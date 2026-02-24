@@ -6,22 +6,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
+import Logo from "./logo";
 
-export default function Navbar() {
-  const [isScrolled, setIsScrolled] = useState(false);
+const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount } = useCart();
   const pathname = usePathname();
 
-  // Scroll effect
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -30,14 +21,9 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        isScrolled
-          ? "bg-white/80 backdrop-blur-md py-4 border-b border-black/5"
-          : "bg-transparent py-6"
-      }`}
+      className={` transition-all duration-300 bg-white/80 backdrop-blur-md py-4 border-b border-black/5`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        
         {/* Mobile Menu Toggle */}
         <button
           className="lg:hidden p-2"
@@ -54,35 +40,30 @@ export default function Navbar() {
           <Link href="/about" className="hover:opacity-50 transition-opacity">
             About
           </Link>
-          <Link href="#" className="hover:opacity-50 transition-opacity">
-            Journal
-          </Link>
         </div>
 
         {/* Logo */}
         <Link
           href="/"
-          className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center"
+          className="flex items-center text-xs flex-col"
         >
-          <div className="font-serif text-3xl tracking-tighter flex items-baseline">
-            <span className="font-bold">I</span>
-            <span className="w-1.5 h-1.5 bg-black rounded-full mx-0.5"></span>
-            <span className="font-bold">A</span>
+          <div className="pt-2.5 ">
+            <Logo color={'#000000'}/>
           </div>
-          <span className="text-[9px] uppercase tracking-[0.3em] mt-1 opacity-60">
-            Clothing Store
+          <span className="uppercase tracking-[0.2em] mt-1 opacity-60">
+            IA Store
           </span>
         </Link>
 
         {/* Icons */}
         <div className="flex items-center space-x-5">
-          <button className="hidden sm:block hover:opacity-50 transition-opacity">
+          <Link href={"/search"} className="hidden sm:block hover:opacity-50 transition-opacity">
             <Search size={20} strokeWidth={1.5} />
-          </button>
+          </Link>
 
-          <button className="hidden sm:block hover:opacity-50 transition-opacity">
+          <Link href={"/user"} className="hidden sm:block hover:opacity-50 transition-opacity">
             <User size={20} strokeWidth={1.5} />
-          </button>
+          </Link>
 
           <Link
             href="/cart"
@@ -117,9 +98,7 @@ export default function Navbar() {
               <Link href="/">Home</Link>
               <Link href="/shop">Shop All</Link>
               <Link href="/about">About I.A</Link>
-              <Link href="/cart">
-                My Bag ({cartCount})
-              </Link>
+              <Link href="/cart">My Bag ({cartCount})</Link>
             </div>
           </motion.div>
         )}
@@ -127,3 +106,4 @@ export default function Navbar() {
     </nav>
   );
 }
+export default Navbar;

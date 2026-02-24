@@ -1,9 +1,11 @@
+"use client"
+
 import React from 'react';
 import { products } from '../data/products';
 import { motion } from 'framer-motion';
 import { Plus, Filter } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import Link from 'next/link';
 
 export default function Shop() {
   const { addToCart } = useCart();
@@ -38,8 +40,8 @@ export default function Shop() {
             transition={{ delay: (index % 3) * 0.1 }}
             className="group"
           >
-            <div className="relative aspect-[3/4] overflow-hidden bg-[#f5f5f5] mb-6">
-              <Link to={`/product/${product.id}`}>
+            <div className="relative aspect-3/4 overflow-hidden bg-[#f5f5f5] mb-6">
+              <Link href={`/product/${product.id}`}>
                 <img 
                   src={product.image} 
                   alt={product.name}
@@ -58,7 +60,7 @@ export default function Shop() {
             </div>
             
             <div className="flex justify-between items-start">
-              <Link to={`/product/${product.id}`}>
+              <Link href={`/product/${product.id}`}>
                 <h3 className="font-serif text-xl mb-1 group-hover:italic transition-all">{product.name}</h3>
                 <p className="text-black/40 text-[11px] uppercase tracking-widest">{product.category}</p>
               </Link>

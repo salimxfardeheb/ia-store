@@ -11,7 +11,7 @@ export default function HomePage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <Hero />
+
 
       {/* Featured Section */}
       <section className="py-24 px-6 bg-white">

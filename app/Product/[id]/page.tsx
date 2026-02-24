@@ -1,13 +1,13 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+"use client"
 import { products } from '../../data/products';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Minus, Plus, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Plus, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useParams, useRouter } from 'next/navigation';
 
 export default function ProductDetail() {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const router = useRouter();
   const { addToCart } = useCart();
   
   const product = products.find(p => p.id === Number(id));
@@ -16,7 +16,7 @@ export default function ProductDetail() {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4">
         <h1 className="font-serif text-4xl">Product not found</h1>
-        <button onClick={() => navigate('/shop')} className="text-[11px] uppercase tracking-widest font-bold border-b border-black">Back to Shop</button>
+        <button onClick={() => router.push('/shop')} className="text-[11px] uppercase tracking-widest font-bold border-b border-black">Back to Shop</button>
       </div>
     );
   }
@@ -24,7 +24,7 @@ export default function ProductDetail() {
   return (
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
       <button 
-        onClick={() => navigate(-1)}
+        onClick={() => router.back()}
         className="flex items-center space-x-2 text-[11px] uppercase tracking-[0.2em] font-bold mb-12 opacity-40 hover:opacity-100 transition-opacity"
       >
         <ArrowLeft size={16} />
@@ -91,7 +91,7 @@ export default function ProductDetail() {
             <div className="flex gap-4">
               <button 
                 onClick={() => addToCart(product)}
-                className="flex-grow bg-black text-white py-5 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
+                className="grow bg-black text-white py-5 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
               >
                 <ShoppingBag size={18} />
                 <span>Add to Bag</span>

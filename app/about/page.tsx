@@ -1,4 +1,4 @@
-import React from 'react';
+"use client"
 import { motion } from 'framer-motion';
 
 export default function About() {
@@ -36,10 +36,10 @@ export default function About() {
 
       {/* Image Grid */}
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4 px-4 mb-32">
-        <div className="aspect-[4/5] overflow-hidden rounded-3xl">
+        <div className="aspect-4/5 overflow-hidden rounded-3xl">
           <img src="https://images.unsplash.com/photo-1594932224828-b4b05a832fe3?auto=format&fit=crop&q=80&w=1000" alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
         </div>
-        <div className="aspect-[4/5] overflow-hidden rounded-3xl md:mt-24">
+        <div className="aspect-4/5 overflow-hidden rounded-3xl md:mt-24">
           <img src="https://images.unsplash.com/photo-1550246140-5119ae4790b8?auto=format&fit=crop&q=80&w=1000" alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
         </div>
       </section>
