@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react';
 import { products } from '../data/products';
 import { motion } from 'framer-motion';
 import { Plus, Filter } from 'lucide-react';

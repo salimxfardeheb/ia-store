@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
+import { useAuth } from "../context/AuthContext";
+
 import Logo from "./logo";
 
 const NAV_LINKS = [
@@ -16,6 +18,9 @@ const NAV_LINKS = [
 
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  const { user, logout, isAuthenticated } = useAuth();
   const { cartCount } = useCart();
   const pathname = usePathname();
 
@@ -74,12 +79,26 @@ const Navbar = () => {
             >
               <Search size={20} strokeWidth={1.5} />
             </Link>
-            <Link
-              href="/user"
-              className="hidden sm:block hover:opacity-50 transition-opacity"
-            >
-              <User size={20} strokeWidth={1.5} />
-            </Link>
+            <div>
+              {isAuthenticated ? (
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center space-x-2 hover:opacity-50 transition-opacity"
+                >
+                  <User size={20} strokeWidth={1.5} />
+                  <span className="hidden md:block text-[10px] uppercase tracking-widest font-bold">
+                    {user?.name.split(" ")[0]}
+                  </span>
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="hover:opacity-50 transition-opacity"
+                >
+                  <User size={20} strokeWidth={1.5} />
+                </Link>
+              )}
+            </div>
             <Link
               href="/cart"
               className="relative hover:opacity-50 transition-opacity"
