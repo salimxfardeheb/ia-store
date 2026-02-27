@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ShoppingBag, Menu, X, Search, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { ShoppingBag, Menu, X, Search, User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "../context/AuthContext";
 
@@ -19,28 +19,44 @@ const NAV_LINKS = [
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Close mobile menu on route change
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
-  // Prevent body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = isMobileMenuOpen ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    return () => { document.body.style.overflow = ""; };
   }, [isMobileMenuOpen]);
+
+  // Fermer le menu user en cliquant à l'extérieur
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    setIsUserMenuOpen(false);
+    router.push('/');
+  };
 
   return (
     <>
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md py-5 border-b border-black/5 lg:py-9">
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+
           {/* Mobile Menu Toggle */}
           <button
             className="lg:hidden p-2 -ml-2"
@@ -52,57 +68,74 @@ const Navbar = () => {
 
           {/* Desktop Links */}
           <div className="hidden lg:flex items-center space-x-8 text-[11px] uppercase tracking-[0.2em] font-medium">
-            <Link href="/shop" className="hover:opacity-50 transition-opacity">
-              Shop
-            </Link>
-            <Link href="/about" className="hover:opacity-50 transition-opacity">
-              About
-            </Link>
+            <Link href="/shop" className="hover:opacity-50 transition-opacity">Shop</Link>
+            <Link href="/about" className="hover:opacity-50 transition-opacity">About</Link>
           </div>
 
           {/* Logo */}
-          <Link
-            href="/"
-            className="flex flex-col items-center absolute left-1/2 -translate-x-1/2"
-          >
+          <Link href="/" className="flex flex-col items-center absolute left-1/2 -translate-x-1/2">
             <Logo color="#000000" size={52} />
-            <span className="uppercase tracking-[0.2em] mt-0.5 opacity-60 text-[9px]">
-              IA Store
-            </span>
+            <span className="uppercase tracking-[0.2em] mt-0.5 opacity-60 text-[9px]">IA Store</span>
           </Link>
 
           {/* Icons */}
           <div className="flex items-center space-x-5">
-            <Link
-              href="/search"
-              className="hidden sm:block hover:opacity-50 transition-opacity"
-            >
+            <Link href="/search" className="hidden sm:block hover:opacity-50 transition-opacity">
               <Search size={20} strokeWidth={1.5} />
             </Link>
-            <div>
+
+            {/* User menu */}
+            <div className="relative" ref={userMenuRef}>
               {isAuthenticated ? (
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 hover:opacity-50 transition-opacity"
-                >
-                  <User size={20} strokeWidth={1.5} />
-                  <span className="hidden md:block text-[10px] uppercase tracking-widest font-bold">
-                    {user?.name.split(" ")[0]}
-                  </span>
-                </button>
+                <>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 hover:opacity-50 transition-opacity"
+                  >
+                    <User size={20} strokeWidth={1.5} />
+                    <span className="hidden md:block text-[10px] uppercase tracking-widest font-bold">
+                      {user?.email?.split("@")[0] || "User"}
+                    </span>
+                  </button>
+
+                  {/* Dropdown */}
+                  <AnimatePresence>
+                    {isUserMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-10 w-48 bg-white border border-black/5 rounded-xl shadow-lg overflow-hidden"
+                      >
+                        <Link
+                          href="/profile"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center space-x-3 px-4 py-3 text-[11px] uppercase tracking-widest font-bold hover:bg-black/5 transition-colors"
+                        >
+                          <User size={14} />
+                          <span>My Profile</span>
+                        </Link>
+                        <div className="border-t border-black/5" />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full flex items-center space-x-3 px-4 py-3 text-[11px] uppercase tracking-widest font-bold text-red-500 hover:bg-red-50 transition-colors"
+                        >
+                          <LogOut size={14} />
+                          <span>Sign Out</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </>
               ) : (
-                <Link
-                  href="/login"
-                  className="hover:opacity-50 transition-opacity"
-                >
+                <Link href="/login" className="hover:opacity-50 transition-opacity">
                   <User size={20} strokeWidth={1.5} />
                 </Link>
               )}
             </div>
-            <Link
-              href="/cart"
-              className="relative hover:opacity-50 transition-opacity"
-            >
+
+            <Link href="/cart" className="relative hover:opacity-50 transition-opacity">
               <ShoppingBag size={20} strokeWidth={1.5} />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center">
@@ -114,11 +147,10 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Mobile Menu — hors du <nav> pour éviter les conflits de z-index */}
+      {/* Mobile Menu */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -126,8 +158,6 @@ const Navbar = () => {
               className="fixed inset-0 bg-black/20 z-60"
               onClick={() => setIsMobileMenuOpen(false)}
             />
-
-            {/* Drawer */}
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -148,35 +178,36 @@ const Navbar = () => {
                   <Link
                     key={href}
                     href={href}
-                    className={
-                      pathname === href
-                        ? "opacity-40"
-                        : "hover:opacity-50 transition-opacity"
-                    }
+                    className={pathname === href ? "opacity-40" : "hover:opacity-50 transition-opacity"}
                   >
                     {label}
                   </Link>
                 ))}
                 <Link
                   href="/cart"
-                  className={
-                    pathname === "/cart"
-                      ? "opacity-40"
-                      : "hover:opacity-50 transition-opacity"
-                  }
+                  className={pathname === "/cart" ? "opacity-40" : "hover:opacity-50 transition-opacity"}
                 >
                   My Bag ({cartCount})
                 </Link>
               </nav>
 
-              {/* Icons mobile */}
               <div className="flex items-center space-x-6 mt-auto pt-8 border-t border-black/10">
                 <Link href="/search" onClick={() => setIsMobileMenuOpen(false)}>
                   <Search size={22} strokeWidth={1.5} />
                 </Link>
-                <Link href="/user" onClick={() => setIsMobileMenuOpen(false)}>
-                  <User size={22} strokeWidth={1.5} />
-                </Link>
+                {isAuthenticated ? (
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center space-x-2 text-red-500"
+                  >
+                    <LogOut size={22} strokeWidth={1.5} />
+                    <span className="text-[10px] uppercase tracking-widest font-bold">Sign Out</span>
+                  </button>
+                ) : (
+                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                    <User size={22} strokeWidth={1.5} />
+                  </Link>
+                )}
               </div>
             </motion.div>
           </>

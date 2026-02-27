@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, Mail, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -12,6 +13,7 @@ export default function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,21 +21,18 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        login(data.user);
-      } else {
-        setError(data.message || 'Login failed');
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+      await login(email, password); // ← Firebase directement, plus de fetch
+      router.push('/');
+    } catch (err: any) {
+      const firebaseErrors: Record<string, string> = {
+        'auth/invalid-credential': 'Email ou mot de passe incorrect.',
+        'auth/user-not-found': 'Aucun compte associé à cet email.',
+        'auth/wrong-password': 'Mot de passe incorrect.',
+        'auth/too-many-requests': 'Trop de tentatives. Réessayez plus tard.',
+        'auth/user-disabled': 'Ce compte a été désactivé.',
+      };
+      const code = err?.code as string;
+      setError(firebaseErrors[code] || err.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }

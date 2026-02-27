@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRight, Mail, Lock, User } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Signup() {
   const [name, setName] = useState('');
@@ -12,7 +13,8 @@ export default function Signup() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { register } = useAuth();  // ← register au lieu de login
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,21 +22,17 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/auth/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        login(data.user);
-      } else {
-        setError(data.message || 'Signup failed');
-      }
-    } catch (err) {
-      setError('An error occurred. Please try again.');
+      await register(email, name, password);  // ← Firebase Auth + Firestore
+      router.push('/');
+    } catch (err: any) {
+      // Messages Firebase traduits
+      const firebaseErrors: Record<string, string> = {
+        'auth/email-already-in-use': 'Cette adresse email est déjà utilisée.',
+        'auth/invalid-email': 'Adresse email invalide.',
+        'auth/weak-password': 'Le mot de passe doit contenir au moins 6 caractères.',
+      };
+      const code = err?.code as string;
+      setError(firebaseErrors[code] || err.message || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
