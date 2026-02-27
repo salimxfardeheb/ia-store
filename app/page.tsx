@@ -11,7 +11,7 @@ export default function HomePage() {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-
+      <Hero />
 
       {/* Featured Section */}
       <section className="py-24 px-6 bg-white">
@@ -38,13 +38,12 @@ export default function HomePage() {
 
             <h2 className="font-serif text-5xl md:text-6xl leading-tight italic">
               Uncompromising <br />
-              <span className="not-italic font-bold">
-                Craftsmanship.
-              </span>
+              <span className="not-italic font-bold">Craftsmanship.</span>
             </h2>
 
             <p className="text-black/60 text-lg leading-relaxed font-light">
-              Every piece in our collection is a testament to our dedication to quality.
+              Every piece in our collection is a testament to our dedication to
+              quality.
             </p>
           </div>
         </div>

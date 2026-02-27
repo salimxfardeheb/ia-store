@@ -1,30 +1,38 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { ShoppingBag, Menu, X, Search, User, LogOut } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { ShoppingBag, Menu, X, Search, User, LogOut, ChevronDown } from "lucide-react";
+import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "../context/AuthContext";
-
 import Logo from "./logo";
 
 const NAV_LINKS = [
-  { href: "/", label: "Home" },
   { href: "/shop", label: "Shop All" },
   { href: "/about", label: "About I.A" },
 ];
 
+// Cormorant Garamond font style shorthand
+const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" };
+
 const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [navState, setNavState] = useState<"hero" | "scrolled">("hero");
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
   const pathname = usePathname();
   const router = useRouter();
+  const { scrollY } = useScroll();
+
+  // Switch between transparent (over hero) and solid (scrolled)
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    setNavState(latest > 60 ? "scrolled" : "hero");
+  });
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -35,7 +43,6 @@ const Navbar = () => {
     return () => { document.body.style.overflow = ""; };
   }, [isMobileMenuOpen]);
 
-  // Fermer le menu user en cliquant à l'extérieur
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
@@ -49,165 +56,324 @@ const Navbar = () => {
   const handleLogout = async () => {
     await logout();
     setIsUserMenuOpen(false);
-    router.push('/');
+    router.push("/");
   };
+
+  const isHero = navState === "hero";
+
+  // Colors adapt based on position over hero (dark bg) vs rest of page (light bg)
+  const textColor = isHero ? "text-[#F5F0E8]" : "text-[#2C2416]";
+  const logoColor = isHero ? "#F5F0E8" : "#2C2416";
+  const borderColor = isHero ? "border-[#F5F0E8]/10" : "border-[#2C2416]/8";
+  const hoverOpacity = "hover:opacity-50 transition-opacity duration-300";
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md py-5 border-b border-black/5 lg:py-9">
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+      {/* Navbar */}
+      <motion.nav
+        animate={{
+          backgroundColor: isHero ? "rgba(0,0,0,0)" : "rgba(245,240,232,0.92)",
+          backdropFilter: isHero ? "blur(0px)" : "blur(16px)",
+          borderBottomColor: isHero ? "rgba(245,240,232,0.08)" : "rgba(44,36,22,0.08)",
+        }}
+        transition={{ duration: 0.4, ease: "easeInOut" }}
+        className={`fixed top-0 left-0 right-0 z-50 border-b`}
+      >
+        {/* Top accent line — only visible when scrolled */}
+        <AnimatePresence>
+          {!isHero && (
+            <motion.div
+              initial={{ scaleX: 0 }}
+              animate={{ scaleX: 1 }}
+              exit={{ scaleX: 0 }}
+              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+              className="absolute top-0 left-[8%] right-[8%] h-px bg-[#8B7355]/40 origin-left"
+            />
+          )}
+        </AnimatePresence>
 
-          {/* Mobile Menu Toggle */}
-          <button
-            className="lg:hidden p-2 -ml-2"
-            onClick={() => setIsMobileMenuOpen(true)}
-            aria-label="Open menu"
-          >
-            <Menu size={24} strokeWidth={1.5} />
-          </button>
+        <div className="max-w-7xl mx-auto px-6 lg:px-[8%]">
+          <div className="flex items-center justify-between py-5 lg:py-7">
 
-          {/* Desktop Links */}
-          <div className="hidden lg:flex items-center space-x-8 text-[11px] uppercase tracking-[0.2em] font-medium">
-            <Link href="/shop" className="hover:opacity-50 transition-opacity">Shop</Link>
-            <Link href="/about" className="hover:opacity-50 transition-opacity">About</Link>
-          </div>
+            {/* Mobile toggle */}
+            <button
+              className={`lg:hidden p-2 -ml-2 ${textColor}`}
+              onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={22} strokeWidth={1.5} />
+            </button>
 
-          {/* Logo */}
-          <Link href="/" className="flex flex-col items-center absolute left-1/2 -translate-x-1/2">
-            <Logo color="#000000" size={52} />
-            <span className="uppercase tracking-[0.2em] mt-0.5 opacity-60 text-[9px]">IA Store</span>
-          </Link>
-
-          {/* Icons */}
-          <div className="flex items-center space-x-5">
-            <Link href="/search" className="hidden sm:block hover:opacity-50 transition-opacity">
-              <Search size={20} strokeWidth={1.5} />
-            </Link>
-
-            {/* User menu */}
-            <div className="relative" ref={userMenuRef}>
-              {isAuthenticated ? (
-                <>
-                  <button
-                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center space-x-2 hover:opacity-50 transition-opacity"
-                  >
-                    <User size={20} strokeWidth={1.5} />
-                    <span className="hidden md:block text-[10px] uppercase tracking-widest font-bold">
-                      {user?.email?.split("@")[0] || "User"}
-                    </span>
-                  </button>
-
-                  {/* Dropdown */}
-                  <AnimatePresence>
-                    {isUserMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 8 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 top-10 w-48 bg-white border border-black/5 rounded-xl shadow-lg overflow-hidden"
-                      >
-                        <Link
-                          href="/profile"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center space-x-3 px-4 py-3 text-[11px] uppercase tracking-widest font-bold hover:bg-black/5 transition-colors"
-                        >
-                          <User size={14} />
-                          <span>My Profile</span>
-                        </Link>
-                        <div className="border-t border-black/5" />
-                        <button
-                          onClick={handleLogout}
-                          className="w-full flex items-center space-x-3 px-4 py-3 text-[11px] uppercase tracking-widest font-bold text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                          <LogOut size={14} />
-                          <span>Sign Out</span>
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </>
-              ) : (
-                <Link href="/login" className="hover:opacity-50 transition-opacity">
-                  <User size={20} strokeWidth={1.5} />
+            {/* Desktop left links */}
+            <div className="hidden lg:flex items-center space-x-10">
+              {NAV_LINKS.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`relative text-[10px] uppercase tracking-[0.3em] font-medium ${textColor} ${hoverOpacity} group`}
+                  style={serif}
+                >
+                  {label}
+                  {/* Active underline */}
+                  <span
+                    className={`absolute -bottom-1 left-0 h-px bg-[#8B7355] transition-all duration-300 ${
+                      pathname === href ? "w-full" : "w-0 group-hover:w-full"
+                    }`}
+                  />
                 </Link>
-              )}
+              ))}
             </div>
 
-            <Link href="/cart" className="relative hover:opacity-50 transition-opacity">
-              <ShoppingBag size={20} strokeWidth={1.5} />
-              {cartCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
+            {/* Logo — centered absolutely */}
+            <Link
+              href="/"
+              className="flex flex-col items-center absolute left-1/2 -translate-x-1/2"
+            >
+              <motion.div
+                animate={{ scale: isHero ? 1 : 0.85 }}
+                transition={{ duration: 0.4 }}
+              >
+                <Logo color={logoColor} size={52} />
+              </motion.div>
+              <motion.span
+                animate={{ color: isHero ? "rgba(245,240,232,0.5)" : "rgba(44,36,22,0.45)" }}
+                transition={{ duration: 0.4 }}
+                className="uppercase tracking-[0.25em] mt-0.5 text-[8px]"
+                style={serif}
+              >
+                IA Store
+              </motion.span>
             </Link>
+
+            {/* Right icons */}
+            <div className="flex items-center space-x-5">
+              <Link href="/search" className={`hidden sm:block ${textColor} ${hoverOpacity}`}>
+                <Search size={18} strokeWidth={1.5} />
+              </Link>
+
+              {/* User dropdown */}
+              <div className="relative" ref={userMenuRef}>
+                {isAuthenticated ? (
+                  <>
+                    <button
+                      onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                      className={`flex items-center space-x-1.5 ${textColor} ${hoverOpacity}`}
+                    >
+                      <User size={18} strokeWidth={1.5} />
+                      <span
+                        className="hidden md:block text-[9px] uppercase tracking-widest font-medium"
+                        style={serif}
+                      >
+                        {user?.email?.split("@")[0] || "User"}
+                      </span>
+                      <motion.div
+                        animate={{ rotate: isUserMenuOpen ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ChevronDown size={12} strokeWidth={1.5} className="hidden md:block" />
+                      </motion.div>
+                    </button>
+
+                    {/* Dropdown */}
+                    <AnimatePresence>
+                      {isUserMenuOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 6, scale: 0.97 }}
+                          transition={{ duration: 0.18 }}
+                          className="absolute right-0 top-10 w-52 bg-[#F5F0E8] border border-[#2C2416]/8 shadow-xl overflow-hidden"
+                        >
+                          {/* User info header */}
+                          <div className="px-4 py-3 border-b border-[#2C2416]/8">
+                            <p
+                              className="text-[10px] uppercase tracking-widest text-[#8B7355]"
+                              style={serif}
+                            >
+                              {user?.email?.split("@")[0]}
+                            </p>
+                            <p className="text-[9px] text-[#2C2416]/40 mt-0.5 truncate">
+                              {user?.email}
+                            </p>
+                          </div>
+
+                          <Link
+                            href="/profile"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className="flex items-center space-x-3 px-4 py-3 text-[10px] uppercase tracking-widest text-[#2C2416] hover:bg-[#2C2416]/5 transition-colors"
+                            style={serif}
+                          >
+                            <User size={13} strokeWidth={1.5} />
+                            <span>Mon Profil</span>
+                          </Link>
+
+                          <div className="h-px bg-[#2C2416]/6 mx-4" />
+
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center space-x-3 px-4 py-3 text-[10px] uppercase tracking-widest text-[#8B4040] hover:bg-[#8B4040]/5 transition-colors"
+                            style={serif}
+                          >
+                            <LogOut size={13} strokeWidth={1.5} />
+                            <span>Se Déconnecter</span>
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </>
+                ) : (
+                  <Link href="/login" className={`${textColor} ${hoverOpacity}`}>
+                    <User size={18} strokeWidth={1.5} />
+                  </Link>
+                )}
+              </div>
+
+              {/* Cart */}
+              <Link href="/cart" className={`relative ${textColor} ${hoverOpacity}`}>
+                <ShoppingBag size={18} strokeWidth={1.5} />
+                <AnimatePresence>
+                  {cartCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-1.5 -right-1.5 bg-[#8B7355] text-[#F5F0E8] text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold"
+                    >
+                      {cartCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Link>
+            </div>
           </div>
         </div>
-      </nav>
+      </motion.nav>
 
-      {/* Mobile Menu */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <>
+            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/20 z-60"
+              className="fixed inset-0 bg-[#2C2416]/30 backdrop-blur-sm z-60"
               onClick={() => setIsMobileMenuOpen(false)}
             />
+
+            {/* Drawer */}
             <motion.div
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
-              transition={{ type: "tween", duration: 0.3 }}
-              className="fixed inset-y-0 left-0 w-3/4 max-w-sm bg-white z-70 p-8 flex flex-col shadow-xl"
+              transition={{ type: "tween", duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed inset-y-0 left-0 w-3/4 max-w-sm bg-[#F5F0E8] z-70 flex flex-col shadow-2xl"
             >
-              <button
-                className="self-end mb-12"
-                onClick={() => setIsMobileMenuOpen(false)}
-                aria-label="Close menu"
-              >
-                <X size={28} strokeWidth={1} />
-              </button>
-
-              <nav className="flex flex-col space-y-8 font-serif text-4xl italic">
-                {NAV_LINKS.map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={pathname === href ? "opacity-40" : "hover:opacity-50 transition-opacity"}
-                  >
-                    {label}
-                  </Link>
-                ))}
-                <Link
-                  href="/cart"
-                  className={pathname === "/cart" ? "opacity-40" : "hover:opacity-50 transition-opacity"}
+              {/* Drawer header */}
+              <div className="flex items-center justify-between px-8 py-7 border-b border-[#2C2416]/8">
+                <span
+                  className="text-[9px] uppercase tracking-[0.35em] text-[#8B7355]"
+                  style={serif}
                 >
-                  My Bag ({cartCount})
-                </Link>
+                  I.A Store
+                </span>
+                <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu">
+                  <X size={22} strokeWidth={1} className="text-[#2C2416]" />
+                </button>
+              </div>
+
+              {/* Nav links */}
+              <nav className="flex flex-col px-8 pt-10 space-y-1">
+                {[{ href: "/", label: "Home" }, ...NAV_LINKS, { href: "/cart", label: `My Bag (${cartCount})` }].map(
+                  ({ href, label }, i) => (
+                    <motion.div
+                      key={href}
+                      initial={{ opacity: 0, x: -16 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.05 * i, duration: 0.4 }}
+                    >
+                      <Link
+                        href={href}
+                        className={`block py-3 border-b border-[#2C2416]/6 transition-opacity ${
+                          pathname === href ? "opacity-30" : "hover:opacity-50"
+                        }`}
+                        style={{
+                          ...serif,
+                          fontSize: "2rem",
+                          fontStyle: "italic",
+                          fontWeight: 300,
+                          color: "#2C2416",
+                        }}
+                      >
+                        {label}
+                      </Link>
+                    </motion.div>
+                  )
+                )}
               </nav>
 
-              <div className="flex items-center space-x-6 mt-auto pt-8 border-t border-black/10">
-                <Link href="/search" onClick={() => setIsMobileMenuOpen(false)}>
-                  <Search size={22} strokeWidth={1.5} />
-                </Link>
+              {/* Drawer footer */}
+              <div className="mt-auto px-8 py-8 border-t border-[#2C2416]/8">
                 {isAuthenticated ? (
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center space-x-2 text-red-500"
-                  >
-                    <LogOut size={22} strokeWidth={1.5} />
-                    <span className="text-[10px] uppercase tracking-widest font-bold">Sign Out</span>
-                  </button>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-7 h-7 rounded-full bg-[#8B7355]/20 flex items-center justify-center">
+                        <User size={13} strokeWidth={1.5} className="text-[#8B7355]" />
+                      </div>
+                      <div>
+                        <p
+                          className="text-[10px] uppercase tracking-widest text-[#2C2416]"
+                          style={serif}
+                        >
+                          {user?.email?.split("@")[0]}
+                        </p>
+                        <p className="text-[9px] text-[#2C2416]/40 truncate max-w-[160px]">
+                          {user?.email}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center space-x-2 text-[#8B4040]"
+                    >
+                      <LogOut size={15} strokeWidth={1.5} />
+                      <span
+                        className="text-[10px] uppercase tracking-widest"
+                        style={serif}
+                      >
+                        Se Déconnecter
+                      </span>
+                    </button>
+                  </div>
                 ) : (
-                  <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                    <User size={22} strokeWidth={1.5} />
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center space-x-3 text-[#2C2416]"
+                  >
+                    <User size={18} strokeWidth={1.5} />
+                    <span
+                      className="text-[10px] uppercase tracking-widest"
+                      style={serif}
+                    >
+                      Se Connecter
+                    </span>
                   </Link>
                 )}
+
+                <div className="flex items-center space-x-6 mt-6">
+                  <Link href="/search" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Search size={18} strokeWidth={1.5} className="text-[#2C2416]/50" />
+                  </Link>
+                  <div className="h-px flex-1 bg-[#2C2416]/8" />
+                  <span
+                    className="text-[8px] uppercase tracking-[0.3em] text-[#8B7355]"
+                    style={serif}
+                  >
+                    MMXXV
+                  </span>
+                </div>
               </div>
             </motion.div>
           </>
