@@ -1,9 +1,9 @@
 "use client"
 
-import { products } from '../data/products';
+import { products } from '@/app/data/products';
 import { motion } from 'framer-motion';
 import { Plus, Filter } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import { useCart } from '@/app/context/CartContext';
 import Link from 'next/link';
 
 export default function Shop() {

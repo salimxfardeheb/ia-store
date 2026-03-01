@@ -1,8 +1,8 @@
 "use client"
-import { products } from '../../data/products';
+import { products } from '@/app/data/products';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Plus, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
-import { useCart } from '../../context/CartContext';
+import { useCart } from '@/app/context/CartContext';
 import { useParams, useRouter } from 'next/navigation';
 
 export default function ProductDetail() {

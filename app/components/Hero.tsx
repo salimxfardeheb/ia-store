@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 
@@ -20,7 +20,7 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen min-h-[700px] overflow-hidden bg-[#F5F0E8]"
+      className="relative h-screen min-h-700px]overflow-hidden bg-[#F5F0E8]"
     >
       {/* Grain texture overlay */}
       <div
