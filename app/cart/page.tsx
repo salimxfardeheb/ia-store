@@ -1,6 +1,5 @@
 "use client"
 
-import React from 'react';
 import { useCart } from '@/app/context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, ArrowRight, ShoppingBag } from 'lucide-react';
