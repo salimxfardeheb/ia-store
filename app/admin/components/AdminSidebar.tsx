@@ -4,7 +4,8 @@ import { ChevronRight, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/app/context/AuthContext";
-import { C, serif, NAV_ITEMS, BOTTOM_NAV } from "../variables";
+import { NAV_ITEMS, BOTTOM_NAV } from "../variables";
+import Logo from "@/app/components/logo";
 
 function SidebarLink({
   href, icon: Icon, label, active,
@@ -18,8 +19,8 @@ function SidebarLink({
           : "text-black/35 hover:bg-black/5 hover:text-black"
       }`}
     >
-      <Icon size={15} strokeWidth={1.5} />
-      <span className="text-[10px] uppercase tracking-[0.25em] flex-1" style={serif}>
+      <Icon size={18} strokeWidth={1.5} />
+      <span className="text-[10px] uppercase tracking-[0.25em] flex-1 font-serif">
         {label}
       </span>
       {active && <ChevronRight size={9} className="opacity-40" />}
@@ -39,21 +40,18 @@ export default function AdminSidebar() {
 
   return (
     <aside
-      className="w-56 fixed inset-y-0 left-0 z-30 flex flex-col border-r"
-      style={{ backgroundColor: C.white, borderColor: C.border }}
+      className="w-56 fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-white border-[rgba(0,0,0,0.08)] "
     >
       {/* Brand */}
-      <div className="px-6 pt-8 pb-6 border-b" style={{ borderColor: C.border }}>
+      <div className="px-6 pt-8 pb-6 border-b border-[rgba(0,0,0,0.08)]">
         <Link href="/" className="flex flex-col">
           <span
-            className="text-[1.6rem] text-black leading-none"
-            style={{ ...serif, fontStyle: "italic", fontWeight: 300, letterSpacing: "-0.02em" }}
+            className="mx-auto"
           >
-            I.A
+            <Logo />
           </span>
           <span
-            className="text-[7px] uppercase tracking-[0.45em] text-black/30 mt-1"
-            style={serif}
+            className="text-[9px] uppercase tracking-[0.45em] text-black/50 mt-3 font-serif text-center"
           >
             Admin Console
           </span>
@@ -81,7 +79,7 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Bottom nav + user */}
-      <div className="border-t py-4 px-2 space-y-0.5" style={{ borderColor: C.border }}>
+      <div className="border-t py-4 px-2 space-y-0.5 border-[rgba(0,0,0,0.08)] " >
         {BOTTOM_NAV.map((item) => (
           <SidebarLink
             key={item.id}
@@ -93,10 +91,10 @@ export default function AdminSidebar() {
         ))}
 
         {/* User row */}
-        <div className="px-4 pt-4 mt-2 border-t" style={{ borderColor: C.border }}>
+        <div className="px-4 pt-4 mt-2 border-t border-[rgba(0,0,0,0.08)]" >
           <div className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-widest text-black truncate" style={serif}>
+              <p className="text-[10px] uppercase tracking-widest text-black truncate font-serif">
                 {user?.email?.split("@")[0] || "Admin"}
               </p>
               <p className="text-[8px] text-black/30 truncate mt-0.5">{user?.email}</p>
@@ -104,7 +102,7 @@ export default function AdminSidebar() {
             <button
               onClick={handleLogout}
               title="Se déconnecter"
-              className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors flex-shrink-0"
+              className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors shrink-0"
             >
               <LogOut size={13} strokeWidth={1.5} />
             </button>

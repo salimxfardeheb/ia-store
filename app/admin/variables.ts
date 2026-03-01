@@ -3,20 +3,6 @@ import {
   Wallet, Calendar, Settings
 } from "lucide-react";
 
-// ─── Palette noir & blanc ─────────────────────────────────────────────────────
-export const C = {
-  bg:      "#F7F7F7",       // fond général
-  white:   "#FFFFFF",       // panels / cartes
-  dark:    "#0A0A0A",       // noir profond
-  mid:     "#3A3A3A",       // texte secondaire
-  muted:   "#9A9A9A",       // placeholders
-  border:  "rgba(0,0,0,0.08)",
-  accent:  "#0A0A0A",       // pas de couleur — le contraste fait le travail
-};
-
-export const serif = { fontFamily: "'Cormorant Garamond', Georgia, serif" };
-export const mono  = { fontFamily: "'JetBrains Mono', 'Fira Code', monospace" };
-
 // ─── Mock data ────────────────────────────────────────────────────────────────
 export const revenueData = [
   { name: "Jan", revenue: 45000, expenses: 32000 },
@@ -61,8 +47,8 @@ export const STATUS_STYLES: Record<string, string> = {
 
 export const NAV_ITEMS = [
   { id: "overview",   icon: LayoutDashboard, label: "Vue d'ensemble",  href: "/admin"            },
-  { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders"     },
   { id: "catalog",    icon: Package,         label: "Catalogue",       href: "/admin/catalog"    },
+  { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders"     },
   { id: "customers",  icon: Users,           label: "Clients",         href: "/admin/customers"  },
   { id: "analytics",  icon: BarChart3,       label: "Analytiques",     href: "/admin/analytics"  },
   { id: "finance",    icon: Wallet,          label: "Finance",         href: "/admin/finance"    },

@@ -11,8 +11,9 @@ import {
 import AdminHeader from "./components/AdminHeader";
 import { KPICard } from "./components/KpiCard";
 import {
-  C, serif, revenueData, categoryData, PIE_COLORS,
-  recentOrders, lowStockProducts, STATUS_STYLES,
+ revenueData, categoryData, PIE_COLORS,
+  recentOrders, lowStockProducts,
+  STATUS_STYLES,
 } from "./variables";;
 
 function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: string; dark?: boolean }) {
@@ -23,7 +24,7 @@ function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: st
       }`}
     >
       <Icon size={18} strokeWidth={1.5} className="mb-2.5" />
-      <span className="text-[8px] uppercase tracking-[0.25em]" style={serif}>{label}</span>
+      <span className="text-[8px] uppercase tracking-tight font-serif">{label}</span>
     </button>
   );
 }
@@ -58,9 +59,9 @@ export default function OverviewPage() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Area chart */}
-          <div className="lg:col-span-2 bg-white border p-7" style={{ borderColor: C.border }}>
+          <div className="lg:col-span-2 bg-white border p-7 border-[rgba(0,0,0,0.08)] " >
             <div className="flex justify-between items-center mb-7">
-              <h3 className="text-lg text-black" style={{ ...serif, fontStyle: "italic", fontWeight: 300 }}>
+              <h3 className="text-lg text-black italic font-light font-serif">
                 Aperçu des revenus
               </h3>
               <div className="flex">
@@ -68,7 +69,7 @@ export default function OverviewPage() {
                   <button
                     key={l}
                     className="px-3 py-1 text-[8px] uppercase tracking-widest transition-colors"
-                    style={{ ...serif, backgroundColor: i === 0 ? "#0A0A0A" : "transparent", color: i === 0 ? "#FFF" : "rgba(0,0,0,0.35)" }}
+                    style={{ backgroundColor: i === 0 ? "#0A0A0A" : "transparent", color: i === 0 ? "#FFF" : "rgba(0,0,0,0.35)" }}
                   >
                     {l}
                   </button>
@@ -103,15 +104,15 @@ export default function OverviewPage() {
               {[{ label: "Revenus", dark: true }, { label: "Dépenses", dark: false }].map(({ label, dark }) => (
                 <div key={label} className="flex items-center space-x-2">
                   <div className="w-5 h-px" style={{ backgroundColor: dark ? "#0A0A0A" : "#7A7A7A" }} />
-                  <span className="text-[8px] uppercase tracking-widest text-black/40" style={serif}>{label}</span>
+                  <span className="text-[8px] uppercase tracking-widest text-black/40 font-serif">{label}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Pie */}
-          <div className="bg-white border p-7" style={{ borderColor: C.border }}>
-            <h3 className="text-lg text-black mb-7" style={{ ...serif, fontStyle: "italic", fontWeight: 300 }}>
+          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)] " >
+            <h3 className="text-lg text-black mb-7 font-serif italic font-light">
               Par catégorie
             </h3>
             <div style={{ height: 180 }}>
@@ -129,9 +130,9 @@ export default function OverviewPage() {
                 <div key={cat.name} className="flex justify-between items-center">
                   <div className="flex items-center space-x-2.5">
                     <div className="w-2 h-2" style={{ backgroundColor: PIE_COLORS[i] }} />
-                    <span className="text-[9px] uppercase tracking-widest text-black/50" style={serif}>{cat.name}</span>
+                    <span className="text-[9px] uppercase tracking-widest text-black/50 font-serif">{cat.name}</span>
                   </div>
-                  <span className="text-[9px] text-black" style={{ ...serif, fontStyle: "italic" }}>{cat.value}%</span>
+                  <span className="text-[9px] text-black italic font-serif">{cat.value}%</span>
                 </div>
               ))}
             </div>
@@ -141,18 +142,18 @@ export default function OverviewPage() {
         {/* Orders + Stock */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Orders table */}
-          <div className="lg:col-span-2 bg-white border overflow-hidden" style={{ borderColor: C.border }}>
-            <div className="px-7 py-5 border-b flex justify-between items-center" style={{ borderColor: C.border }}>
-              <h3 className="text-lg text-black" style={{ ...serif, fontStyle: "italic", fontWeight: 300 }}>Commandes récentes</h3>
-              <button className="text-[8px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity" style={serif}>
+          <div className="lg:col-span-2 bg-white border overflow-hidden border-[rgba(0,0,0,0.08)] ">
+            <div className="px-7 py-5 border-b flex justify-between items-center border-[rgba(0,0,0,0.08)] ">
+              <h3 className="text-lg text-black font-serif italic font-light">Commandes récentes</h3>
+              <button className="text-[8px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
                 Tout voir
               </button>
             </div>
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b text-[8px] uppercase tracking-[0.25em] text-black/30" style={{ borderColor: C.border }}>
+                <tr className="border-b text-[8px] uppercase tracking-[0.25em] text-black/30 border-[rgba(0,0,0,0.08)] ">
                   {["N° Commande", "Client", "Statut", "Montant", ""].map((h) => (
-                    <th key={h} className="px-6 py-3 font-normal" style={serif}>{h}</th>
+                    <th key={h} className="px-6 py-3 font-normal font-serif">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -163,17 +164,16 @@ export default function OverviewPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: i * 0.04 }}
-                    className="border-b hover:bg-black/[0.02] transition-colors"
-                    style={{ borderColor: C.border }}
+                    className="border-b hover:bg-black/2 transition-colors border-[rgba(0,0,0,0.08)] "
                   >
-                    <td className="px-6 py-3.5 text-[9px] text-black/40" style={serif}>{order.id}</td>
-                    <td className="px-6 py-3.5 text-[10px] text-black" style={serif}>{order.customer}</td>
+                    <td className="px-6 py-3.5 text-[9px] text-black/40 font-serif">{order.id}</td>
+                    <td className="px-6 py-3.5 text-[10px] text-black font-serif" >{order.customer}</td>
                     <td className="px-6 py-3.5">
-                      <span className={`px-2.5 py-0.5 text-[7px] uppercase tracking-widest ${STATUS_STYLES[order.status] ?? "bg-black/5 text-black"}`} style={serif}>
+                      <span className={`px-2.5 py-0.5 text-[7px] uppercase tracking-widest font-serif ${STATUS_STYLES[order.status] ?? "bg-black/5 text-black"}`}>
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3.5 text-[10px] text-black" style={{ ...serif, fontStyle: "italic" }}>{order.amount}</td>
+                    <td className="px-6 py-3.5 text-[10px] text-black font-serif italic">{order.amount}</td>
                     <td className="px-6 py-3.5">
                       <button className="p-1 text-black/20 hover:text-black hover:bg-black/5 transition-colors">
                         <MoreVertical size={12} strokeWidth={1.5} />
@@ -186,26 +186,26 @@ export default function OverviewPage() {
           </div>
 
           {/* Stock alerts */}
-          <div className="bg-white border p-6" style={{ borderColor: C.border }}>
+          <div className="bg-white border p-6 border-[rgba(0,0,0,0.08)] ">
             <div className="flex items-center space-x-2 mb-6">
               <AlertTriangle size={14} strokeWidth={1.5} className="text-black/50" />
-              <h3 className="text-lg text-black" style={{ ...serif, fontStyle: "italic", fontWeight: 300 }}>Alertes stock</h3>
+              <h3 className="text-lg text-black font-serif italic font-light">Alertes stock</h3>
             </div>
             <div className="space-y-3">
               {lowStockProducts.map((item) => (
-                <div key={`${item.name}-${item.size}`} className="p-4 border" style={{ borderColor: C.border }}>
+                <div key={`${item.name}-${item.size}`} className="p-4 border border-[rgba(0,0,0,0.08)] ">
                   <div className="flex justify-between items-start mb-2.5">
-                    <h4 className="text-[10px] text-black pr-2 leading-snug" style={serif}>{item.name}</h4>
-                    <span className="text-[7px] uppercase tracking-widest bg-black text-white px-2 py-0.5 flex-shrink-0" style={serif}>{item.size}</span>
+                    <h4 className="text-[10px] text-black pr-2 leading-snug font-serif">{item.name}</h4>
+                    <span className="text-[7px] uppercase tracking-widest bg-black text-white px-2 py-0.5 shrink-0 font-serif">{item.size}</span>
                   </div>
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-[7px] uppercase tracking-[0.3em] text-black/30 mb-0.5" style={serif}>En stock</p>
-                      <p className="text-xl" style={{ ...serif, fontStyle: "italic", fontWeight: 300, color: item.stock === 0 ? "#000" : "#555" }}>
+                      <p className="text-[7px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
+                      <p className="text-xl font-serif italic font-light " style={{ color: item.stock === 0 ? "#000" : "#555" }}>
                         {item.stock}
                       </p>
                     </div>
-                    <button className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity" style={serif}>
+                    <button className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
                       Restock
                     </button>
                   </div>
@@ -215,8 +215,8 @@ export default function OverviewPage() {
                 </div>
               ))}
             </div>
-            <button className="w-full mt-4 py-3 border border-black/10 text-[8px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all" style={serif}>
-              Rapport complet
+            <button className="w-full mt-4 py-3 border border-black/10 text-[8px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
+              Rapport complet 
             </button>
           </div>
         </div>
@@ -224,20 +224,20 @@ export default function OverviewPage() {
         {/* Bottom row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Seasonal */}
-          <div className="bg-black p-8 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+          <div className="bg-black p-8 relative overflow-hidden flex flex-col justify-between min-h-55">
             <div className="relative z-10">
               <div className="flex items-center space-x-2.5 mb-4">
                 <Sun size={14} strokeWidth={1.5} className="text-white/50" />
-                <span className="text-[8px] uppercase tracking-[0.4em] text-white/40" style={serif}>Analyse saisonnière</span>
+                <span className="text-[8px] uppercase tracking-[0.4em] text-white/40 font-serif">Analyse saisonnière</span>
               </div>
-              <h3 className="text-white mb-3" style={{ ...serif, fontSize: "1.5rem", fontStyle: "italic", fontWeight: 300, lineHeight: 1.2 }}>
+              <h3 className="text-white mb-3 font-serif text-[1.5rem] italic font-light leading-5">
                 Transition printemps<br />approche
               </h3>
-              <p className="text-white/40 text-sm mb-6 max-w-xs leading-relaxed" style={serif}>
+              <p className="text-white/40 text-sm mb-6 max-w-xs leading-relaxed font-serif">
                 La demande en lin et soie légère devrait augmenter de 40% la semaine prochaine.
               </p>
             </div>
-            <button className="self-start px-6 py-2.5 bg-white text-black text-[8px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all" style={serif}>
+            <button className="self-start px-6 py-2.5 bg-white text-black text-[8px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all font-serif">
               Mettre à jour la vitrine
             </button>
             <div className="absolute -right-6 -bottom-6 pointer-events-none opacity-[0.04]">
@@ -246,8 +246,8 @@ export default function OverviewPage() {
           </div>
 
           {/* Quick actions */}
-          <div className="bg-white border p-7" style={{ borderColor: C.border }}>
-            <h3 className="text-lg text-black mb-5" style={{ ...serif, fontStyle: "italic", fontWeight: 300 }}>Actions rapides</h3>
+          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)] ">
+            <h3 className="text-lg text-black mb-5 font-serif italic font-light">Actions rapides</h3>
             <div className="grid grid-cols-2 gap-3">
               <QuickAction icon={Plus}       label="Ajouter produit" dark />
               <QuickAction icon={TrendingUp} label="Créer une promo" />
