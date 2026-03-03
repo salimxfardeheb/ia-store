@@ -1,23 +1,32 @@
 "use client";
 
-import { products } from "@/app/data/products";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
+import { useEffect, useState } from "react";
+import { Product } from "../variables";
+import { getAllProducts } from "../firebase/getproducts";
 
 export default function ProductGrid() {
+  const [products, setProducts] = useState<Product[]>([]);
   const { addToCart } = useCart();
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      const data = await getAllProducts();
+      setProducts(data);
+    };
+    loadProducts();
+  }, []);
 
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 space-y-4 md:space-y-0">
         <div>
-          <h2 className="font-serif text-5xl italic mb-4">
-            The Essentials
-          </h2>
+          <h2 className="font-serif text-5xl italic mb-4">The Essentials</h2>
           <p className="text-black/40 text-sm uppercase tracking-widest">
             Curated pieces for your wardrobe
           </p>
@@ -25,15 +34,9 @@ export default function ProductGrid() {
 
         <div className="flex space-x-8 text-[11px] uppercase tracking-[0.2em] font-medium">
           <button className="border-b border-black pb-1">All</button>
-          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">
-            Suits
-          </button>
-          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">
-            Knitwear
-          </button>
-          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">
-            Outerwear
-          </button>
+          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">Suits</button>
+          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">Knitwear</button>
+          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">Outerwear</button>
         </div>
       </div>
 
@@ -49,17 +52,21 @@ export default function ProductGrid() {
             className="group"
           >
             <div className="relative aspect-3/4 overflow-hidden bg-[#f5f5f5] mb-6">
-              
+
               {/* Image */}
               <Link href={`/product/${product.id}`}>
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                />
+                {product.mainImage ? (
+                  <img
+                    src={product.mainImage}
+                    alt={product.name}
+                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-[#F2F0ED]" />
+                )}
               </Link>
 
-              <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors duration-500"></div>
+              <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
 
               {/* Quick Add */}
               <button
@@ -89,9 +96,8 @@ export default function ProductGrid() {
                   </p>
                 </div>
               </Link>
-
               <span className="font-medium text-sm">
-                ${product.price}
+                {product.price.toLocaleString("fr-FR")} DA
               </span>
             </div>
           </motion.div>

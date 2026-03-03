@@ -21,24 +21,7 @@
 }
 
 @layer base {
-  body {
-    @apply bg-[#fdfcfb] text-[#1a1a1a] font-sans antialiased;
-  }
-  .livre {
-    @apply bg-black text-white;
-  }
-  .en-attente {
-    @apply bg-black/10 text-black;
-  }
-  .retard{
-    @apply bg-black text-white border border-black/20;
-  }
-  .confirme{
-    @apply bg-black/5 text-black;
-  }
-  .Expédie {
-    @apply bg-black/80 text-white;
-  }
+
 }
 
 .luxury-shadow {

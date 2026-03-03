@@ -20,11 +20,11 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen min-h-700px]overflow-hidden bg-[#F5F0E8]"
+      className="relative h-screen min-h-175 overflow-hidden bg-white "
     >
       {/* Grain texture overlay */}
       <div
-        className="pointer-events-none absolute inset-0 z-10 opacity-[0.04]"
+        className="pointer-events-none absolute inset-0 z-10 opacity-[0.06]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           backgroundRepeat: "repeat",
@@ -34,8 +34,8 @@ export default function HeroSection() {
 
       {/* Decorative vertical lines */}
       <div className="pointer-events-none absolute inset-0 z-10">
-        <div className="absolute left-[8%] top-0 h-full w-px bg-[#2C2416]/8" />
-        <div className="absolute right-[8%] top-0 h-full w-px bg-[#2C2416]/8" />
+        <div className="absolute left-[8%] top-0 h-full w-px bg-white/8" />
+        <div className="absolute right-[8%] top-0 h-full w-px bg-white/8" />
       </div>
 
       {/* Background image with parallax */}
@@ -43,20 +43,10 @@ export default function HeroSection() {
         style={{ y: imageY }}
         className="absolute inset-0 z-0 scale-110"
       >
-        {/* Placeholder for image — replace src with your actual image */}
         <div
           className="h-full w-full"
           style={{
-            background: `
-              linear-gradient(
-                165deg,
-                #2C2416 0%,
-                #3D3020 30%,
-                #4A3C28 55%,
-                #5C4D35 75%,
-                #6B5C42 100%
-              )
-            `,
+            background: `linear-gradient(165deg, #ffffff 0%, #f5f5f5 40%, #eeeeee 70%, #e8e8e8 100%)`,
           }}
         />
 
@@ -65,8 +55,8 @@ export default function HeroSection() {
           className="absolute inset-0"
           style={{
             background: `
-              radial-gradient(ellipse 80% 80% at 60% 40%, transparent 30%, rgba(44,36,22,0.55) 100%),
-              linear-gradient(to right, rgba(245,240,232,0.92) 0%, rgba(245,240,232,0.4) 42%, transparent 65%)
+              radial-gradient(ellipse 80% 80% at 60% 40%, transparent 30%, rgba(0,0,0,0.08) 100%),
+              linear-gradient(to right, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 42%, transparent 65%)
             `,
           }}
         />
@@ -82,11 +72,11 @@ export default function HeroSection() {
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="mb-10 flex items-center space-x-4"
+          className="my-10 flex items-center space-x-4"
         >
-          <div className="h-px w-12 bg-[#8B7355]" />
+          <div className="h-px w-12 bg-black/40" />
           <span
-            className="text-[10px] uppercase tracking-[0.35em] text-[#8B7355]"
+            className="text-[10px] uppercase tracking-[0.35em] text-black/50"
             style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
           >
             Collection Printemps — 2025
@@ -99,7 +89,7 @@ export default function HeroSection() {
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="leading-none text-[#2C2416]"
+            className="leading-none text-black/90"
             style={{
               fontFamily: "'Cormorant Garamond', Georgia, serif",
               fontSize: "clamp(3.5rem, 8vw, 7.5rem)",
@@ -127,12 +117,12 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 1 + i * 0.15 }}
-              className="text-[11px] uppercase tracking-[0.25em] text-[#8B7355]"
+              className="text-[11px] uppercase tracking-[0.25em] text-black/40"
               style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
               {word}
               {i < WORDS.length - 1 && (
-                <span className="ml-3 text-[#8B7355]/40">·</span>
+                <span className="ml-3 text-black/20">·</span>
               )}
             </motion.span>
           ))}
@@ -143,11 +133,14 @@ export default function HeroSection() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 1.2 }}
-          className="mt-8 max-w-xs text-sm leading-relaxed text-[#2C2416]/55"
-          style={{ fontFamily: "'Cormorant Garamond', Georgia, serif", fontSize: "1rem" }}
+          className="mt-8 max-w-xs leading-relaxed text-black/35"
+          style={{
+            fontFamily: "'Cormorant Garamond', Georgia, serif",
+            fontSize: "1rem",
+          }}
         >
-          Des pièces conçues pour l'homme qui comprend que le vrai luxe
-          réside dans la discrétion et la permanence du style.
+          Des pièces conçues pour l'homme qui comprend que le vrai luxe réside
+          dans la discrétion et la permanence du style.
         </motion.p>
 
         {/* CTAs */}
@@ -159,14 +152,14 @@ export default function HeroSection() {
         >
           <Link
             href="/shop"
-            className="group relative overflow-hidden bg-[#2C2416] px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-[#F5F0E8] transition-all duration-300 hover:bg-[#8B7355]"
+            className="group relative overflow-hidden bg-black px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-white/85"
           >
             <span className="relative z-10">Découvrir la Collection</span>
           </Link>
 
           <Link
             href="/about"
-            className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.3em] text-[#2C2416]/60 transition-colors hover:text-[#2C2416]"
+            className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.3em] text-black/40 transition-colors hover:text-black"
           >
             <span>Notre Histoire</span>
             <motion.span
@@ -193,11 +186,11 @@ export default function HeroSection() {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="flex flex-col items-center space-y-1"
           >
-            <div className="h-8 w-px bg-[#2C2416]/25" />
-            <div className="h-1.5 w-1.5 rounded-full bg-[#8B7355]" />
+            <div className="h-8 w-px bg-black/20" />
+            <div className="h-1.5 w-1.5 rounded-full bg-black/50" />
           </motion.div>
           <span
-            className="text-[8px] uppercase tracking-[0.4em] text-[#2C2416]/35"
+            className="text-[8px] uppercase tracking-[0.4em] text-black/25"
             style={{ writingMode: "vertical-rl" }}
           >
             Défiler
@@ -213,7 +206,7 @@ export default function HeroSection() {
           ].map(({ value, label }) => (
             <div key={label} className="text-right">
               <div
-                className="text-lg text-[#2C2416]/80"
+                className="text-lg text-black/60"
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
                   fontStyle: "italic",
@@ -221,7 +214,7 @@ export default function HeroSection() {
               >
                 {value}
               </div>
-              <div className="text-[9px] uppercase tracking-[0.25em] text-[#2C2416]/35">
+              <div className="text-[9px] uppercase tracking-[0.25em] text-black/25">
                 {label}
               </div>
             </div>
@@ -239,7 +232,7 @@ export default function HeroSection() {
           fontFamily: "'Cormorant Garamond', Georgia, serif",
           fontSize: "12rem",
           fontWeight: 300,
-          color: "rgba(44,36,22,0.04)",
+          color: "rgba(255,255,255,0.03)",
           lineHeight: 1,
           userSelect: "none",
         }}

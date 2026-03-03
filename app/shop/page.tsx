@@ -1,14 +1,27 @@
 "use client"
 
-import { products } from '@/app/data/products';
 import { motion } from 'framer-motion';
 import { Plus, Filter } from 'lucide-react';
 import { useCart } from '@/app/context/CartContext';
 import Link from 'next/link';
+import { Product } from "../variables";
+import { useEffect, useState } from 'react';
+import { getAllProducts } from '../firebase/getproducts';
+
 
 export default function Shop() {
   const { addToCart } = useCart();
   const categories = ["All", "Suits", "Knitwear", "Shirts", "Shoes", "Outerwear", "Trousers"];
+    const [products, setProducts] = useState<Product[]>([]);
+
+      useEffect(() => {
+        const loadProducts = async () => {
+          const data = await getAllProducts();
+          setProducts(data);
+        };
+        loadProducts();
+      }, []);
+  
 
   return (
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
@@ -42,7 +55,7 @@ export default function Shop() {
             <div className="relative aspect-3/4 overflow-hidden bg-[#f5f5f5] mb-6">
               <Link href={`/product/${product.id}`}>
                 <img 
-                  src={product.image} 
+                  src={product.mainImage} 
                   alt={product.name}
                   className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                   referrerPolicy="no-referrer"

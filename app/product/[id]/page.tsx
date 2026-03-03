@@ -1,29 +1,59 @@
-"use client"
-import { products } from '@/app/data/products';
-import { motion } from 'framer-motion';
-import { ArrowLeft, Plus, ShoppingBag, Truck, ShieldCheck, RefreshCw } from 'lucide-react';
-import { useCart } from '@/app/context/CartContext';
-import { useParams, useRouter } from 'next/navigation';
+"use client";
+import { motion } from "framer-motion";
+import {
+  ArrowLeft,
+  Plus,
+  ShoppingBag,
+  Truck,
+  ShieldCheck,
+  RefreshCw,
+} from "lucide-react";
+import { useCart } from "@/app/context/CartContext";
+import { useParams, useRouter } from "next/navigation";
+import { Product as P } from "@/app/variables";
+import { useEffect, useState } from "react";
+import { getProductId } from "@/app/firebase/getproducts";
 
 export default function ProductDetail() {
+  const [product, setProduct] = useState<P | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [selectedSize, setSelectedSize] = useState<string>("");
+
   const { id } = useParams();
   const router = useRouter();
   const { addToCart } = useCart();
-  
-  const product = products.find(p => p.id === Number(id));
+
+  useEffect(() => {
+    const loadProduct = async () => {
+      const data = await getProductId(id as string);
+      setProduct(data);
+      if (data?.mainImage) setSelectedImage(data.mainImage);
+    };
+    loadProduct();
+  }, [id]);
 
   if (!product) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4">
         <h1 className="font-serif text-4xl">Product not found</h1>
-        <button onClick={() => router.push('/shop')} className="text-[11px] uppercase tracking-widest font-bold border-b border-black">Back to Shop</button>
+        <button
+          onClick={() => router.push("/shop")}
+          className="text-[11px] uppercase tracking-widest font-bold border-b border-black"
+        >
+          Back to Shop
+        </button>
       </div>
     );
   }
 
+  const allImages = [
+    product.mainImage,
+    ...(product.extraImages ?? []),
+  ].filter(Boolean);
+
   return (
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-      <button 
+      <button
         onClick={() => router.back()}
         className="flex items-center space-x-2 text-[11px] uppercase tracking-[0.2em] font-bold mb-12 opacity-40 hover:opacity-100 transition-opacity"
       >
@@ -33,70 +63,109 @@ export default function ProductDetail() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
         {/* Image Gallery */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           className="space-y-4"
         >
-          <div className="aspect-3/4 overflow-hidden bg-[#f5f5f5] rounded-2xl">
-            <img 
-              src={product.image} 
+          {/* Image principale */}
+          <div className="aspect-3/4 overflow-hidden bg-[#f5f5f5]">
+            <img
+              src={selectedImage || product.mainImage}
               alt={product.name}
-              className="w-full h-full object-cover"
-              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover transition-all duration-500"
             />
           </div>
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="aspect-square bg-[#f5f5f5] rounded-xl overflow-hidden opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
-                <img src={`https://picsum.photos/seed/${product.id + i}/400/400`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              </div>
-            ))}
-          </div>
+
+          {/* Miniatures */}
+          {allImages.length > 1 && (
+            <div className="grid grid-cols-4 gap-3">
+              {allImages.map((img, i) => (
+                <button
+                  key={i}
+                  onClick={() => setSelectedImage(img)}
+                  className={`aspect-square overflow-hidden transition-all ${
+                    selectedImage === img
+                      ? "ring-2 ring-black opacity-100"
+                      : "opacity-50 hover:opacity-100"
+                  }`}
+                >
+                  <img
+                    src={img}
+                    alt={`${product.name} ${i + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
 
         {/* Info */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="flex flex-col"
         >
           <div className="mb-8">
-            <span className="text-black/40 text-[11px] uppercase tracking-[0.3em] font-medium mb-2 block">{product.category}</span>
+            <span className="text-black/40 text-[11px] uppercase tracking-[0.3em] font-medium mb-2 block">
+              {product.category}
+            </span>
             <h1 className="font-serif text-5xl italic mb-4">{product.name}</h1>
-            <span className="text-2xl font-medium">${product.price}</span>
+            <span className="text-2xl font-medium">
+              {product.price.toLocaleString("fr-FR")} DA
+            </span>
           </div>
 
           <p className="text-black/60 leading-relaxed mb-12 font-light">
-            {product.description} This piece represents the pinnacle of our design philosophy, combining traditional tailoring techniques with modern functionality. Crafted from premium materials sourced from the finest mills.
+            This piece represents the pinnacle of our design philosophy,
+            combining traditional tailoring techniques with modern functionality.
+            Crafted from premium materials sourced from the finest mills.
           </p>
 
           <div className="space-y-8 mb-12">
             {/* Size Selection */}
-            <div>
-              <div className="flex justify-between mb-4">
-                <span className="text-[11px] uppercase tracking-widest font-bold">Select Size</span>
-                <button className="text-[10px] uppercase tracking-widest opacity-40 border-b border-black/20">Size Guide</button>
-              </div>
-              <div className="flex gap-3">
-                {['S', 'M', 'L', 'XL'].map(size => (
-                  <button key={size} className="w-12 h-12 rounded-full border border-black/10 flex items-center justify-center text-xs font-medium hover:border-black transition-colors">
-                    {size}
+            {product.sizes.length > 0 && (
+              <div>
+                <div className="flex justify-between mb-4">
+                  <span className="text-[11px] uppercase tracking-widest font-bold">
+                    Select Size
+                  </span>
+                  <button className="text-[10px] uppercase tracking-widest opacity-40 border-b border-black/20">
+                    Size Guide
                   </button>
-                ))}
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {product.sizes.map(({ size, quantity }) => (
+                    <button
+                      key={size}
+                      disabled={quantity === 0}
+                      onClick={() => setSelectedSize(size)}
+                      className={`w-12 h-12 border flex items-center justify-center text-xs font-medium transition-all ${
+                        quantity === 0
+                          ? "opacity-25 cursor-not-allowed border-black/10 line-through"
+                          : selectedSize === size
+                          ? "bg-black text-white border-black"
+                          : "border-black/10 hover:border-black"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Actions */}
             <div className="flex gap-4">
-              <button 
+              <button
                 onClick={() => addToCart(product)}
-                className="grow bg-black text-white py-5 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
+                className="grow bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
               >
                 <ShoppingBag size={18} />
                 <span>Add to Bag</span>
               </button>
-              <button className="w-16 h-16 rounded-full border border-black/10 flex items-center justify-center hover:bg-black/5 transition-colors">
+              <button className="w-16 h-16 border border-black/10 flex items-center justify-center hover:bg-black/5 transition-colors">
                 <Plus size={20} />
               </button>
             </div>
@@ -106,15 +175,21 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-12 border-t border-black/5">
             <div className="flex flex-col items-center text-center space-y-2">
               <Truck size={20} strokeWidth={1} />
-              <span className="text-[9px] uppercase tracking-widest font-bold">Free Shipping</span>
+              <span className="text-[9px] uppercase tracking-widest font-bold">
+                Free Shipping
+              </span>
             </div>
             <div className="flex flex-col items-center text-center space-y-2">
               <RefreshCw size={20} strokeWidth={1} />
-              <span className="text-[9px] uppercase tracking-widest font-bold">Easy Returns</span>
+              <span className="text-[9px] uppercase tracking-widest font-bold">
+                Easy Returns
+              </span>
             </div>
             <div className="flex flex-col items-center text-center space-y-2">
               <ShieldCheck size={20} strokeWidth={1} />
-              <span className="text-[9px] uppercase tracking-widest font-bold">Secure Payment</span>
+              <span className="text-[9px] uppercase tracking-widest font-bold">
+                Secure Payment
+              </span>
             </div>
           </div>
         </motion.div>
