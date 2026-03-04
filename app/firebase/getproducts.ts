@@ -38,3 +38,17 @@ export async function getProductId(id: string | string[]): Promise<Product | nul
   if (!docSnap.exists()) return null;
   return { id: docSnap.id, ...docSnap.data() } as Product;
 }
+
+export async function getCategories() {
+  try {
+    const req = query(collection(db, "products"));
+    const reqSnapshot = await getDocs(req);
+    
+    const categories = reqSnapshot.docs.map((doc) => doc.data().category as string);
+    
+    return [...new Set(categories)];
+  } catch (e) {
+    console.error("firestore error", e);
+    return [];
+  }
+}
