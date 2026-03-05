@@ -1,10 +1,11 @@
 "use client"
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../variables';
-
-interface CartItem extends Product {
-  quantity: number;
-}
+import { useAuth } from './AuthContext';
+import { saveCart, loadCart, clearCartFirestore, CartItem } from '@/app/firebase/cart';
+import { AnimatePresence, motion } from 'framer-motion';
+import Link from 'next/link';
+import { ShoppingBag, X } from 'lucide-react';
 
 interface CartContextType {
   cart: CartItem[];
@@ -20,12 +21,41 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [showBanner, setShowBanner] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const { user } = useAuth();
+
+  // Charger le panier depuis Firestore quand l'user se connecte
+  useEffect(() => {
+    if (user) {
+      loadCart(user.uid).then((items) => {
+        if (items.length > 0) setCart(items);
+      });
+      setShowBanner(false);
+      setBannerDismissed(false);
+    } else {
+      setCart([]);
+    }
+  }, [user]);
+
+  // Sauvegarder le panier dans Firestore à chaque changement
+  useEffect(() => {
+    if (!user) return;
+    if (cart.length === 0) {
+      clearCartFirestore(user.uid);
+      return;
+    }
+    saveCart(user.uid, cart);
+  }, [cart, user]);
 
   const addToCart = (product: Product) => {
+    // Si non connecté, afficher la bannière
+    if (!user && !bannerDismissed) setShowBanner(true);
+
     setCart(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
-        return prev.map(item => 
+        return prev.map(item =>
           item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
       }
@@ -33,28 +63,67 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const removeFromCart = (productId: string | number) => {
+  const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(item => item.id !== productId));
   };
 
-  const updateQuantity = (productId: string | number, delta: number) => {
+  const updateQuantity = (productId: string, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.id === productId) {
-        const newQty = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQty };
+        return { ...item, quantity: Math.max(1, item.quantity + delta) };
       }
       return item;
     }));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    if (user) clearCartFirestore(user.uid);
+  };
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
       {children}
+
+      {/* Bannière connectez-vous */}
+      <AnimatePresence>
+        {showBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 40 }}
+            transition={{ duration: 0.25 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-black/8 shadow-lg px-6 py-4 flex items-center gap-6 max-w-sm w-full mx-4"
+          >
+            <ShoppingBag size={18} strokeWidth={1.5} className="text-black/40 shrink-0" />
+            <div className="grow">
+              <p className="text-[11px] font-serif italic text-black mb-0.5">
+                Sauvegardez votre panier
+              </p>
+              <p className="text-[9px] uppercase tracking-widest text-black/30">
+                Connectez-vous pour ne rien perdre
+              </p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <Link
+                href="/login"
+                className="text-[9px] uppercase tracking-widest font-bold border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+              >
+                Se connecter
+              </Link>
+              <button
+                onClick={() => { setShowBanner(false); setBannerDismissed(true); }}
+                className="text-black/20 hover:text-black transition-colors"
+              >
+                <X size={14} strokeWidth={1.5} />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </CartContext.Provider>
   );
 }

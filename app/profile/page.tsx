@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
-import { getProfile, saveProfile, Profile } from "@/app/firebase/profile";
+import { getProfile, saveProfile } from "@/app/firebase/profile";
+import { Profile } from "../variables";
 import { useRouter } from "next/navigation";
 import { User, MapPin, Phone, Hash, Check, LogOut } from "lucide-react";
 

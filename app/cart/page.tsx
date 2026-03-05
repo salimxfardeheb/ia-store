@@ -132,10 +132,12 @@ export default function Cart() {
               </div>
             </div>
 
-            <button className="w-full bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3">
+            <Link
+            href={"/checkout"} 
+            className="w-full bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3">
               <span>Checkout</span>
               <ArrowRight size={16} strokeWidth={1.5} />
-            </button>
+            </Link>
 
             <p className="text-[8px] text-center mt-6 text-black/20 uppercase tracking-[0.3em] font-serif">
               Paiement sécurisé

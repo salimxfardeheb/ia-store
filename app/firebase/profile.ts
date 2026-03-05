@@ -1,13 +1,6 @@
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-
-export interface Profile {
-  uid: string;
-  phone: string;
-  city: string;
-  address: string;
-  postalCode: string;
-}
+import { Profile } from "@/app/variables";
 
 export async function getProfile(uid: string): Promise<Profile | null> {
   const snap = await getDoc(doc(db, "profile", uid));
@@ -15,6 +8,10 @@ export async function getProfile(uid: string): Promise<Profile | null> {
   return snap.data() as Profile;
 }
 
-export async function saveProfile(uid: string, data: Omit<Profile, "uid">): Promise<void> {
-  await setDoc(doc(db, "profile", uid), { uid, ...data }, { merge: true });
+export async function saveProfile(
+  uid: string,
+  data: Omit<Profile, "uid">,
+): Promise<void> {
+  const userRef = doc(db, "users", uid);
+  await setDoc(doc(db, "profile", uid), { userRef, ...data }, { merge: true });
 }
