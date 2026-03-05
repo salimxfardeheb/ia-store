@@ -1,21 +1,6 @@
 import { collection, addDoc, serverTimestamp, doc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-import { CartItem } from "@/app/firebase/cart";
-import { Profile } from "../variables";
-
-export interface OrderForm extends Profile {
-  fullName: string;
-  paymentMethod: "cash" | "card";
-  deliveryType: "home" | "bureau";
-}
-
-export interface Order {
-  form: OrderForm;
-  items: CartItem[];
-  total: number;
-  status: "pending";
-  createdAt: unknown;
-}
+import { Order } from "../variables";
 
 export async function createOrder(
   uid: string,

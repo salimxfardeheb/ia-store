@@ -1,10 +1,7 @@
 import { doc, setDoc, getDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
-import { Product } from "@/app/variables";
+import { CartItem } from "../variables";
 
-export interface CartItem extends Product {
-  quantity: number;
-}
 
 export async function saveCart(uid: string, cart: CartItem[]): Promise<void> {
   await setDoc(doc(db, "carts", uid), { items: cart, updatedAt: new Date().toISOString() });

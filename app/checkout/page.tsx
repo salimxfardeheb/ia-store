@@ -4,9 +4,9 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "@/app/context/AuthContext";
-import { createOrder, OrderForm } from "@/app/firebase/orders";
+import { createOrder } from "@/app/firebase/orders";
 import { getProfile } from "@/app/firebase/profile";
-import { WILAYAS } from "../variables";
+import { OrderForm, WILAYAS } from "../variables";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -29,7 +29,9 @@ export default function Checkout() {
   const router = useRouter();
 
   const [form, setForm] = useState<OrderForm>({
-    fullName: profile?.name ?? "",
+    uid: user?.uid ?? "",
+    email: user?.email ?? "",
+    name: profile?.name ?? "",
     phone: "",
     city: "",
     address: "",
@@ -45,7 +47,7 @@ useEffect(() => {
     if (data)
       setForm((prev) => ({
         ...prev,
-        fullName: profile?.name ?? prev.fullName,
+        fullName: profile?.name ?? prev.name,
         phone: data.phone ?? "",
         city: data.city ?? "",
         address: data.address ?? "",
@@ -63,7 +65,7 @@ useEffect(() => {
     setForm((f) => ({ ...f, [key]: value }));
 
   const isValid =
-    form.fullName.trim() &&
+    form.name.trim() &&
     form.phone.trim() &&
     form.city &&
     form.address.trim() &&
@@ -77,6 +79,7 @@ useEffect(() => {
         form,
         items: cart,
         total: cartTotal,
+        id: user.uid
       });
       setOrderId(id);
       setSuccess(true);
@@ -181,8 +184,8 @@ useEffect(() => {
                   Nom & Prénom
                 </label>
                 <input
-                  value={form.fullName}
-                  onChange={(e) => set("fullName", e.target.value)}
+                  value={form.name}
+                  onChange={(e) => set("name", e.target.value)}
                   placeholder="Ex : Karim Benali"
                   className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors"
                 />
