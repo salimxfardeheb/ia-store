@@ -16,3 +16,10 @@ export interface Product {
   mainImage: string;
   extraImages?: string[];
 }
+
+export interface UserProfile {
+  uid: string;
+  email: string;
+  name: string;
+  createdAt?: string;
+}

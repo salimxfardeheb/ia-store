@@ -18,6 +18,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState<P | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [quantity, setQuantity] = useState(1);
 
   const { id } = useParams();
   const router = useRouter();
@@ -46,10 +47,9 @@ export default function ProductDetail() {
     );
   }
 
-  const allImages = [
-    product.mainImage,
-    ...(product.extraImages ?? []),
-  ].filter(Boolean);
+  const allImages = [product.mainImage, ...(product.extraImages ?? [])].filter(
+    Boolean,
+  );
 
   return (
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
@@ -119,8 +119,9 @@ export default function ProductDetail() {
 
           <p className="text-black/60 leading-relaxed mb-12 font-light">
             This piece represents the pinnacle of our design philosophy,
-            combining traditional tailoring techniques with modern functionality.
-            Crafted from premium materials sourced from the finest mills.
+            combining traditional tailoring techniques with modern
+            functionality. Crafted from premium materials sourced from the
+            finest mills.
           </p>
 
           <div className="space-y-8 mb-12">
@@ -145,8 +146,8 @@ export default function ProductDetail() {
                         quantity === 0
                           ? "opacity-25 cursor-not-allowed border-black/10 line-through"
                           : selectedSize === size
-                          ? "bg-black text-white border-black"
-                          : "border-black/10 hover:border-black"
+                            ? "bg-black text-white border-black"
+                            : "border-black/10 hover:border-black"
                       }`}
                     >
                       {size}
@@ -158,15 +159,34 @@ export default function ProductDetail() {
 
             {/* Actions */}
             <div className="flex gap-4">
+              {/* Quantity selector */}
+              <div className="flex items-center border border-black/10">
+                <button
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="w-12 h-16 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-colors text-lg font-light"
+                >
+                  −
+                </button>
+                <span className="w-10 text-center text-sm font-medium font-serif">
+                  {quantity}
+                </span>
+                <button
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="w-12 h-16 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-colors"
+                >
+                  <Plus size={16} strokeWidth={1.5} />
+                </button>
+              </div>
+
+              {/* Add to bag */}
               <button
-                onClick={() => addToCart(product)}
+                onClick={() => {
+                  for (let i = 0; i < quantity; i++) addToCart(product);
+                }}
                 className="grow bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
               >
                 <ShoppingBag size={18} />
                 <span>Add to Bag</span>
-              </button>
-              <button className="w-16 h-16 border border-black/10 flex items-center justify-center hover:bg-black/5 transition-colors">
-                <Plus size={20} />
               </button>
             </div>
           </div>

@@ -9,12 +9,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/app/lib/firebase';
+import { UserProfile } from '../variables';
 
-interface UserProfile {
-  uid: string;
-  email: string;
-  name: string;
-}
 
 interface AuthContextType {
   user: User | null;
@@ -52,19 +48,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, []);
 
-  const register = async (email: string, name: string, password: string) => {
-    const { user } = await createUserWithEmailAndPassword(auth, email, password);
-    const token = await user.getIdToken();
+const register = async (email: string, name: string, password: string) => {
+  const { user } = await createUserWithEmailAndPassword(auth, email, password);
+  const token = await user.getIdToken();
 
-    await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ name }),
-    });
-  };
+  // Attendre que le document soit créé dans Firestore
+  await fetch('/api/auth/register', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify({ name }),
+  });
+
+  // Recharger manuellement le profil après la création
+  const snap = await getDoc(doc(db, 'users', user.uid));
+  if (snap.exists()) {
+    setProfile(snap.data() as UserProfile);
+    localStorage.setItem('ia_user', JSON.stringify(snap.data()));
+  }
+};
 
   const login = async (email: string, password: string) => {
     await signInWithEmailAndPassword(auth, email, password);

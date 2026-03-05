@@ -9,8 +9,8 @@ interface CartItem extends Product {
 interface CartContextType {
   cart: CartItem[];
   addToCart: (product: Product) => void;
-  removeFromCart: (productId: number) => void;
-  updateQuantity: (productId: number, delta: number) => void;
+  removeFromCart: (productId: string) => void;
+  updateQuantity: (productId: string, delta: number) => void;
   clearCart: () => void;
   cartCount: number;
   cartTotal: number;

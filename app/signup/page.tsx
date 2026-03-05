@@ -22,7 +22,7 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      await register(email, name, password);  // ← Firebase Auth + Firestore
+      await register(email, name, password);
       router.push('/');
     } catch (err: any) {
       // Messages Firebase traduits
