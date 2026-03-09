@@ -110,3 +110,9 @@ export interface CartItem extends Product {
 
 export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
 
+export interface ReclamationForm {
+  orderId: string;
+  productName: string;
+  type: string;
+  description: string;
+}

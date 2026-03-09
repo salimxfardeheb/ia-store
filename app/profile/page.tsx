@@ -6,13 +6,15 @@ import { useAuth } from "@/app/context/AuthContext";
 import { getProfile, saveProfile } from "@/app/firebase/profile";
 import { Profile } from "../variables";
 import { useRouter } from "next/navigation";
-import { User, MapPin, Phone, Hash, Check, LogOut } from "lucide-react";
+import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, profile, logout } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<Omit<Profile, "uid">>({
+    name: "",
+    email: "",
     phone: "",
     city: "",
     address: "",
@@ -27,7 +29,7 @@ export default function ProfilePage() {
     if (!user) { router.push("/"); return; }
     const load = async () => {
       const data = await getProfile(user.uid);
-      if (data) setForm({ phone: data.phone, city: data.city, address: data.address, postalCode: data.postalCode });
+      if (data) setForm({ name: data.name, email: data.email, phone: data.phone, city: data.city, address: data.address, postalCode: data.postalCode });
       setLoading(false);
     };
     load();
@@ -74,6 +76,25 @@ export default function ProfilePage() {
           <span>Déconnexion</span>
         </button>
       </div>
+
+      {/* ── Historique des commandes ── */}
+      <motion.button
+        onClick={() => router.push("/orders")}
+        whileHover={{ x: 4 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+        className="w-full mb-12 flex items-center justify-between border border-black/10 px-5 py-4 hover:border-black/30 hover:bg-black/[0.02] transition-all group"
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-9 h-9 border border-black/10 flex items-center justify-center group-hover:border-black/30 transition-colors">
+            <ClockArrowUp size={15} strokeWidth={1.5} className="text-black/40 group-hover:text-black/70 transition-colors" />
+          </div>
+          <div className="text-left">
+            <p className="font-serif text-sm text-black/80">Historique des commandes</p>
+            <p className="text-[9px] uppercase tracking-[0.25em] text-black/30 mt-0.5">Suivre · Signaler · Gérer</p>
+          </div>
+        </div>
+        <span className="text-black/20 group-hover:text-black/50 transition-colors text-lg font-light">→</span>
+      </motion.button>
 
       {/* Section — Infos compte */}
       <div className="mb-12">
