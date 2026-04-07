@@ -8,10 +8,10 @@ import { ArrowLeft, Package } from "lucide-react";
 import { Order, OrderStatus } from "../variables";
 import { ReclamationModal } from "../components/ReclamationModal";
 import { OrderCard, STATUS_CONFIG } from "../components/OrderCard";
-import { getOrdersClient } from "../firebase/getOrders";
+import { getOrders } from "@/services/orders";
 
 export default function OrdersPage() {
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [claimTarget, setClaimTarget] = useState<{
@@ -21,11 +21,9 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
-    const fetchOrders = async () => {
-      const data = await getOrdersClient(user.uid);
-      setOrders(data);
-    };
-    fetchOrders();
+    const token = getToken();
+    if (!token) return;
+    getOrders(token).then(setOrders);
   }, [user]);
 
   const openClaim = (order: Order, productName: string) => {

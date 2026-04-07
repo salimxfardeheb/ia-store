@@ -1,90 +1,109 @@
-"use client"
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  User
-} from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/app/lib/firebase';
-import { UserProfile } from '../variables';
+"use client";
 
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { UserProfile } from "../variables";
+
+interface AuthUser {
+  id: string;
+  email: string;
+  name: string;
+  role: "ADMIN" | "CLIENT";
+}
 
 interface AuthContextType {
-  user: User | null;
-  profile: UserProfile | null;       // données Firestore
+  user: AuthUser | null;
+  profile: UserProfile | null;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, name: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
   isAuthenticated: boolean;
-  getToken: () => Promise<string | null>;
+  getToken: () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const TOKEN_KEY = "ia_token";
+const USER_KEY = "ia_user";
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
+  // Restaurer la session depuis localStorage au chargement
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setUser(firebaseUser);
-
-      if (firebaseUser) {
-        // Charger le profil depuis Firestore
-        const snap = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (snap.exists()) {
-          setProfile(snap.data() as UserProfile);
-          localStorage.setItem('ia_user', JSON.stringify(snap.data()));
-        }
-      } else {
-        setProfile(null);
-        localStorage.removeItem('ia_user');
-      }
-    });
-
-    return () => unsubscribe();
+    const stored = localStorage.getItem(USER_KEY);
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (stored && token) {
+      setUser(JSON.parse(stored));
+    }
   }, []);
 
-const register = async (email: string, name: string, password: string) => {
-  const { user } = await createUserWithEmailAndPassword(auth, email, password);
-  const token = await user.getIdToken();
-
-  // Attendre que le document soit créé dans Firestore
-  await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify({ name }),
-  });
-
-  // Recharger manuellement le profil après la création
-  const snap = await getDoc(doc(db, 'users', user.uid));
-  if (snap.exists()) {
-    setProfile(snap.data() as UserProfile);
-    localStorage.setItem('ia_user', JSON.stringify(snap.data()));
-  }
-};
-
   const login = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged s'occupe du reste automatiquement
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!res.ok) {
+      const { error } = await res.json();
+      throw new Error(error ?? "Erreur de connexion");
+    }
+
+    const { token, user: authUser } = await res.json();
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+    setUser(authUser);
   };
 
-  const logout = async () => {
-    await signOut(auth);
+  const register = async (email: string, name: string, password: string) => {
+    const res = await fetch("/api/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, name, password }),
+    });
+
+    if (!res.ok) {
+      const { error } = await res.json();
+      throw new Error(error ?? "Erreur d'inscription");
+    }
+
+    const { token, user: authUser } = await res.json();
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+    setUser(authUser);
   };
 
-  const getToken = async () => {
-    return user ? user.getIdToken() : null;
+  const logout = () => {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setUser(null);
   };
+
+  const getToken = () => localStorage.getItem(TOKEN_KEY);
+
+  // profile = subset de UserProfile compatible avec les pages existantes
+  const profile: UserProfile | null = user
+    ? { uid: user.id, email: user.email, name: user.name }
+    : null;
 
   return (
-    <AuthContext.Provider value={{ user, profile, login, register, logout, isAuthenticated: !!user, getToken }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        profile,
+        login,
+        register,
+        logout,
+        isAuthenticated: !!user,
+        getToken,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -93,7 +112,7 @@ const register = async (email: string, name: string, password: string) => {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

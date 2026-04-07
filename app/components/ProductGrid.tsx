@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
 import { useEffect, useState } from "react";
 import { Product } from "../variables";
-import { getAllProducts } from "../firebase/getproducts";
+import { getAllProducts } from "@/services/products";
 
 export default function ProductGrid() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -26,18 +26,18 @@ export default function ProductGrid() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 space-y-4 md:space-y-0">
         <div>
-          <h2 className="font-serif text-5xl italic mb-4">The Essentials</h2>
+          <h2 className="font-serif text-5xl italic mb-4">L'Essentiel</h2>
           <p className="text-black/40 text-sm uppercase tracking-widest">
-            Curated pieces for your wardrobe
+            Pièces sélectionnées pour votre garde-robe
           </p>
         </div>
 
-        <div className="flex space-x-8 text-[11px] uppercase tracking-[0.2em] font-medium">
-          <button className="border-b border-black pb-1">All</button>
-          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">Suits</button>
-          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">Knitwear</button>
-          <button className="opacity-40 hover:opacity-100 transition-opacity pb-1">Outerwear</button>
-        </div>
+        <Link
+          href="/shop"
+          className="text-[11px] uppercase tracking-[0.2em] font-medium opacity-40 hover:opacity-100 transition-opacity border-b border-black/20 pb-1"
+        >
+          Voir tout
+        </Link>
       </div>
 
       {/* Grid */}
@@ -110,7 +110,7 @@ export default function ProductGrid() {
           href="/shop"
           className="border border-black/10 px-12 py-4 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black hover:text-white transition-all duration-500 inline-block"
         >
-          View All Products
+          Voir tous les produits
         </Link>
       </div>
     </section>

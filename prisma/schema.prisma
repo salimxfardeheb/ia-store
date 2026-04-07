@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  ADMIN
+  CLIENT
+}
+
+model User {
+  id         String   @id @default(cuid())
+  email      String   @unique
+  name       String
+  password   String
+  role       UserRole @default(CLIENT)
+  phone      String?
+  city       String?
+  address    String?
+  postalCode String?
+  createdAt  DateTime @default(now())
+
+  orders    Order[]
+  cartItems CartItem[]
+}
+
+// ─── Product ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id          String        @id @default(cuid())
+  name        String
+  category    String
+  price       Float
+  stock       Int           @default(0)
+  status      ProductStatus @default(DRAFT)
+  mainImage   String        @default("")
+  extraImages String        @default("[]") // JSON array as string
+  createdAt   DateTime      @default(now())
+
+  sizes      ProductSize[]
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+}
+
+model ProductSize {
+  id        Int     @id @default(autoincrement())
+  size      String
+  quantity  Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+// ─── Order ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id            String      @id @default(cuid())
+  user          User?       @relation(fields: [userId], references: [id])
+  userId        String?
+  total         Float
+  status        OrderStatus @default(PENDING)
+  paymentMethod String      @default("cash")
+  deliveryType  String      @default("home")
+
+  // Snapshot adresse au moment de la commande
+  name       String
+  phone      String
+  email      String
+  city       String
+  address    String
+  postalCode String
+
+  createdAt DateTime    @default(now())
+  items     OrderItem[]
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   String
+  product   Product? @relation(fields: [productId], references: [id])
+  productId String?
+
+  // Snapshot produit au moment de la commande
+  name      String
+  price     Float
+  quantity  Int
+  mainImage String
+  category  String
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+// ─── Cart ────────────────────────────────────────────────────────────────────
+
+model CartItem {
+  id        Int     @id @default(autoincrement())
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product @relation(fields: [productId], references: [id])
+  productId String
+  quantity  Int     @default(1)
+
+  @@unique([userId, productId])
+}

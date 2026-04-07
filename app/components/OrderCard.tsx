@@ -8,31 +8,31 @@ export const STATUS_CONFIG: Record<
   { label: string; icon: React.ReactNode; color: string; dot: string }
 > = {
   pending: {
-    label: "pending",
+    label: "En attente",
     icon: <Clock size={13} strokeWidth={1.5} />,
     color: "text-amber-600",
     dot: "bg-amber-400",
   },
   confirmed: {
-    label: "confirmed",
-    icon: <Truck size={13} strokeWidth={1.5} />,
+    label: "Confirmée",
+    icon: <CheckCircle2 size={13} strokeWidth={1.5} />,
     color: "text-blue-600",
     dot: "bg-blue-400",
   },
   shipped: {
-    label: "shipped",
+    label: "Expédiée",
+    icon: <Truck size={13} strokeWidth={1.5} />,
+    color: "text-purple-600",
+    dot: "bg-purple-400",
+  },
+  delivered: {
+    label: "Livrée",
     icon: <CheckCircle2 size={13} strokeWidth={1.5} />,
     color: "text-emerald-600",
     dot: "bg-emerald-400",
   },
-  delivered: {
-    label: "delivered",
-    icon: <XCircle size={13} strokeWidth={1.5} />,
-    color: "text-red-500",
-    dot: "bg-red-400",
-  },
   cancelled: {
-    label: "cancelled",
+    label: "Annulée",
     icon: <XCircle size={13} strokeWidth={1.5} />,
     color: "text-red-500",
     dot: "bg-red-400",
@@ -69,23 +69,15 @@ export function OrderCard({
           />
           <div>
             <p className="font-serif text-sm text-black/80">{order.form.name}</p>
-            {order.createdAt instanceof Date
-              ? order.createdAt.toLocaleDateString("fr-DZ", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })
-              : typeof order.createdAt === "object" &&
-                  order.createdAt !== null &&
-                  "toDate" in order.createdAt
-                ? (order.createdAt as { toDate: () => Date })
-                    .toDate()
-                    .toLocaleDateString("fr-DZ", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })
+            <p className="text-[9px] text-black/30 mt-0.5">
+              {order.createdAt instanceof Date
+                ? order.createdAt.toLocaleDateString("fr-DZ", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
                 : "—"}
+            </p>
           </div>
         </div>
 

@@ -1,7 +1,6 @@
 import "@/app/globals.css";
 
-import Navbar from "@/app/components/NavBar";
-import Footer from "@/app/components/Footer";
+import LayoutShell from "@/app/components/LayoutShell";
 import { CartProvider } from "@/app/context/CartContext";
 import { AuthProvider } from "@/app/context/AuthContext";
 
@@ -16,14 +15,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <AuthProvider>
-
-        <CartProvider>
-          <div className="min-h-screen flex flex-col">
-            <Navbar />
-            <main className="grow">{children}</main>
-            <Footer />
-          </div>
-        </CartProvider>
+          <CartProvider>
+            <LayoutShell>{children}</LayoutShell>
+          </CartProvider>
         </AuthProvider>
       </body>
     </html>

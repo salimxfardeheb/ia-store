@@ -1,11 +1,12 @@
-"use client"
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product } from '../variables';
-import { useAuth } from './AuthContext';
-import { saveCart, loadCart, clearCartFirestore, CartItem } from '@/app/firebase/cart';
-import { AnimatePresence, motion } from 'framer-motion';
-import Link from 'next/link';
-import { ShoppingBag, X } from 'lucide-react';
+"use client";
+
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { Product } from "../variables";
+import { useAuth } from "./AuthContext";
+import { loadCart, saveCart, clearCart, CartItem } from "@/services/cart";
+import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
+import { ShoppingBag, X } from "lucide-react";
 
 interface CartContextType {
   cart: CartItem[];
@@ -23,40 +24,46 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showBanner, setShowBanner] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const { user } = useAuth();
+  const { isAuthenticated, getToken } = useAuth();
 
-  // Charger le panier depuis Firestore quand l'user se connecte
+  // Charger le panier quand l'user se connecte
   useEffect(() => {
-    if (user) {
-      loadCart(user.uid).then((items) => {
-        if (items.length > 0) setCart(items);
-      });
+    if (isAuthenticated) {
+      const token = getToken();
+      if (token) {
+        loadCart(token).then((items) => {
+          if (items.length > 0) setCart(items);
+        });
+      }
       setShowBanner(false);
       setBannerDismissed(false);
     } else {
       setCart([]);
     }
-  }, [user]);
+  }, [isAuthenticated]);
 
-  // Sauvegarder le panier dans Firestore à chaque changement
+  // Sauvegarder le panier à chaque changement
   useEffect(() => {
-    if (!user) return;
+    const token = getToken();
+    if (!token) return;
+
     if (cart.length === 0) {
-      clearCartFirestore(user.uid);
+      clearCart(token);
       return;
     }
-    saveCart(user.uid, cart);
-  }, [cart, user]);
+    saveCart(token, cart);
+  }, [cart, isAuthenticated]);
 
   const addToCart = (product: Product) => {
-    // Si non connecté, afficher la bannière
-    if (!user && !bannerDismissed) setShowBanner(true);
+    if (!isAuthenticated && !bannerDismissed) setShowBanner(true);
 
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
+    setCart((prev) => {
+      const existing = prev.find((item) => item.id === product.id);
       if (existing) {
-        return prev.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+        return prev.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
         );
       }
       return [...prev, { ...product, quantity: 1 }];
@@ -64,28 +71,40 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
+    setCart((prev) => prev.filter((item) => item.id !== productId));
   };
 
   const updateQuantity = (productId: string, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === productId) {
-        return { ...item, quantity: Math.max(1, item.quantity + delta) };
-      }
-      return item;
-    }));
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === productId
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item
+      )
+    );
   };
 
-  const clearCart = () => {
+  const handleClearCart = () => {
     setCart([]);
-    if (user) clearCartFirestore(user.uid);
+    const token = getToken();
+    if (token) clearCart(token);
   };
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const cartTotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, cartCount, cartTotal }}>
+    <CartContext.Provider
+      value={{
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart: handleClearCart,
+        cartCount,
+        cartTotal,
+      }}
+    >
       {children}
 
       {/* Bannière connectez-vous */}
@@ -115,7 +134,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
                 Se connecter
               </Link>
               <button
-                onClick={() => { setShowBanner(false); setBannerDismissed(true); }}
+                onClick={() => {
+                  setShowBanner(false);
+                  setBannerDismissed(true);
+                }}
                 className="text-black/20 hover:text-black transition-colors"
               >
                 <X size={14} strokeWidth={1.5} />
@@ -131,7 +153,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 export function useCart() {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 }

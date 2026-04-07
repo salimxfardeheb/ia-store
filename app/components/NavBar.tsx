@@ -5,10 +5,10 @@ import {
   ShoppingBag,
   Menu,
   X,
-  Search,
   User,
   LogOut,
   ChevronDown,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   motion,
@@ -163,13 +163,6 @@ const Navbar = () => {
 
             {/* Right icons */}
             <div className="flex items-center space-x-5">
-              <Link
-                href="/search"
-                className={`hidden sm:block ${hoverOpacity}`}
-              >
-                <Search size={18} strokeWidth={1.5} />
-              </Link>
-
               {/* User dropdown */}
               <div className="relative" ref={userMenuRef}>
                 {isAuthenticated ? (
@@ -229,6 +222,18 @@ const Navbar = () => {
                             <User size={13} strokeWidth={1.5} />
                             <span>Mon Profil</span>
                           </Link>
+
+                          {user?.role === "ADMIN" && (
+                            <Link
+                              href="/admin"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center space-x-3 px-4 py-3 text-[10px] uppercase tracking-widest text-[#2C2416] hover:bg-[#2C2416]/5 transition-colors"
+                              style={serif}
+                            >
+                              <LayoutDashboard size={13} strokeWidth={1.5} />
+                              <span>Dashboard</span>
+                            </Link>
+                          )}
 
                           <div className="h-px bg-[#2C2416]/6 mx-4" />
 
@@ -398,20 +403,10 @@ const Navbar = () => {
                   </Link>
                 )}
 
-                <div className="flex items-center space-x-6 mt-6">
-                  <Link
-                    href="/search"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <Search
-                      size={18}
-                      strokeWidth={1.5}
-                      className="text-[#2C2416]/50"
-                    />
-                  </Link>
+                <div className="flex items-center mt-6">
                   <div className="h-px flex-1 bg-[#2C2416]/8" />
                   <span
-                    className="text-[8px] uppercase tracking-[0.3em] text-[#8B7355]"
+                    className="text-[8px] uppercase tracking-[0.3em] text-[#8B7355] ml-4"
                     style={serif}
                   >
                     MMXXV

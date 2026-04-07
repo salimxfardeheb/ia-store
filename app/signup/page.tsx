@@ -24,15 +24,8 @@ export default function Signup() {
     try {
       await register(email, name, password);
       router.push('/');
-    } catch (err: any) {
-      // Messages Firebase traduits
-      const firebaseErrors: Record<string, string> = {
-        'auth/email-already-in-use': 'Cette adresse email est déjà utilisée.',
-        'auth/invalid-email': 'Adresse email invalide.',
-        'auth/weak-password': 'Le mot de passe doit contenir au moins 6 caractères.',
-      };
-      const code = err?.code as string;
-      setError(firebaseErrors[code] || err.message || 'Une erreur est survenue.');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }
@@ -46,8 +39,8 @@ export default function Signup() {
         className="w-full max-w-md bg-white p-8 rounded-2xl luxury-shadow border border-black/5"
       >
         <div className="text-center mb-10">
-          <h1 className="font-serif text-4xl italic mb-2">Join I.A</h1>
-          <p className="text-black/40 text-sm uppercase tracking-widest">Create your account</p>
+          <h1 className="font-serif text-4xl italic mb-2">Rejoindre I.A</h1>
+          <p className="text-black/40 text-sm uppercase tracking-widest">Créer votre compte</p>
         </div>
 
         {error && (
@@ -58,7 +51,7 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Full Name</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Nom complet</label>
             <div className="relative">
               <User className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={18} />
               <input 
@@ -73,7 +66,7 @@ export default function Signup() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Email Address</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Adresse e-mail</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={18} />
               <input 
@@ -88,7 +81,7 @@ export default function Signup() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Password</label>
+            <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">Mot de passe</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 opacity-20" size={18} />
               <input 
@@ -107,16 +100,16 @@ export default function Signup() {
             disabled={loading}
             className="w-full bg-black text-white py-5 rounded-full text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3 disabled:opacity-50"
           >
-            <span>{loading ? 'Creating Account...' : 'Create Account'}</span>
+            <span>{loading ? 'Création en cours...' : 'Créer mon compte'}</span>
             {!loading && <ArrowRight size={16} />}
           </button>
         </form>
 
         <div className="mt-8 text-center">
           <p className="text-sm text-black/40">
-            Already have an account? {' '}
+            Déjà un compte ?{' '}
             <Link href="/login" className="text-black font-bold border-b border-black/20 hover:border-black transition-colors">
-              Sign in
+              Se connecter
             </Link>
           </p>
         </div>

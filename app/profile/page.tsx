@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
-import { getProfile, saveProfile } from "@/app/firebase/profile";
+import { getProfile, saveProfile } from "@/services/profile";
 import { Profile } from "../variables";
 import { useRouter } from "next/navigation";
 import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, getToken } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<Omit<Profile, "uid">>({
@@ -27,25 +27,26 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
-    const load = async () => {
-      const data = await getProfile(user.uid);
+    const token = getToken();
+    if (!token) return;
+    getProfile(token).then((data) => {
       if (data) setForm({ name: data.name, email: data.email, phone: data.phone, city: data.city, address: data.address, postalCode: data.postalCode });
       setLoading(false);
-    };
-    load();
+    });
   }, [user]);
 
   const handleSave = async () => {
-    if (!user) return;
+    const token = getToken();
+    if (!token) return;
     setSaving(true);
-    await saveProfile(user.uid, form);
+    await saveProfile(token, { phone: form.phone, city: form.city, address: form.address, postalCode: form.postalCode });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
-  const handleLogout = async () => {
-    await logout();
+  const handleLogout = () => {
+    logout();
     router.push("/");
   };
 

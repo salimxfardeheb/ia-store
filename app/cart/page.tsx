@@ -14,15 +14,15 @@ export default function Cart() {
         <div className="mb-8 flex justify-center">
           <ShoppingBag size={40} strokeWidth={0.75} className="opacity-15" />
         </div>
-        <h1 className="font-serif text-4xl italic mb-6">Your bag is empty</h1>
+        <h1 className="font-serif text-4xl italic mb-6">Votre panier est vide</h1>
         <p className="text-black/40 mb-12 max-w-md mx-auto text-sm font-light">
-          Looks like you haven't added anything to your bag yet. Explore our latest collections to find your next essential.
+          Vous n'avez encore rien ajouté. Explorez nos collections pour trouver votre prochaine pièce essentielle.
         </p>
         <Link
           href="/shop"
           className="bg-black text-white px-12 py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow inline-block"
         >
-          Start Shopping
+          Commencer mes achats
         </Link>
       </div>
     );
@@ -31,7 +31,7 @@ export default function Cart() {
   return (
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
       <h1 className="font-serif text-5xl italic mb-16">
-        Your Bag <span className="not-italic text-black/20 text-3xl">({cartCount})</span>
+        Mon Panier <span className="not-italic text-black/20 text-3xl">({cartCount})</span>
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
@@ -108,20 +108,20 @@ export default function Cart() {
         <div className="lg:col-span-1">
           <div className="border border-black/8 p-8 sticky top-32">
             <h2 className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-8">
-              Order Summary
+              Résumé
             </h2>
 
             <div className="space-y-4 mb-8">
               <div className="flex justify-between text-sm">
-                <span className="text-black/40 font-light">Subtotal</span>
+                <span className="text-black/40 font-light">Sous-total</span>
                 <span className="font-serif italic">
                   {cartTotal.toLocaleString("fr-FR")} DA
                 </span>
               </div>
               <div className="flex justify-between text-sm items-center">
-                <span className="text-black/40 font-light">Shipping</span>
+                <span className="text-black/40 font-light">Livraison</span>
                 <span className="text-black/40 uppercase text-[9px] tracking-widest font-serif">
-                  Cash on delivery
+                  À confirmer
                 </span>
               </div>
               <div className="pt-6 border-t border-black/8 flex justify-between items-baseline">
@@ -133,9 +133,9 @@ export default function Cart() {
             </div>
 
             <Link
-            href={"/checkout"} 
+            href={"/checkout"}
             className="w-full bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3">
-              <span>Checkout</span>
+              <span>Commander</span>
               <ArrowRight size={16} strokeWidth={1.5} />
             </Link>
 

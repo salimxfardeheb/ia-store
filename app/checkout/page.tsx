@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "@/app/context/AuthContext";
-import { createOrder } from "@/app/firebase/orders";
-import { getProfile } from "@/app/firebase/profile";
+import { createOrder } from "@/services/orders";
+import { getProfile } from "@/services/profile";
 import { OrderForm, WILAYAS } from "../variables";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -25,11 +25,11 @@ import {
 
 export default function Checkout() {
   const { cart, cartTotal, clearCart } = useCart();
-  const { user, profile } = useAuth();
+  const { user, profile, getToken } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<OrderForm>({
-    uid: user?.uid ?? "",
+    uid: user?.id ?? "",
     email: user?.email ?? "",
     name: profile?.name ?? "",
     phone: "",
@@ -40,22 +40,23 @@ export default function Checkout() {
     deliveryType: "home",
   });
 
-useEffect(() => {
-  if (!user) return;
-  const load = async () => {
-    const data = await getProfile(user.uid);
-    if (data)
-      setForm((prev) => ({
-        ...prev,
-        fullName: profile?.name ?? prev.name,
-        phone: data.phone ?? "",
-        city: data.city ?? "",
-        address: data.address ?? "",
-        postalCode: data.postalCode ?? "",
-      }));
-  };
-  load();
-}, [user]);
+  useEffect(() => {
+    const token = getToken();
+    if (!token) return;
+    const load = async () => {
+      const data = await getProfile(token);
+      if (data)
+        setForm((prev) => ({
+          ...prev,
+          name: data.name || prev.name,
+          phone: data.phone ?? "",
+          city: data.city ?? "",
+          address: data.address ?? "",
+          postalCode: data.postalCode ?? "",
+        }));
+    };
+    load();
+  }, [user]);
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -72,14 +73,13 @@ useEffect(() => {
     form.postalCode.trim();
 
   const handleSubmit = async () => {
-    if (!isValid || submitting || !user?.uid) return;
+    if (!isValid || submitting) return;
     setSubmitting(true);
     try {
-      const id = await createOrder(user.uid,{
+      const id = await createOrder(getToken(), {
         form,
         items: cart,
         total: cartTotal,
-        id: user.uid
       });
       setOrderId(id);
       setSuccess(true);

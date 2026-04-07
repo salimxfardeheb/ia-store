@@ -12,13 +12,14 @@ import { useCart } from "@/app/context/CartContext";
 import { useParams, useRouter } from "next/navigation";
 import { Product as P } from "@/app/variables";
 import { useEffect, useState } from "react";
-import { getProductId } from "@/app/firebase/getproducts";
+import { getProductById } from "@/services/products";
 
 export default function ProductDetail() {
   const [product, setProduct] = useState<P | null>(null);
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
+  const [sizeError, setSizeError] = useState(false);
 
   const { id } = useParams();
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function ProductDetail() {
 
   useEffect(() => {
     const loadProduct = async () => {
-      const data = await getProductId(id as string);
+      const data = await getProductById(id as string);
       setProduct(data);
       if (data?.mainImage) setSelectedImage(data.mainImage);
     };
@@ -36,12 +37,12 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="h-screen flex flex-col items-center justify-center space-y-4">
-        <h1 className="font-serif text-4xl">Product not found</h1>
+        <h1 className="font-serif text-4xl">Produit introuvable</h1>
         <button
           onClick={() => router.push("/shop")}
           className="text-[11px] uppercase tracking-widest font-bold border-b border-black"
         >
-          Back to Shop
+          Retour à la boutique
         </button>
       </div>
     );
@@ -58,7 +59,7 @@ export default function ProductDetail() {
         className="flex items-center space-x-2 text-[11px] uppercase tracking-[0.2em] font-bold mb-12 opacity-40 hover:opacity-100 transition-opacity"
       >
         <ArrowLeft size={16} />
-        <span>Back</span>
+        <span>Retour</span>
       </button>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
@@ -130,10 +131,10 @@ export default function ProductDetail() {
               <div>
                 <div className="flex justify-between mb-4">
                   <span className="text-[11px] uppercase tracking-widest font-bold">
-                    Select Size
+                    Choisir la taille
                   </span>
                   <button className="text-[10px] uppercase tracking-widest opacity-40 border-b border-black/20">
-                    Size Guide
+                    Guide des tailles
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3">
@@ -141,19 +142,26 @@ export default function ProductDetail() {
                     <button
                       key={size}
                       disabled={quantity === 0}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => { setSelectedSize(size); setSizeError(false); }}
                       className={`w-12 h-12 border flex items-center justify-center text-xs font-medium transition-all ${
                         quantity === 0
                           ? "opacity-25 cursor-not-allowed border-black/10 line-through"
                           : selectedSize === size
                             ? "bg-black text-white border-black"
-                            : "border-black/10 hover:border-black"
+                            : sizeError
+                              ? "border-red-400 hover:border-black"
+                              : "border-black/10 hover:border-black"
                       }`}
                     >
                       {size}
                     </button>
                   ))}
                 </div>
+                {sizeError && (
+                  <p className="text-red-500 text-[10px] uppercase tracking-widest mt-3">
+                    Veuillez sélectionner une taille
+                  </p>
+                )}
               </div>
             )}
 
@@ -181,12 +189,17 @@ export default function ProductDetail() {
               {/* Add to bag */}
               <button
                 onClick={() => {
+                  if (product.sizes.length > 0 && !selectedSize) {
+                    setSizeError(true);
+                    return;
+                  }
+                  setSizeError(false);
                   for (let i = 0; i < quantity; i++) addToCart(product);
                 }}
                 className="grow bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
               >
                 <ShoppingBag size={18} />
-                <span>Add to Bag</span>
+                <span>Ajouter au panier</span>
               </button>
             </div>
           </div>
@@ -196,19 +209,19 @@ export default function ProductDetail() {
             <div className="flex flex-col items-center text-center space-y-2">
               <Truck size={20} strokeWidth={1} />
               <span className="text-[9px] uppercase tracking-widest font-bold">
-                Free Shipping
+                Livraison gratuite
               </span>
             </div>
             <div className="flex flex-col items-center text-center space-y-2">
               <RefreshCw size={20} strokeWidth={1} />
               <span className="text-[9px] uppercase tracking-widest font-bold">
-                Easy Returns
+                Retours faciles
               </span>
             </div>
             <div className="flex flex-col items-center text-center space-y-2">
               <ShieldCheck size={20} strokeWidth={1} />
               <span className="text-[9px] uppercase tracking-widest font-bold">
-                Secure Payment
+                Paiement sécurisé
               </span>
             </div>
           </div>

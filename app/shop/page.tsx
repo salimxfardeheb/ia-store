@@ -6,7 +6,7 @@ import { useCart } from '@/app/context/CartContext';
 import Link from 'next/link';
 import { Product } from "../variables";
 import { useEffect, useState } from 'react';
-import { getAllProducts, getCategories } from '../firebase/getproducts';
+import { getAllProducts, getCategories } from '@/services/products';
 
 type SortOption = "newest" | "price-asc" | "price-desc"
 

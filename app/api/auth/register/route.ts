@@ -1,31 +1,28 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/app/lib/firebase-admin';
+import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { signToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
-  if (!token) {
-    return NextResponse.json({ error: 'Token manquant' }, { status: 401 });
+  const { email, name, password } = await req.json();
+
+  if (!email || !name || !password) {
+    return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
   }
 
-  const decoded = await adminAuth.verifyIdToken(token).catch(() => null);
-  if (!decoded) {
-    return NextResponse.json({ error: 'Token invalide' }, { status: 401 });
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return NextResponse.json({ error: "Email déjà utilisé" }, { status: 409 });
   }
 
-  const { name } = await req.json();
+  const hashed = await bcrypt.hash(password, 12);
 
-  // Vérifie si le profil existe déjà
-  const userRef = adminDb.collection('users').doc(decoded.uid);
-  const userSnap = await userRef.get();
+  const user = await prisma.user.create({
+    data: { email, name, password: hashed },
+    select: { id: true, email: true, name: true, role: true },
+  });
 
-  if (!userSnap.exists) {
-    await userRef.set({
-      uid: decoded.uid,
-      email: decoded.email ?? '',
-      name: name ?? 'Utilisateur',
-      createdAt: new Date().toISOString(),
-    });
-  }
+  const token = signToken({ id: user.id, email: user.email, name: user.name, role: user.role as "ADMIN" | "CLIENT" });
 
-  return NextResponse.json({ uid: decoded.uid }, { status: 201 });
+  return NextResponse.json({ token, user }, { status: 201 });
 }

@@ -1,23 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { adminAuth, adminDb } from '@/app/lib/firebase-admin';
+import { NextRequest, NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import { signToken } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get('Authorization')?.replace('Bearer ', '');
+  const { email, password } = await req.json();
 
-  if (!token) {
-    return NextResponse.json({ error: 'Token manquant' }, { status: 401 });
+  if (!email || !password) {
+    return NextResponse.json({ error: "Champs manquants" }, { status: 400 });
   }
 
-  const decoded = await adminAuth.verifyIdToken(token).catch(() => null);
-  if (!decoded) {
-    return NextResponse.json({ error: 'Token invalide ou expiré' }, { status: 401 });
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    return NextResponse.json({ error: "Identifiants incorrects" }, { status: 401 });
   }
 
-  // Récupérer le profil depuis Firestore
-  const userSnap = await adminDb.collection('users').doc(decoded.uid).get();
-  if (!userSnap.exists) {
-    return NextResponse.json({ error: 'Utilisateur introuvable' }, { status: 404 });
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) {
+    return NextResponse.json({ error: "Identifiants incorrects" }, { status: 401 });
   }
 
-  return NextResponse.json({ user: userSnap.data() });
+  const token = signToken({ id: user.id, email: user.email, name: user.name, role: user.role as "ADMIN" | "CLIENT" });
+
+  return NextResponse.json({
+    token,
+    user: { id: user.id, email: user.email, name: user.name, role: user.role },
+  });
 }
