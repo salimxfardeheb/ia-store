@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -10,11 +11,8 @@ import {
 } from "lucide-react";
 import AdminHeader from "./components/AdminHeader";
 import { KPICard } from "./components/KpiCard";
-import {
- revenueData, categoryData, PIE_COLORS,
-  recentOrders, lowStockProducts,
-  STATUS_STYLES,
-} from "@/app/variables";
+import { PIE_COLORS } from "@/app/variables";
+import { getDashboard, DashboardData } from "@/services/admin";
 
 function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: string; dark?: boolean }) {
   return (
@@ -29,22 +27,42 @@ function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: st
   );
 }
 
-const KPIs = [
-  { title: "Chiffre d'affaires", value: "128 430 €", trend: "+12.5%", isUp: true,  subtitle: "vs mois dernier" },
-  { title: "Commandes",          value: "1 240",      trend: "+8.2%",  isUp: true,  subtitle: "vs mois dernier" },
-  { title: "Panier moyen",       value: "103 €",      trend: "-2.1%",  isUp: false, subtitle: "vs mois dernier" },
-  { title: "Conversion",         value: "3.42%",      trend: "+0.5%",  isUp: true,  subtitle: "vs mois dernier" },
-];
-
 export default function OverviewPage() {
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getDashboard().then((d) => {
+      setData(d);
+      setLoading(false);
+    });
+  }, []);
+
+  const kpis = data
+    ? [
+        { title: "Chiffre d'affaires", ...data.kpis.revenue },
+        { title: "Commandes",          ...data.kpis.orders   },
+        { title: "Panier moyen",       ...data.kpis.avgBasket },
+      ]
+    : [
+        { title: "Chiffre d'affaires", value: "—", trend: "—", isUp: true, subtitle: "vs mois dernier" },
+        { title: "Commandes",          value: "—", trend: "—", isUp: true, subtitle: "vs mois dernier" },
+        { title: "Panier moyen",       value: "—", trend: "—", isUp: true, subtitle: "vs mois dernier" },
+      ];
+
+  const revenueChart  = data?.revenueChart  ?? [];
+  const categoryData  = data?.categoryData  ?? [];
+  const recentOrders  = data?.recentOrders  ?? [];
+  const lowStock      = data?.lowStock      ?? [];
+
   return (
     <>
       <AdminHeader title="Tableau de bord" subtitle="Vue d'ensemble" />
 
       <div className="space-y-6">
         {/* KPIs */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {KPIs.map((kpi, i) => (
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+          {kpis.map((kpi, i) => (
             <motion.div
               key={kpi.title}
               initial={{ opacity: 0, y: 12 }}
@@ -59,164 +77,184 @@ export default function OverviewPage() {
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Area chart */}
-          <div className="lg:col-span-2 bg-white border p-7 border-[rgba(0,0,0,0.08)] " >
+          <div className="lg:col-span-2 bg-white border p-7 border-[rgba(0,0,0,0.08)]">
             <div className="flex justify-between items-center mb-7">
               <h3 className="text-lg text-black italic font-light font-serif">
                 Aperçu des revenus
               </h3>
-              <div className="flex">
-                {["Mensuel", "Hebdo"].map((l, i) => (
-                  <button
-                    key={l}
-                    className="px-3 py-1 text-[8px] uppercase tracking-widest transition-colors"
-                    style={{ backgroundColor: i === 0 ? "#0A0A0A" : "transparent", color: i === 0 ? "#FFF" : "rgba(0,0,0,0.35)" }}
-                  >
-                    {l}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div style={{ height: 260 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
-                  <defs>
-                    <linearGradient id="gDark" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#0A0A0A" stopOpacity={0.1} />
-                      <stop offset="95%" stopColor="#0A0A0A" stopOpacity={0}   />
-                    </linearGradient>
-                    <linearGradient id="gMid" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%"  stopColor="#7A7A7A" stopOpacity={0.12} />
-                      <stop offset="95%" stopColor="#7A7A7A" stopOpacity={0}    />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgba(0,0,0,0.35)", fontFamily: "'Cormorant Garamond',Georgia,serif" }} dy={8} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgba(0,0,0,0.35)", fontFamily: "'Cormorant Garamond',Georgia,serif" }} />
-                  <Tooltip contentStyle={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 0, backgroundColor: "#fff", fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 11 }} />
-                  <Area type="monotone" dataKey="revenue"  stroke="#0A0A0A" strokeWidth={1.5} fillOpacity={1} fill="url(#gDark)" />
-                  <Area type="monotone" dataKey="expenses" stroke="#7A7A7A" strokeWidth={1.5} fillOpacity={1} fill="url(#gMid)" strokeDasharray="4 2" />
-                </AreaChart>
-              </ResponsiveContainer>
+              {loading ? (
+                <div className="h-full flex items-center justify-center">
+                  <p className="font-serif italic text-black/20">Chargement…</p>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={revenueChart}>
+                    <defs>
+                      <linearGradient id="gDark" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%"  stopColor="#0A0A0A" stopOpacity={0.1} />
+                        <stop offset="95%" stopColor="#0A0A0A" stopOpacity={0}   />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgba(0,0,0,0.35)", fontFamily: "'Cormorant Garamond',Georgia,serif" }} dy={8} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgba(0,0,0,0.35)", fontFamily: "'Cormorant Garamond',Georgia,serif" }} />
+                    <Tooltip contentStyle={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 0, backgroundColor: "#fff", fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 11 }} />
+                    <Area type="monotone" dataKey="revenue" stroke="#0A0A0A" strokeWidth={1.5} fillOpacity={1} fill="url(#gDark)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
             </div>
 
             <div className="flex items-center space-x-5 mt-4">
-              {[{ label: "Revenus", dark: true }, { label: "Dépenses", dark: false }].map(({ label, dark }) => (
-                <div key={label} className="flex items-center space-x-2">
-                  <div className="w-5 h-px" style={{ backgroundColor: dark ? "#0A0A0A" : "#7A7A7A" }} />
-                  <span className="text-[8px] uppercase tracking-widest text-black/40 font-serif">{label}</span>
-                </div>
-              ))}
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-px bg-[#0A0A0A]" />
+                <span className="text-[8px] uppercase tracking-widest text-black/40 font-serif">Revenus</span>
+              </div>
             </div>
           </div>
 
           {/* Pie */}
-          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)] " >
+          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)]">
             <h3 className="text-lg text-black mb-7 font-serif italic font-light">
               Par catégorie
             </h3>
-            <div style={{ height: 180 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={68} paddingAngle={3} dataKey="value">
-                    {categoryData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip contentStyle={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 0, backgroundColor: "#fff", fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 11 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2 mt-4">
-              {categoryData.map((cat, i) => (
-                <div key={cat.name} className="flex justify-between items-center">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="w-2 h-2" style={{ backgroundColor: PIE_COLORS[i] }} />
-                    <span className="text-[9px] uppercase tracking-widest text-black/50 font-serif">{cat.name}</span>
-                  </div>
-                  <span className="text-[9px] text-black italic font-serif">{cat.value}%</span>
+            {loading ? (
+              <div className="h-45 flex items-center justify-center">
+                <p className="font-serif italic text-black/20">Chargement…</p>
+              </div>
+            ) : categoryData.length === 0 ? (
+              <div className="h-45 flex items-center justify-center">
+                <p className="font-serif italic text-black/20">Aucune donnée</p>
+              </div>
+            ) : (
+              <>
+                <div style={{ height: 180 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={68} paddingAngle={3} dataKey="value">
+                        {categoryData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 0, backgroundColor: "#fff", fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 11 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2 mt-4">
+                  {categoryData.map((cat, i) => (
+                    <div key={cat.name} className="flex justify-between items-center">
+                      <div className="flex items-center space-x-2.5">
+                        <div className="w-2 h-2" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
+                        <span className="text-[9px] uppercase tracking-widest text-black/50 font-serif">{cat.name}</span>
+                      </div>
+                      <span className="text-[9px] text-black italic font-serif">{cat.value}%</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
         {/* Orders + Stock */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Orders table */}
-          <div className="lg:col-span-2 bg-white border overflow-hidden border-[rgba(0,0,0,0.08)] ">
-            <div className="px-7 py-5 border-b flex justify-between items-center border-[rgba(0,0,0,0.08)] ">
+          <div className="lg:col-span-2 bg-white border overflow-hidden border-[rgba(0,0,0,0.08)]">
+            <div className="px-7 py-5 border-b flex justify-between items-center border-[rgba(0,0,0,0.08)]">
               <h3 className="text-lg text-black font-serif italic font-light">Commandes récentes</h3>
-              <button className="text-[8px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
+              <a href="/admin/orders" className="text-[8px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
                 Tout voir
-              </button>
+              </a>
             </div>
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b text-[8px] uppercase tracking-[0.25em] text-black/30 border-[rgba(0,0,0,0.08)] ">
+                <tr className="border-b text-[8px] uppercase tracking-[0.25em] text-black/30 border-[rgba(0,0,0,0.08)]">
                   {["N° Commande", "Client", "Statut", "Montant", ""].map((h) => (
                     <th key={h} className="px-6 py-3 font-normal font-serif">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order, i) => (
-                  <motion.tr
-                    key={order.id}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: i * 0.04 }}
-                    className="border-b hover:bg-black/2 transition-colors border-[rgba(0,0,0,0.08)] "
-                  >
-                    <td className="px-6 py-3.5 text-[9px] text-black/40 font-serif">{order.id}</td>
-                    <td className="px-6 py-3.5 text-[10px] text-black font-serif" >{order.customer}</td>
-                    <td className="px-6 py-3.5">
-                      <span className={`px-2.5 py-0.5 text-[7px] uppercase tracking-widest font-serif ${STATUS_STYLES[order.status] ?? "bg-black/5 text-black"}`}>
-                        {order.status}
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center font-serif italic text-black/20">
+                      Chargement…
                     </td>
-                    <td className="px-6 py-3.5 text-[10px] text-black font-serif italic">{order.amount}</td>
-                    <td className="px-6 py-3.5">
-                      <button className="p-1 text-black/20 hover:text-black hover:bg-black/5 transition-colors">
-                        <MoreVertical size={12} strokeWidth={1.5} />
-                      </button>
+                  </tr>
+                ) : recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center font-serif italic text-black/20">
+                      Aucune commande
                     </td>
-                  </motion.tr>
-                ))}
+                  </tr>
+                ) : (
+                  recentOrders.map((order, i) => (
+                    <motion.tr
+                      key={order.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="border-b hover:bg-black/2 transition-colors border-[rgba(0,0,0,0.08)]"
+                    >
+                      <td className="px-6 py-3.5 text-[9px] text-black/40 font-serif">{order.id}</td>
+                      <td className="px-6 py-3.5 text-[10px] text-black font-serif">{order.customer}</td>
+                      <td className="px-6 py-3.5">
+                        <span className={`px-2.5 py-0.5 text-[7px] uppercase tracking-widest font-serif ${order.statusStyle}`}>
+                          {order.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-3.5 text-[10px] text-black font-serif italic">{order.amount}</td>
+                      <td className="px-6 py-3.5">
+                        <button className="p-1 text-black/20 hover:text-black hover:bg-black/5 transition-colors">
+                          <MoreVertical size={12} strokeWidth={1.5} />
+                        </button>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
 
           {/* Stock alerts */}
-          <div className="bg-white border p-6 border-[rgba(0,0,0,0.08)] ">
+          <div className="bg-white border p-6 border-[rgba(0,0,0,0.08)]">
             <div className="flex items-center space-x-2 mb-6">
               <AlertTriangle size={14} strokeWidth={1.5} className="text-black/50" />
               <h3 className="text-lg text-black font-serif italic font-light">Alertes stock</h3>
             </div>
-            <div className="space-y-3">
-              {lowStockProducts.map((item) => (
-                <div key={`${item.name}-${item.size}`} className="p-4 border border-[rgba(0,0,0,0.08)] ">
-                  <div className="flex justify-between items-start mb-2.5">
-                    <h4 className="text-[10px] text-black pr-2 leading-snug font-serif">{item.name}</h4>
-                    <span className="text-[7px] uppercase tracking-widest bg-black text-white px-2 py-0.5 shrink-0 font-serif">{item.size}</span>
-                  </div>
-                  <div className="flex justify-between items-end">
-                    <div>
-                      <p className="text-[7px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
-                      <p className="text-xl font-serif italic font-light " style={{ color: item.stock === 0 ? "#000" : "#555" }}>
-                        {item.stock}
-                      </p>
+            {loading ? (
+              <p className="font-serif italic text-black/20 text-center py-8">Chargement…</p>
+            ) : lowStock.length === 0 ? (
+              <p className="font-serif italic text-black/20 text-center py-8">Aucune alerte</p>
+            ) : (
+              <div className="space-y-3">
+                {lowStock.map((item) => (
+                  <div key={`${item.name}-${item.size}`} className="p-4 border border-[rgba(0,0,0,0.08)]">
+                    <div className="flex justify-between items-start mb-2.5">
+                      <h4 className="text-[10px] text-black pr-2 leading-snug font-serif">{item.name}</h4>
+                      <span className="text-[7px] uppercase tracking-widest bg-black text-white px-2 py-0.5 shrink-0 font-serif">{item.size}</span>
                     </div>
-                    <button className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
-                      Restock
-                    </button>
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[7px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
+                        <p className="text-xl font-serif italic font-light" style={{ color: item.stock === 0 ? "#000" : "#555" }}>
+                          {item.stock}
+                        </p>
+                      </div>
+                      <button className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
+                        Restock
+                      </button>
+                    </div>
+                    <div className="mt-2.5 h-px w-full bg-black/8">
+                      <div className="h-full bg-black transition-all" style={{ width: `${Math.min((item.stock / item.threshold) * 100, 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="mt-2.5 h-px w-full bg-black/8">
-                    <div className="h-full bg-black transition-all" style={{ width: `${Math.min((item.stock / item.threshold) * 100, 100)}%` }} />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
             <button className="w-full mt-4 py-3 border border-black/10 text-[8px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
-              Rapport complet 
+              Rapport complet
             </button>
           </div>
         </div>
@@ -246,13 +284,15 @@ export default function OverviewPage() {
           </div>
 
           {/* Quick actions */}
-          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)] ">
+          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)]">
             <h3 className="text-lg text-black mb-5 font-serif italic font-light">Actions rapides</h3>
             <div className="grid grid-cols-2 gap-3">
-              <QuickAction icon={Plus}       label="Ajouter produit" dark />
+              <a href="/admin/catalog">
+                <QuickAction icon={Plus}       label="Ajouter produit" dark />
+              </a>
               <QuickAction icon={TrendingUp} label="Créer une promo" />
               <QuickAction icon={Download}   label="Exporter ventes" />
-              <QuickAction icon={Calendar}   label="Plan campagne"   />
+              <QuickAction icon={Calendar}   label="Plan campagne" />
             </div>
           </div>
         </div>

@@ -1,5 +1,39 @@
 import { Product, Order, OrderStatus } from "@/app/variables";
 
+// ─── Dashboard ────────────────────────────────────────────────────────────────
+
+export interface DashboardKPI {
+  value: string;
+  trend: string;
+  isUp: boolean;
+  subtitle: string;
+}
+
+export interface DashboardData {
+  kpis: {
+    revenue:   DashboardKPI;
+    orders:    DashboardKPI;
+    avgBasket: DashboardKPI;
+  };
+  revenueChart: { name: string; revenue: number }[];
+  categoryData: { name: string; value: number }[];
+  recentOrders: {
+    id: string;
+    customer: string;
+    status: string;
+    statusStyle: string;
+    amount: string;
+    date: string;
+  }[];
+  lowStock: { name: string; size: string; stock: number; threshold: number }[];
+}
+
+export async function getDashboard(): Promise<DashboardData | null> {
+  const res = await fetch("/api/admin/dashboard");
+  if (!res.ok) return null;
+  return res.json();
+}
+
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export async function getAllProducts(): Promise<Product[]> {

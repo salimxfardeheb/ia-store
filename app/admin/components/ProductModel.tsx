@@ -28,7 +28,8 @@ export default function ProductModel({
   onAddCategory: (cat: string) => void;
 }) {
   const [newCategoryInput, setNewCategoryInput] = useState("");
-  const [showAddCategory, setShowAddCategory] = useState(false);
+  const validCategories = categories.filter((c) => c !== "Tous");
+  const [showAddCategory, setShowAddCategory] = useState(validCategories.length === 0);
   const [uploading, setUploading] = useState(false);
   const isNew = !product;
 
@@ -47,7 +48,7 @@ export default function ProductModel({
     product ?? {
       id: "",
       name: "",
-      category: categories.find((c) => c !== "Tous") ?? "Costumes",
+      category: "",
       price: 0,
       stock: 0,
       sizes: [],
@@ -115,7 +116,7 @@ export default function ProductModel({
   };
 
   const handleSubmit = async () => {
-    if (!mainPreview) return; // image principale obligatoire
+    if (!mainPreview || !form.category) return;
     setUploading(true);
     try {
       // Upload image principale
@@ -303,9 +304,12 @@ export default function ProductModel({
                       setShowAddCategory(false);
                     }
                   }}
-                  className="w-full border text-[11px] py-2.5 px-3 focus:outline-none focus:border-black appearance-none bg-[#F7F7F7] transition-colors font-serif border-[rgba(0,0,0,0.08)]"
+                  className={`w-full border text-[11px] py-2.5 px-3 focus:outline-none focus:border-black appearance-none bg-[#F7F7F7] transition-colors font-serif ${
+                    !form.category ? "border-black/20 text-black/30" : "border-[rgba(0,0,0,0.08)]"
+                  }`}
                 >
-                  {categories.filter((c) => c !== "Tous").map((c) => (
+                  <option value="" disabled>Sélectionner...</option>
+                  {validCategories.map((c) => (
                     <option key={c}>{c}</option>
                   ))}
                   <option value="__add__">+ Ajouter une catégorie</option>
@@ -450,9 +454,9 @@ export default function ProductModel({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={!mainPreview || uploading}
+            disabled={!mainPreview || !form.category || uploading}
             className={`px-6 py-2.5 text-white text-[9px] uppercase tracking-widest transition-all font-serif ${
-              !mainPreview || uploading
+              !mainPreview || !form.category || uploading
                 ? "bg-black/30 cursor-not-allowed"
                 : "bg-black hover:bg-black/80"
             }`}

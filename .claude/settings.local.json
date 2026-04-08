@@ -18,7 +18,9 @@
       "Bash(npx tsc:*)",
       "Bash(node_modules/.bin/tsc --noEmit)",
       "Bash(echo \"EXIT:$?\")",
-      "Bash(node_modules/.bin/next build:*)"
+      "Bash(node_modules/.bin/next build:*)",
+      "Bash(npm.cmd uninstall:*)",
+      "Bash(npm.cmd run:*)"
     ]
   }
 }
