@@ -7,6 +7,14 @@ const nextConfig: NextConfig = {
   },
   // Prevent Turbopack from bundling native Node.js packages
   serverExternalPackages: ["@prisma/adapter-libsql", "@libsql/client"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;

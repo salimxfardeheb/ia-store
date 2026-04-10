@@ -1,25 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import cloudinary from "@/lib/cloudinary";
 
-// POST /api/admin/upload  — upload d'image, retourne l'URL publique
+// POST /api/admin/upload — upload une image vers Cloudinary, retourne l'URL sécurisée
 export async function POST(req: NextRequest) {
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
 
   if (!file) {
-    return NextResponse.json({ error: "Aucun fichier" }, { status: 400 });
+    return NextResponse.json({ error: "Aucun fichier fourni" }, { status: 400 });
   }
 
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
 
-  const ext = file.name.split(".").pop() ?? "jpg";
-  const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
+  // Conversion en data URI base64 pour l'API Cloudinary
+  const mime = file.type || "image/jpeg";
+  const dataUri = `data:${mime};base64,${buffer.toString("base64")}`;
 
-  await mkdir(uploadDir, { recursive: true });
-  await writeFile(path.join(uploadDir, filename), buffer);
+  const result = await cloudinary.uploader.upload(dataUri, {
+    folder: "ia-store",
+    resource_type: "image",
+  });
 
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  return NextResponse.json({ url: result.secure_url });
 }
