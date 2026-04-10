@@ -37,7 +37,7 @@ export default function OrdersPage() {
         <div>
           <button
             onClick={() => router.push("/profile")}
-            className="flex items-center gap-2 text-[9px] uppercase tracking-[0.25em] text-black/30 hover:text-black transition-colors mb-4"
+            className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-black/30 hover:text-black transition-colors mb-4"
           >
             <ArrowLeft size={12} strokeWidth={1.5} />
             <span>Mon profil</span>
@@ -59,7 +59,7 @@ export default function OrdersPage() {
         ).map(([key, cfg]) => (
           <div key={key} className={`flex items-center gap-1.5 ${cfg.color}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-            <span className="text-[8px] uppercase tracking-[0.2em]">
+            <span className="text-[9px] uppercase tracking-[0.2em]">
               {cfg.label}
             </span>
           </div>

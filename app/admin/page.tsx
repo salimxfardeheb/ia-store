@@ -22,7 +22,7 @@ function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: st
       }`}
     >
       <Icon size={18} strokeWidth={1.5} className="mb-2.5" />
-      <span className="text-[8px] uppercase tracking-tight font-serif">{label}</span>
+      <span className="text-[9px] uppercase tracking-tight font-serif">{label}</span>
     </button>
   );
 }
@@ -111,7 +111,7 @@ export default function OverviewPage() {
             <div className="flex items-center space-x-5 mt-4">
               <div className="flex items-center space-x-2">
                 <div className="w-5 h-px bg-[#0A0A0A]" />
-                <span className="text-[8px] uppercase tracking-widest text-black/40 font-serif">Revenus</span>
+                <span className="text-[9px] uppercase tracking-widest text-black/40 font-serif">Revenus</span>
               </div>
             </div>
           </div>
@@ -146,7 +146,7 @@ export default function OverviewPage() {
                     <div key={cat.name} className="flex justify-between items-center">
                       <div className="flex items-center space-x-2.5">
                         <div className="w-2 h-2" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                        <span className="text-[9px] uppercase tracking-widest text-black/50 font-serif">{cat.name}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-black/50 font-serif">{cat.name}</span>
                       </div>
                       <span className="text-[9px] text-black italic font-serif">{cat.value}%</span>
                     </div>
@@ -163,13 +163,13 @@ export default function OverviewPage() {
           <div className="lg:col-span-2 bg-white border overflow-hidden border-[rgba(0,0,0,0.08)]">
             <div className="px-7 py-5 border-b flex justify-between items-center border-[rgba(0,0,0,0.08)]">
               <h3 className="text-lg text-black font-serif italic font-light">Commandes récentes</h3>
-              <a href="/admin/orders" className="text-[8px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
+              <a href="/admin/orders" className="text-[9px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
                 Tout voir
               </a>
             </div>
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b text-[8px] uppercase tracking-[0.25em] text-black/30 border-[rgba(0,0,0,0.08)]">
+                <tr className="border-b text-[9px] uppercase tracking-[0.25em] text-black/30 border-[rgba(0,0,0,0.08)]">
                   {["N° Commande", "Client", "Statut", "Montant", ""].map((h) => (
                     <th key={h} className="px-6 py-3 font-normal font-serif">{h}</th>
                   ))}
@@ -197,10 +197,10 @@ export default function OverviewPage() {
                       transition={{ delay: i * 0.04 }}
                       className="border-b hover:bg-black/2 transition-colors border-[rgba(0,0,0,0.08)]"
                     >
-                      <td className="px-6 py-3.5 text-[9px] text-black/40 font-serif">{order.id}</td>
+                      <td className="px-6 py-3.5 text-[10px] text-black/40 font-serif">{order.id}</td>
                       <td className="px-6 py-3.5 text-[10px] text-black font-serif">{order.customer}</td>
                       <td className="px-6 py-3.5">
-                        <span className={`px-2.5 py-0.5 text-[7px] uppercase tracking-widest font-serif ${order.statusStyle}`}>
+                        <span className={`px-2.5 py-0.5 text-[8px] uppercase tracking-widest font-serif ${order.statusStyle}`}>
                           {order.status}
                         </span>
                       </td>
@@ -237,7 +237,7 @@ export default function OverviewPage() {
                     </div>
                     <div className="flex justify-between items-end">
                       <div>
-                        <p className="text-[7px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
+                        <p className="text-[9px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
                         <p className="text-xl font-serif italic font-light" style={{ color: item.stock === 0 ? "#000" : "#555" }}>
                           {item.stock}
                         </p>
@@ -253,7 +253,7 @@ export default function OverviewPage() {
                 ))}
               </div>
             )}
-            <button className="w-full mt-4 py-3 border border-black/10 text-[8px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
+            <button className="w-full mt-4 py-3 border border-black/10 text-[9px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
               Rapport complet
             </button>
           </div>
@@ -266,7 +266,7 @@ export default function OverviewPage() {
             <div className="relative z-10">
               <div className="flex items-center space-x-2.5 mb-4">
                 <Sun size={14} strokeWidth={1.5} className="text-white/50" />
-                <span className="text-[8px] uppercase tracking-[0.4em] text-white/40 font-serif">Analyse saisonnière</span>
+                <span className="text-[9px] uppercase tracking-[0.4em] text-white/40 font-serif">Analyse saisonnière</span>
               </div>
               <h3 className="text-white mb-3 font-serif text-[1.5rem] italic font-light leading-5">
                 Transition printemps<br />approche
@@ -275,7 +275,7 @@ export default function OverviewPage() {
                 La demande en lin et soie légère devrait augmenter de 40% la semaine prochaine.
               </p>
             </div>
-            <button className="self-start px-6 py-2.5 bg-white text-black text-[8px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all font-serif">
+            <button className="self-start px-6 py-2.5 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all font-serif">
               Mettre à jour la vitrine
             </button>
             <div className="absolute -right-6 -bottom-6 pointer-events-none opacity-[0.04]">

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { formatDate, Order, OrderStatus, STATUS_CONFIG, STATUS_FLOW } from "@/app/variables";
+import { getAllowedTransitions } from "@/lib/orderStatus";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
@@ -12,12 +13,20 @@ export function OrderRow({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [changingStatus, setChangingStatus] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
   const cfg = STATUS_CONFIG[order.status];
+  const allowedTransitions = getAllowedTransitions(order.status);
 
   const handleStatus = async (status: OrderStatus) => {
     setChangingStatus(true);
-    await onStatusChange(order.id, status);
-    setChangingStatus(false);
+    setStatusError(null);
+    try {
+      await onStatusChange(order.id, status);
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : "Transition invalide");
+    } finally {
+      setChangingStatus(false);
+    }
   };
 
   return (
@@ -34,55 +43,66 @@ export function OrderRow({
       >
         {/* Réf */}
         <div className="col-span-3">
-          <p className="text-[9px] uppercase tracking-[0.3em] text-black/30 font-serif mb-0.5">
+          <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 font-serif mb-0.5">
             #{order.id.slice(0, 8).toUpperCase()}
           </p>
           <p className="text-[11px] font-serif text-black">{order.form.name}</p>
-          <p className="text-[9px] text-black/30 font-serif">{order.form.phone}</p>
+          <p className="text-[10px] text-black/30 font-serif">{order.form.phone}</p>
         </div>
 
         {/* Wilaya */}
         <div className="col-span-2">
           <p className="text-[10px] font-serif text-black/70">{order.form.city}</p>
-          <p className="text-[9px] text-black/30 font-serif capitalize">
+          <p className="text-[10px] text-black/30 font-serif capitalize">
             {order.form.deliveryType === "home" ? "À domicile" : "Bureau"}
           </p>
         </div>
 
         {/* Articles */}
         <div className="col-span-2">
-          <div className="flex -space-x-2">
+          <div className="flex -space-x-2 mb-1.5">
             {order.items.slice(0, 3).map((item, i) => (
-              <div key={i} className="w-8 h-8 border border-white bg-[#f5f5f5] overflow-hidden shrink-0">
+              <div key={i} className="w-9 h-11 border border-white bg-[#f5f5f5] overflow-hidden shrink-0">
                 <img src={item.mainImage} alt={item.name} className="w-full h-full object-cover" />
               </div>
             ))}
             {order.items.length > 3 && (
-              <div className="w-8 h-8 border border-white bg-black/5 flex items-center justify-center">
+              <div className="w-9 h-11 border border-white bg-black/5 flex items-center justify-center">
                 <span className="text-[8px] font-serif text-black/40">+{order.items.length - 3}</span>
               </div>
             )}
           </div>
-          <p className="text-[9px] text-black/30 font-serif mt-1">
-            {order.items.reduce((s, i) => s + i.quantity, 0)} article{order.items.length > 1 ? "s" : ""}
-          </p>
+          {/* Résumé textuel des articles */}
+          <div className="space-y-0.5">
+            {order.items.slice(0, 2).map((item, i) => (
+              <p key={i} className="text-[9px] text-black/50 font-serif leading-tight truncate max-w-32">
+                {item.quantity}× {item.name}
+                {item.selectedSize && <span className="text-black/30"> · {item.selectedSize}</span>}
+              </p>
+            ))}
+            {order.items.length > 2 && (
+              <p className="text-[9px] text-black/30 font-serif italic">
+                +{order.items.length - 2} autre{order.items.length - 2 > 1 ? "s" : ""}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Total */}
         <div className="col-span-2">
           <p className="font-serif italic text-sm">{order.total.toLocaleString("fr-FR")} DA</p>
-          <p className="text-[9px] text-black/30 font-serif uppercase tracking-widest">
+          <p className="text-[10px] text-black/30 font-serif uppercase tracking-widest">
             {order.form.paymentMethod === "cash" ? "Cash" : "Carte"}
           </p>
         </div>
 
         {/* Status */}
         <div className="col-span-2 flex items-center justify-between">
-          <span className={`text-[8px] uppercase tracking-widest px-2.5 py-1 font-serif ${cfg.color} ${cfg.bg}`}>
+          <span className={`text-[9px] uppercase tracking-widest px-2.5 py-1 font-serif ${cfg.color} ${cfg.bg}`}>
             {cfg.label}
           </span>
           <div className="flex items-center gap-2 text-black/20">
-            <span className="text-[8px] font-serif">{formatDate(order.createdAt)}</span>
+            <span className="text-[9px] font-serif">{formatDate(order.createdAt)}</span>
             {expanded
               ? <ChevronUp size={12} strokeWidth={1.5} />
               : <ChevronDown size={12} strokeWidth={1.5} />
@@ -105,31 +125,64 @@ export function OrderRow({
 
               {/* Articles */}
               <div>
-                <p className="text-[8px] uppercase tracking-[0.3em] text-black/30 font-serif mb-4">
+                <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 font-serif mb-4">
                   Articles commandés
                 </p>
                 <div className="space-y-3">
-                  {order.items.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-[#f5f5f5] overflow-hidden shrink-0">
+                  {order.items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 border border-[rgba(0,0,0,0.06)] p-2.5">
+                      {/* Image */}
+                      <div className="w-14 h-16 bg-[#f5f5f5] overflow-hidden shrink-0">
                         <img src={item.mainImage} alt={item.name} className="w-full h-full object-cover" />
                       </div>
-                      <div className="grow">
-                        <p className="font-serif text-[11px] italic">{item.name}</p>
-                        <p className="text-[9px] text-black/30 uppercase tracking-widest">x{item.quantity}</p>
+
+                      {/* Info produit */}
+                      <div className="grow min-w-0">
+                        <p className="font-serif text-[12px] italic text-black leading-snug truncate">
+                          {item.name}
+                        </p>
+                        <p className="text-[9px] text-black/30 uppercase tracking-widest mt-0.5">
+                          {item.category}
+                        </p>
+                        {/* Taille + quantité */}
+                        <div className="flex items-center gap-2 mt-1.5">
+                          {item.selectedSize && (
+                            <span className="text-[9px] uppercase tracking-widest border border-black/15 px-1.5 py-0.5 font-serif text-black/60">
+                              Taille {item.selectedSize}
+                            </span>
+                          )}
+                          <span className="text-[9px] text-black/40 font-serif">
+                            × {item.quantity}
+                          </span>
+                          <span className="text-[9px] text-black/30 font-serif">
+                            ({item.price.toLocaleString("fr-FR")} DA / u)
+                          </span>
+                        </div>
                       </div>
-                      <span className="font-serif text-[11px] italic shrink-0">
+
+                      {/* Sous-total */}
+                      <span className="font-serif text-[12px] italic shrink-0 text-black">
                         {(item.price * item.quantity).toLocaleString("fr-FR")} DA
                       </span>
                     </div>
                   ))}
+                </div>
+
+                {/* Total articles */}
+                <div className="mt-3 pt-3 border-t border-[rgba(0,0,0,0.06)] flex justify-between items-center">
+                  <span className="text-[9px] uppercase tracking-[0.25em] text-black/30 font-serif">
+                    Total commande
+                  </span>
+                  <span className="font-serif italic text-sm text-black">
+                    {order.total.toLocaleString("fr-FR")} DA
+                  </span>
                 </div>
               </div>
 
               {/* Adresse + changer statut */}
               <div className="space-y-6">
                 <div>
-                  <p className="text-[8px] uppercase tracking-[0.3em] text-black/30 font-serif mb-3">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 font-serif mb-3">
                     Adresse de livraison
                   </p>
                   <p className="font-serif text-[11px] text-black">{order.form.name}</p>
@@ -142,29 +195,46 @@ export function OrderRow({
 
                 {/* Changer le statut */}
                 <div>
-                  <p className="text-[8px] uppercase tracking-[0.3em] text-black/30 font-serif mb-3">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 font-serif mb-3">
                     Changer le statut
                   </p>
-                  <div className="flex flex-wrap gap-2">
-                    {STATUS_FLOW.map((s) => {
-                      const c = STATUS_CONFIG[s];
-                      const isActive = order.status === s;
-                      return (
-                        <button
-                          key={s}
-                          disabled={isActive || changingStatus}
-                          onClick={(e) => { e.stopPropagation(); handleStatus(s); }}
-                          className={`px-3 py-1.5 text-[8px] uppercase tracking-widest font-serif transition-all border ${
-                            isActive
-                              ? `${c.bg} ${c.color} border-transparent`
-                              : "border-black/8 text-black/40 hover:border-black/30 hover:text-black"
-                          } disabled:cursor-not-allowed`}
-                        >
-                          {c.label}
-                        </button>
-                      );
-                    })}
+
+                  {/* Statut actuel */}
+                  <div className="mb-3">
+                    <span className={`px-3 py-1.5 text-[9px] uppercase tracking-widest font-serif border-transparent ${cfg.bg} ${cfg.color}`}>
+                      {cfg.label}
+                    </span>
                   </div>
+
+                  {/* Transitions disponibles */}
+                  {allowedTransitions.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {allowedTransitions.map((s) => {
+                        const c = STATUS_CONFIG[s];
+                        return (
+                          <button
+                            key={s}
+                            disabled={changingStatus}
+                            onClick={(e) => { e.stopPropagation(); handleStatus(s); }}
+                            className="px-3 py-1.5 text-[9px] uppercase tracking-widest font-serif transition-all border border-black/8 text-black/40 hover:border-black/30 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            → {c.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-[9px] text-black/30 font-serif italic">
+                      État final — aucune modification possible
+                    </p>
+                  )}
+
+                  {/* Message d'erreur */}
+                  {statusError && (
+                    <p className="mt-2 text-[9px] text-red-500 font-serif">
+                      {statusError}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

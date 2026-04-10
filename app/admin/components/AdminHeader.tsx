@@ -15,7 +15,7 @@ export default function AdminHeader({ title, subtitle }: AdminHeaderProps) {
         {subtitle && (
           <div className="flex items-center space-x-3 mb-2">
             <div className="h-px w-6 bg-black/30" />
-            <span className="text-[8px] uppercase tracking-[0.4em] text-black/35 font-serif">
+            <span className="text-[10px] uppercase tracking-[0.4em] text-black/35 font-serif">
               {subtitle}
             </span>
           </div>

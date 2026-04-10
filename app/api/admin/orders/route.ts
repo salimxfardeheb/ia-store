@@ -27,6 +27,7 @@ export async function GET() {
       name: i.name,
       price: i.price,
       quantity: i.quantity,
+      selectedSize: i.size ?? undefined,
       mainImage: i.mainImage,
       category: i.category,
       stock: 0,

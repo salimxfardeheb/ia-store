@@ -1,26 +1,12 @@
 {
   "permissions": {
     "allow": [
+      "Bash(ls /c/Users/simou/GitHub/ia-store/.env*)",
       "Bash(npm install:*)",
-      "Bash(npm --version)",
-      "Bash(where npm:*)",
-      "Bash(\"/c/Program Files/nodejs/npm.cmd\" install prisma @prisma/client)",
-      "Bash(\"/c/Program Files/nodejs/npm.cmd\" install jsonwebtoken @types/jsonwebtoken)",
-      "Bash(/c/Program Files/nodejs/npx.cmd prisma:*)",
-      "Bash(\"/c/Program Files/nodejs/npx.cmd\" prisma generate)",
-      "Bash(\"/c/Program Files/nodejs/npx.cmd\" tsc --noEmit)",
-      "Bash(ls:*)",
-      "Bash(npx prisma:*)",
-      "Bash(/c/Program Files/nodejs/npx prisma:*)",
-      "Bash(node:*)",
-      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('exports', {}\\).get\\('./runtime/client', 'NOT FOUND'\\), indent=2\\)\\)\")",
-      "Bash(cat /c/Users/simou/GitHub/ia-store/next.config.*)",
-      "Bash(npx tsc:*)",
-      "Bash(node_modules/.bin/tsc --noEmit)",
-      "Bash(echo \"EXIT:$?\")",
-      "Bash(node_modules/.bin/next build:*)",
-      "Bash(npm.cmd uninstall:*)",
-      "Bash(npm.cmd run:*)"
+      "Bash(cmd:*)",
+      "Bash(node -e \"const c = require\\('/c/Users/simou/GitHub/ia-store/node_modules/cloudinary/package.json'\\); console.log\\(c.version\\)\")",
+      "Bash(PowerShell:*)",
+      "Bash(npx prisma:*)"
     ]
   }
 }

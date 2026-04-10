@@ -25,11 +25,10 @@ export default function OrdersPage() {
   }, []);
 
   const handleStatusChange = async (id: string, status: OrderStatus) => {
+    // Lève une erreur si la transition est refusée (propagée depuis le service)
     await updateOrder(id, status);
     setOrders((prev) =>
-      prev.map((o) =>
-        o.id === id ? { ...o, status } : o
-      )
+      prev.map((o) => (o.id === id ? { ...o, status } : o))
     );
   };
 
@@ -76,7 +75,7 @@ export default function OrdersPage() {
                 {count}
               </p>
               <p
-                className={`text-[8px] uppercase tracking-[0.25em] font-serif ${filterStatus === s ? "text-white/60" : "text-black/30"}`}
+                className={`text-[10px] uppercase tracking-[0.25em] font-serif ${filterStatus === s ? "text-white/60" : "text-black/30"}`}
               >
                 {s === "all" ? "Toutes" : cfg!.label}
               </p>
@@ -100,7 +99,7 @@ export default function OrdersPage() {
         {["Client", "Wilaya", "Articles", "Total", "Statut"].map((h, i) => (
           <div
             key={h}
-            className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-2" : "col-span-2"} text-[8px] uppercase tracking-[0.3em] text-black/25 font-serif`}
+            className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-2" : "col-span-2"} text-[9px] uppercase tracking-[0.3em] text-black/25 font-serif`}
           >
             {h}
           </div>

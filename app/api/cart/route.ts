@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
   });
 
   return NextResponse.json(
-    items.map((i) => ({ ...i.product, quantity: i.quantity }))
+    items.map((i) => ({ ...i.product, quantity: i.quantity, selectedSize: i.size ?? undefined }))
   );
 }
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const user = getUser(req);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const items: Array<{ id: string; quantity: number }> = await req.json();
+  const items: Array<{ id: string; quantity: number; selectedSize?: string }> = await req.json();
 
   // Supprimer puis recréer
   await prisma.cartItem.deleteMany({ where: { userId: user.id } });
@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         productId: i.id,
         quantity: i.quantity,
+        size: i.selectedSize ?? null,
       })),
     });
   }

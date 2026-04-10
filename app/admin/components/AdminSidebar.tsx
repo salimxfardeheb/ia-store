@@ -19,7 +19,7 @@ function SidebarLink({
       }`}
     >
       <Icon size={18} strokeWidth={1.5} />
-      <span className="text-[10px] uppercase tracking-[0.25em] flex-1 font-serif">
+      <span className="text-[11px] uppercase tracking-[0.25em] flex-1 font-serif">
         {label}
       </span>
       {active && <ChevronRight size={9} className="opacity-40" />}
@@ -48,7 +48,7 @@ export default function AdminSidebar() {
             <Logo />
           </span>
           <span
-            className="text-[9px] uppercase tracking-[0.45em] text-black/50 mt-3 font-serif text-center"
+            className="text-[10px] uppercase tracking-[0.45em] text-black/50 mt-3 font-serif text-center"
           >
             Admin Console
           </span>
@@ -94,7 +94,7 @@ export default function AdminSidebar() {
               <p className="text-[10px] uppercase tracking-widest text-black truncate font-serif">
                 {"Admin"}
               </p>
-              <p className="text-[8px] text-black/30 truncate mt-0.5">{'AD'}</p>
+              <p className="text-[9px] text-black/30 truncate mt-0.5">{'AD'}</p>
             </div>
             <button
               onClick={handleLogout}

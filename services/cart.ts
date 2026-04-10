@@ -2,6 +2,7 @@ import { Product } from "@/app/variables";
 
 export interface CartItem extends Product {
   quantity: number;
+  selectedSize?: string; // taille choisie par le client
 }
 
 function authHeader(token: string) {
@@ -20,7 +21,7 @@ export async function saveCart(token: string, items: CartItem[]): Promise<void> 
   await fetch("/api/cart", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader(token) },
-    body: JSON.stringify(items.map((i) => ({ id: i.id, quantity: i.quantity }))),
+    body: JSON.stringify(items.map((i) => ({ id: i.id, quantity: i.quantity, selectedSize: i.selectedSize }))),
   });
 }
 

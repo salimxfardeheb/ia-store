@@ -194,7 +194,8 @@ export default function ProductDetail() {
                     return;
                   }
                   setSizeError(false);
-                  for (let i = 0; i < quantity; i++) addToCart(product);
+                  for (let i = 0; i < quantity; i++)
+                    addToCart(product, selectedSize || undefined);
                 }}
                 className="grow bg-black text-white py-5 text-[11px] uppercase tracking-[0.2em] font-bold hover:bg-black/80 transition-all luxury-shadow flex items-center justify-center space-x-3"
               >
@@ -208,19 +209,19 @@ export default function ProductDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-12 border-t border-black/5">
             <div className="flex flex-col items-center text-center space-y-2">
               <Truck size={20} strokeWidth={1} />
-              <span className="text-[9px] uppercase tracking-widest font-bold">
+              <span className="text-[10px] uppercase tracking-widest font-bold">
                 Livraison gratuite
               </span>
             </div>
             <div className="flex flex-col items-center text-center space-y-2">
               <RefreshCw size={20} strokeWidth={1} />
-              <span className="text-[9px] uppercase tracking-widest font-bold">
+              <span className="text-[10px] uppercase tracking-widest font-bold">
                 Retours faciles
               </span>
             </div>
             <div className="flex flex-col items-center text-center space-y-2">
               <ShieldCheck size={20} strokeWidth={1} />
-              <span className="text-[9px] uppercase tracking-widest font-bold">
+              <span className="text-[10px] uppercase tracking-widest font-bold">
                 Paiement sécurisé
               </span>
             </div>

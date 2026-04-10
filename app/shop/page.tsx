@@ -100,7 +100,7 @@ export default function Shop() {
                     <button
                       key={key}
                       onClick={() => { setSort(key); setShowSort(false); }}
-                      className={`w-full text-left px-5 py-3 text-[10px] uppercase tracking-[0.2em] transition-colors hover:bg-[#F7F7F7] ${
+                      className={`w-full text-left px-5 py-3 text-[11px] uppercase tracking-[0.2em] transition-colors hover:bg-[#F7F7F7] ${
                         sort === key
                           ? "font-bold text-black"
                           : "text-black/40 font-medium"
@@ -155,7 +155,7 @@ export default function Shop() {
                 <h3 className="font-serif text-xl mb-1 group-hover:italic transition-all">
                   {product.name}
                 </h3>
-                <p className="text-black/40 text-[11px] uppercase tracking-widest">
+                <p className="text-black/40 text-xs uppercase tracking-widest">
                   {product.category}
                 </p>
               </Link>

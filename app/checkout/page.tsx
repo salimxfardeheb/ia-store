@@ -128,7 +128,7 @@ export default function Checkout() {
         <p className="text-black/40 text-sm font-light mb-2">
           Merci pour votre commande.
         </p>
-        <p className="text-[9px] uppercase tracking-[0.3em] text-black/25 font-serif mb-12">
+        <p className="text-[11px] uppercase tracking-[0.3em] text-black/25 font-serif mb-12">
           Réf. {orderId}
         </p>
         <Link
@@ -175,12 +175,12 @@ export default function Checkout() {
 
           {/* Coordonnées */}
           <div>
-            <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
               Coordonnées
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
                   Nom & Prénom
                 </label>
                 <input
@@ -191,7 +191,7 @@ export default function Checkout() {
                 />
               </div>
               <div>
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
                   Numéro de téléphone
                 </label>
                 <input
@@ -207,13 +207,13 @@ export default function Checkout() {
 
           {/* Adresse */}
           <div>
-            <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
               Adresse de livraison
             </p>
             <div className="space-y-4">
               {/* Wilaya */}
               <div>
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
                   Wilaya
                 </label>
                 <div className="relative">
@@ -234,7 +234,7 @@ export default function Checkout() {
               </div>
 
               <div>
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
                   Adresse
                 </label>
                 <input
@@ -246,7 +246,7 @@ export default function Checkout() {
               </div>
 
               <div>
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
                   Code Postal
                 </label>
                 <input
@@ -261,7 +261,7 @@ export default function Checkout() {
 
           {/* Type de livraison */}
           <div>
-            <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
               Type de livraison
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -300,7 +300,7 @@ export default function Checkout() {
                     {label}
                   </p>
                   <p
-                    className={`text-[9px] mt-0.5 font-serif ${form.deliveryType === value ? "text-white/60" : "text-black/30"}`}
+                    className={`text-[10px] mt-0.5 font-serif ${form.deliveryType === value ? "text-white/60" : "text-black/30"}`}
                   >
                     {sub}
                   </p>
@@ -311,7 +311,7 @@ export default function Checkout() {
 
           {/* Paiement */}
           <div>
-            <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
               Mode de paiement
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -355,7 +355,7 @@ export default function Checkout() {
                     {label}
                   </p>
                   <p
-                    className={`text-[9px] mt-0.5 font-serif ${form.paymentMethod === value && !disabled ? "text-white/60" : "text-black/30"}`}
+                    className={`text-[10px] mt-0.5 font-serif ${form.paymentMethod === value && !disabled ? "text-white/60" : "text-black/30"}`}
                   >
                     {sub}
                   </p>
@@ -373,14 +373,14 @@ export default function Checkout() {
         {/* Résumé commande */}
         <div className="lg:col-span-1">
           <div className="border border-black/8 p-8 sticky top-32">
-            <h2 className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6">
+            <h2 className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6">
               Résumé
             </h2>
 
             {/* Articles */}
             <div className="space-y-4 mb-6 border-b border-black/8 pb-6">
               {cart.map((item) => (
-                <div key={item.id} className="flex items-center gap-3">
+                <div key={`${item.id}-${item.selectedSize ?? ''}`} className="flex items-center gap-3">
                   <div className="w-12 aspect-3/4 bg-[#f5f5f5] overflow-hidden shrink-0">
                     <img
                       src={item.mainImage}
@@ -413,7 +413,7 @@ export default function Checkout() {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-black/40 font-light">Livraison</span>
-                <span className="text-[9px] uppercase tracking-widest text-black/30 font-serif">
+                <span className="text-[10px] uppercase tracking-widest text-black/30 font-serif">
                   À confirmer
                 </span>
               </div>
@@ -444,7 +444,7 @@ export default function Checkout() {
               )}
             </button>
 
-            <p className="text-[8px] text-center mt-6 text-black/20 uppercase tracking-[0.3em] font-serif">
+            <p className="text-[9px] text-center mt-6 text-black/20 uppercase tracking-[0.3em] font-serif">
               Paiement sécurisé
             </p>
           </div>

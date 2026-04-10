@@ -81,11 +81,16 @@ export async function getOrders(): Promise<Order[]> {
 }
 
 export async function updateOrder(id: string, status: OrderStatus): Promise<void> {
-  await fetch(`/api/admin/orders/${id}`, {
+  const res = await fetch(`/api/admin/orders/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
+
+  if (!res.ok) {
+    const { error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));
+    throw new Error(error);
+  }
 }
 
 // ─── Upload ───────────────────────────────────────────────────────────────────

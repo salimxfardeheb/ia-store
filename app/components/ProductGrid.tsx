@@ -91,7 +91,7 @@ export default function ProductGrid() {
                   <h3 className="font-serif text-xl mb-1 group-hover:italic transition-all">
                     {product.name}
                   </h3>
-                  <p className="text-black/40 text-[11px] uppercase tracking-widest">
+                  <p className="text-black/40 text-xs uppercase tracking-widest">
                     {product.category}
                   </p>
                 </div>

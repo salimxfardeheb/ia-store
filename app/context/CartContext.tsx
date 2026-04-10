@@ -10,9 +10,9 @@ import { ShoppingBag, X } from "lucide-react";
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product) => void;
-  removeFromCart: (productId: string) => void;
-  updateQuantity: (productId: string, delta: number) => void;
+  addToCart: (product: Product, size?: string) => void;
+  removeFromCart: (productId: string, size?: string) => void;
+  updateQuantity: (productId: string, delta: number, size?: string) => void;
   clearCart: () => void;
   cartCount: number;
   cartTotal: number;
@@ -54,30 +54,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
     saveCart(token, cart);
   }, [cart, isAuthenticated]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, size?: string) => {
     if (!isAuthenticated && !bannerDismissed) setShowBanner(true);
 
     setCart((prev) => {
-      const existing = prev.find((item) => item.id === product.id);
+      // Clé composite : même produit + même taille = même ligne
+      const existing = prev.find(
+        (item) => item.id === product.id && item.selectedSize === size
+      );
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id
+          item.id === product.id && item.selectedSize === size
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prev, { ...product, quantity: 1 }];
+      return [...prev, { ...product, quantity: 1, selectedSize: size }];
     });
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart((prev) => prev.filter((item) => item.id !== productId));
+  const removeFromCart = (productId: string, size?: string) => {
+    setCart((prev) =>
+      prev.filter(
+        (item) => !(item.id === productId && item.selectedSize === size)
+      )
+    );
   };
 
-  const updateQuantity = (productId: string, delta: number) => {
+  const updateQuantity = (productId: string, delta: number, size?: string) => {
     setCart((prev) =>
       prev.map((item) =>
-        item.id === productId
+        item.id === productId && item.selectedSize === size
           ? { ...item, quantity: Math.max(1, item.quantity + delta) }
           : item
       )

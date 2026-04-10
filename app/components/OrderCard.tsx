@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, ChevronUp, ChevronDown, AlertTriangle, Clock, CheckCircle2, Truck, XCircle } from "lucide-react";
+import { Package, ChevronUp, ChevronDown, AlertTriangle, Clock, CheckCircle2, Truck, XCircle, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { Order, OrderStatus } from "../variables";
 
@@ -36,6 +36,12 @@ export const STATUS_CONFIG: Record<
     icon: <XCircle size={13} strokeWidth={1.5} />,
     color: "text-red-500",
     dot: "bg-red-400",
+  },
+  returned: {
+    label: "Retournée",
+    icon: <RotateCcw size={13} strokeWidth={1.5} />,
+    color: "text-orange-600",
+    dot: "bg-orange-400",
   },
 };
 

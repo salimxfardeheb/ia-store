@@ -41,7 +41,7 @@ export default function Cart() {
           <AnimatePresence mode="popLayout">
             {cart.map((item) => (
               <motion.div
-                key={item.id}
+                key={`${item.id}-${item.selectedSize ?? ''}`}
                 layout
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -64,10 +64,11 @@ export default function Cart() {
                       <h3 className="font-serif text-xl italic">{item.name}</h3>
                       <p className="text-black/30 text-[10px] uppercase tracking-[0.25em] mt-0.5">
                         {item.category}
+                        {item.selectedSize && <span className="ml-2">· Taille {item.selectedSize}</span>}
                       </p>
                     </div>
                     <button
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => removeFromCart(item.id, item.selectedSize)}
                       className="p-1.5 hover:bg-black/5 transition-colors"
                     >
                       <X size={15} strokeWidth={1.5} />
@@ -78,7 +79,7 @@ export default function Cart() {
                     {/* Quantity */}
                     <div className="flex items-center border border-black/10">
                       <button
-                        onClick={() => updateQuantity(item.id, -1)}
+                        onClick={() => updateQuantity(item.id, -1, item.selectedSize)}
                         className="w-9 h-9 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors"
                       >
                         <Minus size={13} strokeWidth={1.5} />
@@ -87,7 +88,7 @@ export default function Cart() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.id, 1)}
+                        onClick={() => updateQuantity(item.id, 1, item.selectedSize)}
                         className="w-9 h-9 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors"
                       >
                         <Plus size={13} strokeWidth={1.5} />
@@ -107,7 +108,7 @@ export default function Cart() {
         {/* Summary */}
         <div className="lg:col-span-1">
           <div className="border border-black/8 p-8 sticky top-32">
-            <h2 className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-8">
+            <h2 className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-8">
               Résumé
             </h2>
 
@@ -120,7 +121,7 @@ export default function Cart() {
               </div>
               <div className="flex justify-between text-sm items-center">
                 <span className="text-black/40 font-light">Livraison</span>
-                <span className="text-black/40 uppercase text-[9px] tracking-widest font-serif">
+                <span className="text-black/40 uppercase text-[10px] tracking-widest font-serif">
                   À confirmer
                 </span>
               </div>
@@ -139,7 +140,7 @@ export default function Cart() {
               <ArrowRight size={16} strokeWidth={1.5} />
             </Link>
 
-            <p className="text-[8px] text-center mt-6 text-black/20 uppercase tracking-[0.3em] font-serif">
+            <p className="text-[9px] text-center mt-6 text-black/20 uppercase tracking-[0.3em] font-serif">
               Paiement sécurisé
             </p>
           </div>

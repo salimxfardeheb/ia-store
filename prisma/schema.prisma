@@ -96,6 +96,7 @@ model OrderItem {
   name      String
   price     Float
   quantity  Int
+  size      String?  // taille sélectionnée (null pour anciennes commandes)
   mainImage String
   category  String
 }
@@ -106,6 +107,7 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELLED
+  RETURNED
 }
 
 // ─── Cart ────────────────────────────────────────────────────────────────────
@@ -117,6 +119,7 @@ model CartItem {
   product   Product @relation(fields: [productId], references: [id])
   productId String
   quantity  Int     @default(1)
+  size      String? // taille sélectionnée (null si pas de taille)
 
-  @@unique([userId, productId])
+  @@unique([userId, productId, size])
 }

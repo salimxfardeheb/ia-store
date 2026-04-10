@@ -125,7 +125,7 @@ export default function CatalogPage() {
             transition={{ delay: i * 0.05 }}
             className="bg-white border px-5 py-4 border-[rgba(0,0,0,0.08)]"
           >
-            <p className="text-[8px] uppercase tracking-[0.3em] text-black/30 mb-2 font-serif">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 mb-2 font-serif">
               {label}
             </p>
             <p className="text-2xl text-black font-serif font-light italic">

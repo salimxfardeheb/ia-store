@@ -208,7 +208,7 @@ const Navbar = () => {
                             >
                               {user?.email?.split("@")[0]}
                             </p>
-                            <p className="text-[9px] text-[#2C2416]/40 mt-0.5 truncate">
+                            <p className="text-[10px] text-[#2C2416]/40 mt-0.5 truncate">
                               {user?.email}
                             </p>
                           </div>

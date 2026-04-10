@@ -113,7 +113,7 @@ export interface CartItem extends Product {
 }
 
 
-export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+export type OrderStatus = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled" | "returned";
 
 export interface ReclamationForm {
   orderId: string;
@@ -193,14 +193,15 @@ export const STATUSES   = ["Tous", "Actif", "Brouillon", "Archivé"];
 // ── Config ───────────────────────────────────────────────────────────────────
 
 export const STATUS_CONFIG: Record<OrderStatus, { label: string; color: string; bg: string }> = {
-  pending:   { label: "En attente",  color: "text-amber-600",  bg: "bg-amber-50"  },
-  confirmed: { label: "Confirmée",   color: "text-blue-600",   bg: "bg-blue-50"   },
-  shipped:   { label: "Expédiée",    color: "text-purple-600", bg: "bg-purple-50" },
-  delivered: { label: "Livrée",      color: "text-emerald-600",bg: "bg-emerald-50"},
-  cancelled: { label: "Annulée",     color: "text-red-500",    bg: "bg-red-50"    },
+  pending:   { label: "En attente",  color: "text-amber-600",  bg: "bg-amber-50"   },
+  confirmed: { label: "Confirmée",   color: "text-blue-600",   bg: "bg-blue-50"    },
+  shipped:   { label: "Expédiée",    color: "text-purple-600", bg: "bg-purple-50"  },
+  delivered: { label: "Livrée",      color: "text-emerald-600",bg: "bg-emerald-50" },
+  cancelled: { label: "Annulée",     color: "text-red-500",    bg: "bg-red-50"     },
+  returned:  { label: "Retournée",   color: "text-orange-600", bg: "bg-orange-50"  },
 };
 
-export const STATUS_FLOW: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled"];
+export const STATUS_FLOW: OrderStatus[] = ["pending", "confirmed", "shipped", "delivered", "cancelled", "returned"];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

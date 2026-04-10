@@ -35,13 +35,13 @@ export default function ProductGrid({
               <Package size={32} strokeWidth={0.75} className="text-black/10" />
             )}
             {product.stock === 0 && (
-              <div className="absolute top-3 left-3 bg-black text-white text-[7px] uppercase tracking-widest px-2 py-0.5 font-serif">
+              <div className="absolute top-3 left-3 bg-black text-white text-[8px] uppercase tracking-widest px-2 py-0.5 font-serif">
                 Épuisé
               </div>
             )}
             <div className="absolute top-3 right-3">
               <span
-                className={`text-[7px] uppercase tracking-widest px-2 py-0.5 font-serif ${STATUS_STYLE[product.status]}`}
+                className={`text-[8px] uppercase tracking-widest px-2 py-0.5 font-serif ${STATUS_STYLE[product.status]}`}
               >
                 {product.status}
               </span>
@@ -64,7 +64,7 @@ export default function ProductGrid({
           </div>
 
           <div className="p-4">
-            <p className="text-[8px] uppercase tracking-[0.3em] text-black/25 mb-1 font-serif">
+            <p className="text-[9px] uppercase tracking-[0.3em] text-black/25 mb-1 font-serif">
               {product.id}
             </p>
             <h3 className="text-[11px] text-black leading-snug mb-2 font-serif">
@@ -74,7 +74,7 @@ export default function ProductGrid({
               <span className="text-base text-black font-serif italic font-light">
                 {product.price.toLocaleString("fr-FR")} DA
               </span>
-              <span className="text-[8px] uppercase tracking-widest text-black/30 font-serif">
+              <span className="text-[9px] uppercase tracking-widest text-black/30 font-serif">
                 {product.category}
               </span>
             </div>
@@ -82,7 +82,7 @@ export default function ProductGrid({
               {product.sizes.slice(0, 4).map((s) => (
                 <span
                   key={s.size}
-                  className="text-[7px] px-1.5 py-0.5 border border-black/10 text-black/40 uppercase tracking-widest font-serif"
+                  className="text-[8px] px-1.5 py-0.5 border border-black/10 text-black/40 uppercase tracking-widest font-serif"
                 >
                   {s.size}
                 </span>

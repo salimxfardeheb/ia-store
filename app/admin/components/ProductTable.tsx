@@ -36,7 +36,7 @@ export default function ProductTable({
                 {key ? (
                   <button
                     onClick={() => handleSort(key as keyof Product)}
-                    className="flex items-center space-x-1.5 text-[8px] uppercase tracking-[0.25em] text-black/35 hover:text-black transition-colors font-serif"
+                    className="flex items-center space-x-1.5 text-[9px] uppercase tracking-[0.25em] text-black/35 hover:text-black transition-colors font-serif"
                   >
                     <span>{label}</span>
                     <ArrowUpDown
@@ -70,12 +70,12 @@ export default function ProductTable({
                     <p className="text-[11px] text-black font-serif">
                       {product.name}
                     </p>
-                    <p className="text-[8px] text-black/30 mt-0.5 font-serif">
+                    <p className="text-[9px] text-black/30 mt-0.5 font-serif">
                       {product.sizes.map((s) => s.size).join(" · ")}
                     </p>
                   </div>
                 </td>
-                <td className="px-5 py-3.5 text-[9px] text-black/50 uppercase tracking-widest font-serif">
+                <td className="px-5 py-3.5 text-[10px] text-black/50 uppercase tracking-widest font-serif">
                   {product.category}
                 </td>
                 <td className="px-5 py-3.5 text-[11px] text-black font-serif italic">
@@ -94,12 +94,12 @@ export default function ProductTable({
                 </td>
                 <td className="px-5 py-3.5">
                   <span
-                    className={`px-2.5 py-0.5 text-[7px] uppercase tracking-widest font-serif ${STATUS_STYLE[product.status]}`}
+                    className={`px-2.5 py-0.5 text-[8px] uppercase tracking-widest font-serif ${STATUS_STYLE[product.status]}`}
                   >
                     {product.status}
                   </span>
                 </td>
-                <td className="px-5 py-3.5 text-[9px] text-black/30 font-serif">
+                <td className="px-5 py-3.5 text-[10px] text-black/30 font-serif">
                   {product.createdAt}
                 </td>
                 <td className="px-5 py-3.5">
