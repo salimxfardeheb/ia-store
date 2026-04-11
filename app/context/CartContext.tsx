@@ -22,6 +22,7 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [isCartLoaded, setIsCartLoaded] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { isAuthenticated, getToken } = useAuth();
@@ -29,21 +30,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // Charger le panier quand l'user se connecte
   useEffect(() => {
     if (isAuthenticated) {
+      setIsCartLoaded(false);
       const token = getToken();
       if (token) {
         loadCart(token).then((items) => {
           if (items.length > 0) setCart(items);
+          setIsCartLoaded(true);
         });
+      } else {
+        setIsCartLoaded(true);
       }
       setShowBanner(false);
       setBannerDismissed(false);
     } else {
       setCart([]);
+      setIsCartLoaded(false);
     }
   }, [isAuthenticated]);
 
-  // Sauvegarder le panier à chaque changement
+  // Sauvegarder le panier à chaque changement (uniquement après le chargement initial)
   useEffect(() => {
+    if (!isCartLoaded) return;
     const token = getToken();
     if (!token) return;
 
@@ -52,7 +59,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       return;
     }
     saveCart(token, cart);
-  }, [cart, isAuthenticated]);
+  }, [cart, isCartLoaded]);
 
   const addToCart = (product: Product, size?: string) => {
     if (!isAuthenticated && !bannerDismissed) setShowBanner(true);
