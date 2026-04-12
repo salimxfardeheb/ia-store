@@ -55,7 +55,10 @@ export function OrderCard({
 }) {
   const [open, setOpen] = useState(false);
   const cfg = STATUS_CONFIG[order.status];
-  const canClaim = order.status === "shipped" || order.status === "pending";
+  const canClaim = order.status === "delivered";
+
+  const firstProduct = order.items[0]?.name ?? "—";
+  const extraCount = order.items.length - 1;
 
   return (
     <motion.div
@@ -68,13 +71,26 @@ export function OrderCard({
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-black/1.5 transition-colors"
       >
         <div className="flex items-center gap-4 text-left">
-          <Package
-            size={15}
-            strokeWidth={1.5}
-            className="text-black/30 shrink-0"
-          />
+          <div className="w-10 aspect-3/4 bg-[#f5f5f5] overflow-hidden shrink-0">
+            {order.items[0]?.mainImage ? (
+              <img
+                src={order.items[0].mainImage}
+                alt={order.items[0].name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <Package size={15} strokeWidth={1.5} className="text-black/30 m-auto mt-3" />
+            )}
+          </div>
           <div>
-            <p className="font-serif text-sm text-black/80">{order.form.name}</p>
+            <p className="font-serif text-sm text-black/80">
+              {firstProduct}
+              {extraCount > 0 && (
+                <span className="text-black/30 text-[10px] ml-1.5">
+                  +{extraCount} article{extraCount > 1 ? "s" : ""}
+                </span>
+              )}
+            </p>
             <p className="text-[9px] text-black/30 mt-0.5">
               {order.createdAt instanceof Date
                 ? order.createdAt.toLocaleDateString("fr-DZ", {
@@ -122,36 +138,77 @@ export function OrderCard({
           >
             <div className="px-5 pb-5 border-t border-black/6">
               {/* Items list */}
-              <div className="mt-4 space-y-2">
+              <div className="mt-4 space-y-0">
+                {/* Column headers */}
+                <div className="flex items-center justify-between pb-2 border-b border-black/8">
+                  <span className="text-[8px] uppercase tracking-[0.2em] text-black/30">Produit</span>
+                  <div className="flex items-center gap-6">
+                    <span className="text-[8px] uppercase tracking-[0.2em] text-black/30 w-16 text-right">P.U</span>
+                    <span className="text-[8px] uppercase tracking-[0.2em] text-black/30 w-8 text-center">Qté</span>
+                    <span className="text-[8px] uppercase tracking-[0.2em] text-black/30 w-20 text-right">Sous-total</span>
+                  </div>
+                </div>
+
                 {order.items.map((item, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between py-2.5 border-b border-black/5 last:border-0"
+                    className="flex items-center justify-between py-3 border-b border-black/5 last:border-0"
                   >
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-serif text-sm text-black/70">
+                    <div className="flex flex-col gap-0.5 flex-1 min-w-0 pr-4">
+                      <span className="font-serif text-sm text-black/80 truncate">
                         {item.name}
+                      </span>
+                      <span className="text-[9px] text-black/30 uppercase tracking-[0.15em]">
+                        {item.category}
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                      {/* Per-product claim button */}
-                      {canClaim && (
-                        <button
-                          onClick={() => onClaim(order, item.name)}
-                          className="flex items-center gap-1.5 text-[8px] uppercase tracking-[0.2em] text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2.5 py-1 transition-colors"
-                        >
-                          <AlertTriangle size={10} strokeWidth={1.5} />
-                          <span>Signaler</span>
-                        </button>
-                      )}
+                    <div className="flex items-center gap-6 shrink-0">
+                      <span className="text-[11px] text-black/50 w-16 text-right">
+                        {item.price.toLocaleString("fr-DZ")} DA
+                      </span>
+                      <span className="text-[11px] text-black/60 w-8 text-center font-medium">
+                        ×{item.quantity}
+                      </span>
+                      <span className="font-serif text-sm text-black/80 w-20 text-right">
+                        {(item.price * item.quantity).toLocaleString("fr-DZ")} DA
+                      </span>
                     </div>
                   </div>
                 ))}
               </div>
 
-              {/* Total row */}
-              <div className="flex justify-end mt-3">
+              {/* Per-product claim buttons */}
+              {canClaim && (
+                <div className="mt-3 space-y-1">
+                  {order.items.map((item, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onClaim(order, item.name)}
+                      className="flex items-center gap-1.5 text-[8px] uppercase tracking-[0.2em] text-red-400 hover:text-red-600 border border-red-200 hover:border-red-400 px-2.5 py-1 transition-colors"
+                    >
+                      <AlertTriangle size={10} strokeWidth={1.5} />
+                      <span>Signaler · {item.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Delivery info + Total */}
+              <div className="flex items-end justify-between mt-4 pt-3 border-t border-black/6">
+                <div className="space-y-0.5">
+                  <p className="text-[8px] uppercase tracking-[0.2em] text-black/30">Livraison</p>
+                  <p className="text-[11px] text-black/60">{order.form.name}</p>
+                  <p className="text-[10px] text-black/40">
+                    {order.form.address}, {order.form.city}
+                  </p>
+                  <p className="text-[9px] text-black/30 uppercase tracking-[0.15em]">
+                    {order.form.deliveryType === "home" ? "Domicile" : "Bureau de poste"}
+                    {" · "}
+                    {order.form.paymentMethod === "cash" ? "Paiement à la livraison" : "Carte"}
+                  </p>
+                </div>
+
                 <div className="text-right">
                   <span className="text-[8px] uppercase tracking-[0.25em] text-black/30">
                     Total commande

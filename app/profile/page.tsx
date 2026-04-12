@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
 import { getProfile, saveProfile } from "@/services/profile";
-import { Profile } from "../variables";
+import { Profile, WILAYAS } from "../variables";
 import { useRouter } from "next/navigation";
 import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp } from "lucide-react";
 
@@ -83,7 +83,7 @@ export default function ProfilePage() {
         onClick={() => router.push("/orders")}
         whileHover={{ x: 4 }}
         transition={{ type: "spring", stiffness: 300, damping: 25 }}
-        className="w-full mb-12 flex items-center justify-between border border-black/10 px-5 py-4 hover:border-black/30 hover:bg-black/[0.02] transition-all group"
+        className="w-full mb-12 flex items-center justify-between border border-black/10 px-5 py-4 hover:border-black/30 hover:bg-black/2 transition-all group"
       >
         <div className="flex items-center gap-4">
           <div className="w-9 h-9 border border-black/10 flex items-center justify-center group-hover:border-black/30 transition-colors">
@@ -171,15 +171,21 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
-                Ville
+                Wilaya
               </label>
-              <input
-                type="text"
-                value={form.city}
-                onChange={(e) => setForm({ ...form, city: e.target.value })}
-                placeholder="Ex : Oran"
-                className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors"
-              />
+              <div className="relative">
+                <select
+                  value={form.city}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
+                  className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors appearance-none"
+                >
+                  <option value="">Sélectionner</option>
+                  {WILAYAS.map((w) => (
+                    <option key={w}>{w}</option>
+                  ))}
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-black/30 pointer-events-none text-xs">▾</span>
+              </div>
             </div>
             <div>
               <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">

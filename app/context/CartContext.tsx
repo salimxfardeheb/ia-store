@@ -69,6 +69,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find(
         (item) => item.id === product.id && item.selectedSize === size
       );
+      // Plafond stock pour cette taille
+      const sizeEntry = size ? product.sizes.find((s) => s.size === size) : undefined;
+      const maxQty = sizeEntry ? sizeEntry.quantity : product.stock;
+      const currentQty = existing?.quantity ?? 0;
+      if (currentQty >= maxQty) return prev;
+
       if (existing) {
         return prev.map((item) =>
           item.id === product.id && item.selectedSize === size
@@ -90,11 +96,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQuantity = (productId: string, delta: number, size?: string) => {
     setCart((prev) =>
-      prev.map((item) =>
-        item.id === productId && item.selectedSize === size
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
+      prev.map((item) => {
+        if (item.id !== productId || item.selectedSize !== size) return item;
+        const sizeEntry = size ? item.sizes.find((s) => s.size === size) : undefined;
+        const maxQty = sizeEntry ? sizeEntry.quantity : item.stock;
+        return { ...item, quantity: Math.max(1, Math.min(maxQty, item.quantity + delta)) };
+      })
     );
   };
 

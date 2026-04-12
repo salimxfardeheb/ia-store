@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Package } from "lucide-react";
 import { Order, OrderStatus } from "../variables";
-import { ReclamationModal } from "../components/ReclamationModal";
 import { OrderCard, STATUS_CONFIG } from "../components/OrderCard";
 import { getOrders } from "@/services/orders";
 
@@ -82,15 +80,6 @@ export default function OrdersPage() {
         </div>
       )}
 
-      {/* Reclamation modal */}
-      <AnimatePresence>
-        {claimTarget && (
-          <ReclamationModal
-            initial={claimTarget}
-            onClose={() => setClaimTarget(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 }

@@ -138,11 +138,21 @@ export default function ProductDetail() {
                   </button>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  {product.sizes.map(({ size, quantity }) => (
+                  {Array.from(
+                    product.sizes.reduce((map, { size, quantity }) => {
+                      map.set(size, (map.get(size) ?? 0) + quantity);
+                      return map;
+                    }, new Map<string, number>()),
+                    ([size, quantity]) => ({ size, quantity })
+                  ).map(({ size, quantity }) => (
                     <button
                       key={size}
                       disabled={quantity === 0}
-                      onClick={() => { setSelectedSize(size); setSizeError(false); }}
+                      onClick={() => {
+                        setSelectedSize(size);
+                        setSizeError(false);
+                        setQuantity((q) => Math.min(q, quantity));
+                      }}
                       className={`w-12 h-12 border flex items-center justify-center text-xs font-medium transition-all ${
                         quantity === 0
                           ? "opacity-25 cursor-not-allowed border-black/10 line-through"
@@ -168,23 +178,32 @@ export default function ProductDetail() {
             {/* Actions */}
             <div className="flex gap-4">
               {/* Quantity selector */}
-              <div className="flex items-center border border-black/10">
-                <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="w-12 h-16 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-colors text-lg font-light"
-                >
-                  −
-                </button>
-                <span className="w-10 text-center text-sm font-medium font-serif">
-                  {quantity}
-                </span>
-                <button
-                  onClick={() => setQuantity((q) => q + 1)}
-                  className="w-12 h-16 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-colors"
-                >
-                  <Plus size={16} strokeWidth={1.5} />
-                </button>
-              </div>
+              {(() => {
+                const sizeEntry = selectedSize
+                  ? product.sizes.find((s) => s.size === selectedSize)
+                  : undefined;
+                const maxQty = sizeEntry ? sizeEntry.quantity : product.stock;
+                return (
+                  <div className="flex items-center border border-black/10">
+                    <button
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="w-12 h-16 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-colors text-lg font-light"
+                    >
+                      −
+                    </button>
+                    <span className="w-10 text-center text-sm font-medium font-serif">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
+                      disabled={quantity >= maxQty}
+                      className="w-12 h-16 flex items-center justify-center text-black/40 hover:text-black hover:bg-black/5 transition-colors disabled:opacity-25 disabled:cursor-not-allowed"
+                    >
+                      <Plus size={16} strokeWidth={1.5} />
+                    </button>
+                  </div>
+                );
+              })()}
 
               {/* Add to bag */}
               <button

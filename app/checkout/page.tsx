@@ -61,6 +61,7 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [stockErrors, setStockErrors] = useState<string[]>([]);
 
   const set = (key: keyof OrderForm, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
@@ -74,6 +75,25 @@ export default function Checkout() {
 
   const handleSubmit = async () => {
     if (!isValid || submitting) return;
+
+    // Vérifier le stock disponible pour chaque article
+    const errors: string[] = [];
+    for (const item of cart) {
+      const sizeEntry = item.selectedSize
+        ? item.sizes.find((s) => s.size === item.selectedSize)
+        : undefined;
+      const available = sizeEntry ? sizeEntry.quantity : item.stock;
+      if (item.quantity > available) {
+        const label = `${item.name}${item.selectedSize ? ` · Taille ${item.selectedSize}` : ""}`;
+        errors.push(`${label} — stock disponible : ${available}`);
+      }
+    }
+    if (errors.length > 0) {
+      setStockErrors(errors);
+      return;
+    }
+    setStockErrors([]);
+
     setSubmitting(true);
     try {
       const id = await createOrder(getToken(), {
@@ -424,6 +444,19 @@ export default function Checkout() {
                 </span>
               </div>
             </div>
+
+            {stockErrors.length > 0 && (
+              <div className="mb-4 border border-red-200 bg-red-50 px-4 py-3 space-y-1">
+                <p className="text-[9px] uppercase tracking-[0.2em] text-red-500 font-medium mb-1">
+                  Stock insuffisant
+                </p>
+                {stockErrors.map((e, i) => (
+                  <p key={i} className="text-[10px] text-red-400 font-serif">
+                    {e}
+                  </p>
+                ))}
+              </div>
+            )}
 
             <button
               onClick={handleSubmit}
