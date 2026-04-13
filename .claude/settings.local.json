@@ -6,7 +6,25 @@
       "Bash(cmd:*)",
       "Bash(node -e \"const c = require\\('/c/Users/simou/GitHub/ia-store/node_modules/cloudinary/package.json'\\); console.log\\(c.version\\)\")",
       "Bash(PowerShell:*)",
-      "Bash(npx prisma:*)"
+      "Bash(npx prisma:*)",
+      "Bash(node_modules/.bin/prisma migrate:*)",
+      "Bash(node_modules/.bin/prisma db:*)",
+      "Bash(node_modules/.bin/prisma generate:*)",
+      "Bash(node_modules/.bin/tsc --noEmit)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(where npm:*)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(npm config:*)",
+      "Bash(node:*)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(npx.cmd tsc:*)",
+      "Bash(\"C:/Program Files/Git/bin/git.exe\" status)",
+      "Bash(\"C:/Program Files/Git/bin/git.exe\" diff --stat)",
+      "Bash('C:/Program Files/Git/bin/git.exe' add app/admin/components/AdminSidebar.tsx app/admin/components/AdminGuard.tsx app/admin/customers/page.tsx app/admin/layout.tsx app/admin/pos/ app/api/admin/customers/ app/api/admin/dashboard/route.ts app/api/admin/orders/route.ts 'app/api/admin/orders/[id]/route.ts' app/api/admin/pos/ app/api/admin/products/route.ts 'app/api/admin/products/[id]/route.ts' app/api/admin/upload/route.ts app/api/auth/login/route.ts app/api/cart/route.ts app/api/orders/route.ts 'app/api/products/[id]/route.ts' app/api/products/categories/route.ts app/api/products/route.ts app/api/profile/route.ts app/api/seed/route.ts app/context/AuthContext.tsx app/variables.ts lib/auth.ts lib/rbac.ts lib/rateLimit.ts lib/validation.ts prisma/schema.prisma services/admin.ts proxy.ts middleware.ts package.json package-lock.json)",
+      "Bash(\"C:/Program Files/Git/bin/git.exe\" status --short)",
+      "Bash(\"C:/Program Files/Git/bin/git.exe\" add \"prisma/migrations/20260412000001_add_product_soft_delete/\")",
+      "Bash(\"C:/Program Files/Git/bin/git.exe\" push origin main)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

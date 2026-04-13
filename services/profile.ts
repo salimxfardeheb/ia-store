@@ -21,6 +21,21 @@ export async function getProfile(token: string): Promise<Profile | null> {
   };
 }
 
+export async function changePassword(
+  token: string,
+  currentPassword: string,
+  newPassword: string
+): Promise<{ success: true } | { error: string }> {
+  const res = await fetch("/api/change-password", {
+    method:  "POST",
+    headers: { "Content-Type": "application/json", ...authHeader(token) },
+    body:    JSON.stringify({ currentPassword, newPassword }),
+  });
+  const data = await res.json();
+  if (!res.ok) return { error: data.message ?? data.error ?? "Erreur inconnue" };
+  return { success: true };
+}
+
 export async function saveProfile(
   token: string,
   data: Partial<Pick<Profile, "phone" | "city" | "address" | "postalCode">>

@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
-import { getProfile, saveProfile } from "@/services/profile";
+import { getProfile, saveProfile, changePassword } from "@/services/profile";
 import { Profile, WILAYAS } from "../variables";
 import { useRouter } from "next/navigation";
-import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp } from "lucide-react";
+import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp, KeyRound } from "lucide-react";
 
 export default function ProfilePage() {
   const { user, profile, logout, getToken } = useAuth();
@@ -24,6 +24,10 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const [pwForm, setPwForm] = useState({ current: "", next: "" });
+  const [pwState, setPwState] = useState<"idle" | "saving" | "success" | "error">("idle");
+  const [pwError, setPwError] = useState("");
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
@@ -43,6 +47,30 @@ export default function ProfilePage() {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
+  };
+
+  const handleChangePassword = async () => {
+    const token = getToken();
+    if (!token) return;
+    if (pwForm.next.length < 8) {
+      setPwError("Le nouveau mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+    if (pwForm.current === pwForm.next) {
+      setPwError("Le nouveau mot de passe doit être différent de l'ancien");
+      return;
+    }
+    setPwState("saving");
+    setPwError("");
+    const result = await changePassword(token, pwForm.current, pwForm.next);
+    if ("error" in result) {
+      setPwError(result.error);
+      setPwState("error");
+    } else {
+      setPwState("success");
+      setPwForm({ current: "", next: "" });
+      setTimeout(() => setPwState("idle"), 3000);
+    }
   };
 
   const handleLogout = () => {
@@ -203,6 +231,65 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Section — Changer le mot de passe */}
+      <div className="mb-12">
+        <div className="flex items-center gap-3 mb-6 border-b border-black/8 pb-4">
+          <KeyRound size={14} strokeWidth={1.5} className="text-black/30" />
+          <span className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif">
+            Changer le mot de passe
+          </span>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+              Mot de passe actuel
+            </label>
+            <input
+              type="password"
+              value={pwForm.current}
+              onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
+              placeholder="••••••••"
+              className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors"
+            />
+          </div>
+          <div>
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+              Nouveau mot de passe
+            </label>
+            <input
+              type="password"
+              value={pwForm.next}
+              onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
+              placeholder="••••••••  (min. 8 caractères)"
+              className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors"
+            />
+          </div>
+
+          {pwError && (
+            <p className="text-[10px] text-red-600 font-serif">{pwError}</p>
+          )}
+
+          <motion.button
+            onClick={handleChangePassword}
+            disabled={pwState === "saving" || !pwForm.current || !pwForm.next}
+            animate={{ opacity: pwState === "saving" ? 0.6 : 1 }}
+            className="w-full border border-black/20 text-black py-3 text-[10px] uppercase tracking-[0.2em] font-bold hover:border-black hover:bg-black hover:text-white transition-all flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {pwState === "success" ? (
+              <>
+                <Check size={14} strokeWidth={2} />
+                <span>Mot de passe modifié</span>
+              </>
+            ) : pwState === "saving" ? (
+              <span>Modification...</span>
+            ) : (
+              <span>Modifier le mot de passe</span>
+            )}
+          </motion.button>
         </div>
       </div>
 

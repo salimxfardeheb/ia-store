@@ -96,6 +96,18 @@ export const cartItemSchema = z.object({
 
 export const cartBodySchema = z.array(cartItemSchema).max(100, "Panier trop grand");
 
+// ─── Change password ──────────────────────────────────────────────────────────
+
+export const changePasswordSchema = z
+  .object({
+    currentPassword: z.string().min(1, "Mot de passe actuel requis"),
+    newPassword:     z.string().min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères"),
+  })
+  .refine((d) => d.currentPassword !== d.newPassword, {
+    message: "Le nouveau mot de passe doit être différent de l'ancien",
+    path:    ["newPassword"],
+  });
+
 // ─── Profile update ───────────────────────────────────────────────────────────
 
 export const profileUpdateSchema = z.object({
