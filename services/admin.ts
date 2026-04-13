@@ -1,11 +1,30 @@
-import { Product, Order, OrderStatus } from "@/app/variables";
+import { Product, Order, OrderStatus, Customer, PosCartItem } from "@/app/variables";
+
+// ─── Auth-aware fetch ─────────────────────────────────────────────────────────
+// Reads the JWT from localStorage and attaches it to every request automatically.
+// Call this instead of raw `fetch` for any admin endpoint.
+
+const TOKEN_KEY = "ia_token";
+
+function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...(options.headers ?? {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+  });
+}
 
 // ─── Dashboard ────────────────────────────────────────────────────────────────
 
 export interface DashboardKPI {
-  value: string;
-  trend: string;
-  isUp: boolean;
+  value:    string;
+  trend:    string;
+  isUp:     boolean;
   subtitle: string;
 }
 
@@ -18,18 +37,14 @@ export interface DashboardData {
   revenueChart: { name: string; revenue: number }[];
   categoryData: { name: string; value: number }[];
   recentOrders: {
-    id: string;
-    customer: string;
-    status: string;
-    statusStyle: string;
-    amount: string;
-    date: string;
+    id: string; customer: string; status: string;
+    statusStyle: string; amount: string; date: string;
   }[];
   lowStock: { name: string; size: string; stock: number; threshold: number }[];
 }
 
 export async function getDashboard(): Promise<DashboardData | null> {
-  const res = await fetch("/api/admin/dashboard");
+  const res = await authFetch("/api/admin/dashboard");
   if (!res.ok) return null;
   return res.json();
 }
@@ -37,7 +52,7 @@ export async function getDashboard(): Promise<DashboardData | null> {
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 export async function getAllProducts(): Promise<Product[]> {
-  const res = await fetch("/api/admin/products");
+  const res = await authFetch("/api/admin/products");
   if (!res.ok) return [];
   return res.json();
 }
@@ -49,48 +64,120 @@ export async function getCategories(): Promise<string[]> {
 }
 
 export async function addProduct(product: Product): Promise<Product> {
-  const res = await fetch("/api/admin/products", {
-    method: "POST",
+  const res = await authFetch("/api/admin/products", {
+    method:  "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
+    body:    JSON.stringify(product),
   });
-  if (!res.ok) throw new Error("Erreur création produit");
+  if (!res.ok) {
+    const { message, error } = await res.json().catch(() => ({ error: "Erreur création produit" }));
+    throw new Error(message ?? error ?? "Erreur création produit");
+  }
   return res.json();
 }
 
 export async function updateProduct(product: Product, id: string): Promise<Product> {
-  const res = await fetch(`/api/admin/products/${id}`, {
-    method: "PUT",
+  const res = await authFetch(`/api/admin/products/${id}`, {
+    method:  "PUT",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(product),
+    body:    JSON.stringify(product),
   });
-  if (!res.ok) throw new Error("Erreur mise à jour produit");
+  if (!res.ok) {
+    const { message, error } = await res.json().catch(() => ({ error: "Erreur mise à jour produit" }));
+    throw new Error(message ?? error ?? "Erreur mise à jour produit");
+  }
   return res.json();
 }
 
 export async function deleteProduct(id: string): Promise<void> {
-  await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
+  await authFetch(`/api/admin/products/${id}`, { method: "DELETE" });
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 export async function getOrders(): Promise<Order[]> {
-  const res = await fetch("/api/admin/orders");
+  const res = await authFetch("/api/admin/orders");
   if (!res.ok) return [];
   return res.json();
 }
 
 export async function updateOrder(id: string, status: OrderStatus): Promise<void> {
-  const res = await fetch(`/api/admin/orders/${id}`, {
-    method: "PATCH",
+  const res = await authFetch(`/api/admin/orders/${id}`, {
+    method:  "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
+    body:    JSON.stringify({ status }),
   });
 
   if (!res.ok) {
-    const { error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));
-    throw new Error(error);
+    const { message, error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));
+    throw new Error(message ?? error ?? "Erreur inconnue");
   }
+}
+
+// ─── Customers ────────────────────────────────────────────────────────────────
+
+export async function getCustomers(token: string, q = ""): Promise<Customer[]> {
+  const url = q
+    ? `/api/admin/customers?q=${encodeURIComponent(q)}`
+    : "/api/admin/customers";
+  const res = await authFetch(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) return [];
+  return res.json();
+}
+
+export async function createCustomer(
+  token: string,
+  data: { name: string; phone: string; email?: string; address?: string }
+): Promise<Customer> {
+  const res = await authFetch("/api/admin/customers", {
+    method:  "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization:  `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const { message, error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));
+    throw new Error(message ?? error ?? "Erreur inconnue");
+  }
+  return res.json();
+}
+
+// ─── POS ──────────────────────────────────────────────────────────────────────
+
+export interface PosPayload {
+  customer: {
+    id?:      string;
+    name:     string;
+    phone:    string;
+    email?:   string;
+    address?: string;
+  };
+  items:         PosCartItem[];
+  paymentMethod: "cash" | "card";
+  total:         number;
+}
+
+export async function createOfflineSale(
+  token: string,
+  payload: PosPayload
+): Promise<{ id: string }> {
+  const res = await authFetch("/api/admin/pos", {
+    method:  "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization:  `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const { message, error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));
+    throw new Error(message ?? error ?? "Erreur inconnue");
+  }
+  return res.json();
 }
 
 // ─── Upload ───────────────────────────────────────────────────────────────────
@@ -98,8 +185,11 @@ export async function updateOrder(id: string, status: OrderStatus): Promise<void
 export async function uploadImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-  if (!res.ok) throw new Error("Erreur upload image");
+  const res = await authFetch("/api/admin/upload", { method: "POST", body: formData });
+  if (!res.ok) {
+    const { message, error } = await res.json().catch(() => ({ error: "Erreur upload image" }));
+    throw new Error(message ?? error ?? "Erreur upload image");
+  }
   const { url } = await res.json();
   return url;
 }

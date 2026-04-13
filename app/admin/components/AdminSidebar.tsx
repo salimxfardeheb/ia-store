@@ -3,12 +3,13 @@
 import { ChevronRight, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { NAV_ITEMS, BOTTOM_NAV } from "@/app/variables";
+import { NAV_ITEMS, BOTTOM_NAV, AdminRole } from "@/app/variables";
 import Logo from "@/app/components/logo";
+import { useAuth } from "@/app/context/AuthContext";
 
 function SidebarLink({
   href, icon: Icon, label, active,
-}: { href: string; icon: any; label: string; active: boolean }) {
+}: { href: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string; active: boolean }) {
   return (
     <Link
       href={href}
@@ -27,29 +28,39 @@ function SidebarLink({
   );
 }
 
-export default function AdminSidebar() {
-  const pathname = usePathname();
-  const router   = useRouter();
+const ROLE_LABELS: Record<string, string> = {
+  ADMIN:  "Propriétaire",
+  SELLER: "Vendeur",
+  CLIENT: "Client",
+};
 
-  const handleLogout = async () => {
+export default function AdminSidebar() {
+  const pathname  = usePathname();
+  const router    = useRouter();
+  const { user, logout } = useAuth();
+
+  // AdminGuard ensures this component only renders when user is authenticated.
+  // Fall back to the most restrictive role (SELLER) to be safe if somehow called without a user.
+  const role = (user?.role ?? "SELLER") as AdminRole;
+
+  const handleLogout = () => {
+    logout();
     router.push("/");
   };
 
+  // Filter nav items by the current user's role
+  const visibleNav    = NAV_ITEMS.filter((item) => item.roles.includes(role));
+  const visibleBottom = BOTTOM_NAV.filter((item) => item.roles.includes(role));
+
   return (
-    <aside
-      className="w-56 fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-white border-[rgba(0,0,0,0.08)] "
-    >
+    <aside className="w-56 fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-white border-[rgba(0,0,0,0.08)]">
       {/* Brand */}
       <div className="px-6 pt-8 pb-6 border-b border-[rgba(0,0,0,0.08)]">
         <Link href="/admin" className="flex flex-col">
-          <span
-            className="mx-auto"
-          >
+          <span className="mx-auto">
             <Logo />
           </span>
-          <span
-            className="text-[10px] uppercase tracking-[0.45em] text-black/50 mt-3 font-serif text-center"
-          >
+          <span className="text-[10px] uppercase tracking-[0.45em] text-black/50 mt-3 font-serif text-center">
             Admin Console
           </span>
         </Link>
@@ -60,7 +71,7 @@ export default function AdminSidebar() {
 
       {/* Primary nav */}
       <nav className="flex-1 py-4 space-y-0.5 px-2 overflow-y-auto">
-        {NAV_ITEMS.map((item) => (
+        {visibleNav.map((item) => (
           <SidebarLink
             key={item.id}
             href={item.href}
@@ -76,8 +87,8 @@ export default function AdminSidebar() {
       </nav>
 
       {/* Bottom nav + user */}
-      <div className="border-t py-4 px-2 space-y-0.5 border-[rgba(0,0,0,0.08)] " >
-        {BOTTOM_NAV.map((item) => (
+      <div className="border-t py-4 px-2 space-y-0.5 border-[rgba(0,0,0,0.08)]">
+        {visibleBottom.map((item) => (
           <SidebarLink
             key={item.id}
             href={item.href}
@@ -88,13 +99,15 @@ export default function AdminSidebar() {
         ))}
 
         {/* User row */}
-        <div className="px-4 pt-4 mt-2 border-t border-[rgba(0,0,0,0.08)]" >
+        <div className="px-4 pt-4 mt-2 border-t border-[rgba(0,0,0,0.08)]">
           <div className="flex items-center justify-between">
             <div className="min-w-0">
               <p className="text-[10px] uppercase tracking-widest text-black truncate font-serif">
-                {"Admin"}
+                {user?.name ?? "Admin"}
               </p>
-              <p className="text-[9px] text-black/30 truncate mt-0.5">{'AD'}</p>
+              <p className="text-[9px] text-black/30 truncate mt-0.5 font-serif">
+                {ROLE_LABELS[user?.role ?? "ADMIN"] ?? "Admin"}
+              </p>
             </div>
             <button
               onClick={handleLogout}

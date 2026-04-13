@@ -1,81 +1,129 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin, isNextResponse } from "@/lib/rbac";
+import { apiError } from "@/lib/validation";
 import { OrderStatus } from "@/app/variables";
 import { isValidTransition } from "@/lib/orderStatus";
 
 function toPrismaOrderStatus(s: OrderStatus) {
-  return s.toUpperCase() as "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "RETURNED";
+  return s.toUpperCase() as
+    | "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "RETURNED";
 }
 
-// Statuts depuis lesquels le stock a déjà été prélevé
+// Statuses where stock has already been decremented
 const STOCK_TAKEN: OrderStatus[] = ["confirmed", "shipped", "delivered"];
 
-// PATCH /api/admin/orders/:id  — mettre à jour le statut + synchroniser le stock
+// PATCH /api/admin/orders/:id — update status + synchronise stock (ADMIN + SELLER)
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
-  const { status }: { status: OrderStatus } = await req.json();
+  const auth = requireAdmin(req);
+  if (isNextResponse(auth)) return auth;
 
-  // Récupère la commande avec ses articles en une seule requête
+  const { id } = await params;
+  const body = await req.json().catch(() => null);
+
+  if (!body?.status) {
+    return apiError("VALIDATION_ERROR", "Statut requis", 400);
+  }
+
+  const { status }: { status: OrderStatus } = body;
+
   const order = await prisma.order.findUnique({
-    where: { id },
+    where:  { id },
     select: {
       status: true,
-      items: { select: { productId: true, quantity: true, size: true } },
+      items:  { select: { productId: true, quantity: true, size: true } },
     },
   });
 
   if (!order) {
-    return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
+    return apiError("NOT_FOUND", "Commande introuvable", 404);
   }
 
   const currentStatus = order.status.toLowerCase() as OrderStatus;
 
   if (!isValidTransition(currentStatus, status)) {
-    return NextResponse.json(
-      { error: `Transition invalide : "${currentStatus}" → "${status}"` },
-      { status: 422 }
+    return apiError(
+      "INVALID_TRANSITION",
+      `Transition invalide : "${currentStatus}" → "${status}"`,
+      422
     );
   }
 
-  // Détermine si le stock doit être modifié
   const shouldDecrement = status === "confirmed";
   const shouldIncrement =
     status === "returned" ||
     (status === "cancelled" && STOCK_TAKEN.includes(currentStatus));
 
-  // Transaction atomique : mise à jour statut + stock en une seule opération
-  const updated = await prisma.$transaction(async (tx) => {
-    if (shouldDecrement || shouldIncrement) {
-      for (const item of order.items) {
-        if (!item.productId) continue;
+  try {
+    const updated = await prisma.$transaction(async (tx) => {
+      if (shouldDecrement) {
+        for (const item of order.items) {
+          if (!item.productId) continue;
 
-        const delta = shouldDecrement ? -item.quantity : item.quantity;
-
-        // 1. Mettre à jour le stock total du produit
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { increment: delta } },
-        });
-
-        // 2. Mettre à jour la quantité de la taille spécifique (si connue)
-        if (item.size) {
-          await tx.productSize.updateMany({
-            where: { productId: item.productId, size: item.size },
-            data: { quantity: { increment: delta } },
+          // Re-read the product inside the transaction for a consistent view
+          const product = await tx.product.findUnique({
+            where:   { id: item.productId },
+            include: { sizes: item.size ? { where: { size: item.size } } : false },
           });
+
+          if (!product) continue;
+
+          if (item.size) {
+            // Atomic conditional decrement — eliminates TOCTOU race condition
+            const sizeUpdated = await tx.productSize.updateMany({
+              where: { productId: item.productId, size: item.size, quantity: { gte: item.quantity } },
+              data:  { quantity: { decrement: item.quantity } },
+            });
+            if (sizeUpdated.count === 0) {
+              const sizeRow = (product as any).sizes?.[0];
+              throw new Error(
+                `Stock insuffisant pour un article (${item.size}) — disponible : ${sizeRow?.quantity ?? 0}`
+              );
+            }
+          }
+
+          const stockUpdated = await tx.product.updateMany({
+            where: { id: item.productId, stock: { gte: item.quantity } },
+            data:  { stock: { decrement: item.quantity } },
+          });
+          if (stockUpdated.count === 0) {
+            throw new Error(
+              `Stock insuffisant — disponible : ${product.stock}, requis : ${item.quantity}`
+            );
+          }
         }
       }
-    }
 
-    // Mise à jour du statut de la commande
-    return tx.order.update({
-      where: { id },
-      data: { status: toPrismaOrderStatus(status) },
+      if (shouldIncrement) {
+        for (const item of order.items) {
+          if (!item.productId) continue;
+
+          await tx.product.update({
+            where: { id: item.productId },
+            data:  { stock: { increment: item.quantity } },
+          });
+
+          if (item.size) {
+            await tx.productSize.updateMany({
+              where: { productId: item.productId, size: item.size },
+              data:  { quantity: { increment: item.quantity } },
+            });
+          }
+        }
+      }
+
+      return tx.order.update({
+        where: { id },
+        data:  { status: toPrismaOrderStatus(status) },
+      });
     });
-  });
 
-  return NextResponse.json({ id: updated.id, status: updated.status.toLowerCase() });
+    return NextResponse.json({ id: updated.id, status: updated.status.toLowerCase() });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erreur inconnue";
+    return apiError("STOCK_INSUFFICIENT", message, 422);
+  }
 }

@@ -1,7 +1,10 @@
+import type React from "react";
 import {
   LayoutDashboard, ShoppingBag, Package, Users, BarChart3,
-  Wallet, Calendar, Settings
+  Wallet, Calendar, Settings, ShoppingCart
 } from "lucide-react";
+
+export type AdminRole = "ADMIN" | "SELLER";
 
 export const WILAYAS = [
   "Adrar",
@@ -74,6 +77,29 @@ export interface Product {
   extraImages?: string[];
 }
 
+//  ─── Customer (ventes en magasin) ────────────────────────────────────────────
+
+export interface Customer {
+  id:        string;
+  name:      string;
+  phone:     string;
+  email?:    string | null;
+  address?:  string | null;
+  createdAt: string;
+  _count?:   { orders: number };
+}
+
+export interface PosCartItem {
+  productId: string;
+  name:      string;
+  price:     number;
+  quantity:  number;
+  size?:     string;
+  mainImage: string;
+  category:  string;
+  maxStock:  number; // used for qty cap validation
+}
+
 //  ─── Profile  ────────────────────────────────────────────────────────────────
 
 export interface Profile extends UserProfile {
@@ -95,11 +121,12 @@ export interface UserProfile {
 //  ─── Orders  ────────────────────────────────────────────────────────────────
 
 export interface Order {
-  id: string;
-  form: OrderForm;
-  items: CartItem[];
-  total: number;
-  status: OrderStatus;
+  id:        string;
+  form:      OrderForm;
+  items:     CartItem[];
+  total:     number;
+  status:    OrderStatus;
+  channel?:  "online" | "offline";
   createdAt: Date;
 }
 
@@ -152,18 +179,19 @@ export const STATUS_STYLE: Record<string, string> = {
   "Archivé":  "bg-black/5 text-black/40",
 };
 
-export const NAV_ITEMS = [
-  { id: "overview",   icon: LayoutDashboard, label: "Vue d'ensemble",  href: "/admin"            },
-  { id: "catalog",    icon: Package,         label: "Catalogue",       href: "/admin/catalog"    },
-  { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders"     },
-  { id: "customers",  icon: Users,           label: "Clients",         href: "/admin/customers"  },
-  { id: "analytics",  icon: BarChart3,       label: "Analytiques",     href: "/admin/analytics"  },
-  { id: "finance",    icon: Wallet,          label: "Finance",         href: "/admin/finance"    },
+export const NAV_ITEMS: { id: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string; href: string; roles: AdminRole[] }[] = [
+  { id: "overview",   icon: LayoutDashboard, label: "Vue d'ensemble",  href: "/admin",            roles: ["ADMIN"]            },
+  { id: "catalog",    icon: Package,         label: "Catalogue",       href: "/admin/catalog",    roles: ["ADMIN"]            },
+  { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders",     roles: ["ADMIN"]            },
+  { id: "pos",        icon: ShoppingCart,    label: "Nouvelle vente",  href: "/admin/pos",        roles: ["ADMIN", "SELLER"]  },
+  { id: "customers",  icon: Users,           label: "Clients",         href: "/admin/customers",  roles: ["ADMIN", "SELLER"]  },
+  { id: "analytics",  icon: BarChart3,       label: "Analytiques",     href: "/admin/analytics",  roles: ["ADMIN"]            },
+  { id: "finance",    icon: Wallet,          label: "Finance",         href: "/admin/finance",    roles: ["ADMIN"]            },
 ];
 
-export const BOTTOM_NAV = [
-  { id: "planning",  icon: Calendar, label: "Planning",    href: "/admin/planning"  },
-  { id: "settings",  icon: Settings, label: "Paramètres",  href: "/admin/settings"  },
+export const BOTTOM_NAV: { id: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string; href: string; roles: AdminRole[] }[] = [
+  { id: "planning",  icon: Calendar, label: "Planning",    href: "/admin/planning",  roles: ["ADMIN"] },
+  { id: "settings",  icon: Settings, label: "Paramètres",  href: "/admin/settings",  roles: ["ADMIN"] },
 ];
 
 export const SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL", "Unique"];

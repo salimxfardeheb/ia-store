@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromHeader, verifyToken } from "@/lib/auth";
+import { createOrderSchema, safeParse, apiError } from "@/lib/validation";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromHeader(req.headers.get("Authorization"));
@@ -8,13 +9,13 @@ function getUser(req: NextRequest) {
   return verifyToken(token);
 }
 
-// GET /api/orders  — commandes de l'utilisateur connecté
+// GET /api/orders — orders of the authenticated user
 export async function GET(req: NextRequest) {
   const user = getUser(req);
-  if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 
   const orders = await prisma.order.findMany({
-    where: { userId: user.id },
+    where:   { userId: user.id },
     include: { items: true },
     orderBy: { createdAt: "desc" },
   });
@@ -22,44 +23,65 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(orders);
 }
 
-// POST /api/orders  — créer une commande
+// POST /api/orders — create an online order (guest or authenticated)
 export async function POST(req: NextRequest) {
-  try {
-    const user = getUser(req);
-    const body = await req.json();
-    const { form, items, total } = body;
+  const user = getUser(req);
 
+  const body = await req.json().catch(() => null);
+  const [data, err] = safeParse(createOrderSchema, body);
+  if (err) return err;
+
+  const { form, items } = data;
+
+  // Fetch all referenced products from DB to get authoritative prices
+  const productIds  = [...new Set(items.map((i) => i.id))];
+  const dbProducts  = await prisma.product.findMany({
+    where:  { id: { in: productIds }, status: "ACTIVE", deletedAt: null },
+    select: { id: true, name: true, price: true, mainImage: true, category: true },
+  });
+
+  if (dbProducts.length !== productIds.length) {
+    return apiError(
+      "PRODUCT_UNAVAILABLE",
+      "Un ou plusieurs produits sont indisponibles",
+      422
+    );
+  }
+
+  const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+  // Recalculate total server-side — never trust client-provided prices
+  const serverTotal = items.reduce((sum, item) => {
+    return sum + productMap.get(item.id)!.price * item.quantity;
+  }, 0);
+
+  try {
     const order = await prisma.order.create({
       data: {
-        userId: user?.id ?? null,
-        total,
-        status: "PENDING",
-        paymentMethod: form.paymentMethod ?? "cash",
-        deliveryType: form.deliveryType ?? "home",
-        name: form.name,
-        phone: form.phone,
-        email: form.email ?? "",
-        city: form.city,
-        address: form.address,
-        postalCode: form.postalCode,
+        userId:        user?.id ?? null,
+        total:         serverTotal,
+        status:        "PENDING",
+        paymentMethod: form.paymentMethod,
+        deliveryType:  form.deliveryType,
+        name:          form.name,
+        phone:         form.phone,
+        email:         form.email,
+        city:          form.city,
+        address:       form.address,
+        postalCode:    form.postalCode,
         items: {
-          create: (items as Array<{
-            id: string;
-            name: string;
-            price: number;
-            quantity: number;
-            selectedSize?: string;
-            mainImage: string;
-            category: string;
-          }>).map((item) => ({
-            ...(item.id ? { product: { connect: { id: item.id } } } : {}),
-            name: item.name,
-            price: item.price,
-            quantity: item.quantity,
-            size: item.selectedSize ?? null,
-            mainImage: item.mainImage ?? "",
-            category: item.category ?? "",
-          })),
+          create: items.map((item) => {
+            const p = productMap.get(item.id)!;
+            return {
+              ...(item.id ? { product: { connect: { id: item.id } } } : {}),
+              name:      p.name,
+              price:     p.price,  // DB price
+              quantity:  item.quantity,
+              size:      item.selectedSize ?? null,
+              mainImage: p.mainImage,
+              category:  p.category,
+            };
+          }),
         },
       },
     });
@@ -67,7 +89,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ id: order.id }, { status: 201 });
   } catch (err) {
     console.error("[POST /api/orders]", err);
-    const message = err instanceof Error ? err.message : "Erreur inconnue";
-    return NextResponse.json({ error: message }, { status: 500 });
+    return apiError("INTERNAL_ERROR", "Erreur lors de la création de la commande", 500);
   }
 }

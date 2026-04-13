@@ -10,49 +10,52 @@ import {
 import { UserProfile } from "../variables";
 
 interface AuthUser {
-  id: string;
+  id:    string;
   email: string;
-  name: string;
-  role: "ADMIN" | "CLIENT";
+  name:  string;
+  role:  "ADMIN" | "SELLER" | "CLIENT";
 }
 
 interface AuthContextType {
-  user: AuthUser | null;
-  profile: UserProfile | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, name: string, password: string) => Promise<void>;
-  logout: () => void;
+  user:            AuthUser | null;
+  profile:         UserProfile | null;
+  isLoading:       boolean;
   isAuthenticated: boolean;
-  getToken: () => string | null;
+  login:           (email: string, password: string) => Promise<void>;
+  register:        (email: string, name: string, password: string) => Promise<void>;
+  logout:          () => void;
+  getToken:        () => string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const TOKEN_KEY = "ia_token";
-const USER_KEY = "ia_user";
+const USER_KEY  = "ia_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user,      setUser]      = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Restaurer la session depuis localStorage au chargement
+  // Restore session from localStorage on first render (client-only)
   useEffect(() => {
     const stored = localStorage.getItem(USER_KEY);
-    const token = localStorage.getItem(TOKEN_KEY);
+    const token  = localStorage.getItem(TOKEN_KEY);
     if (stored && token) {
       setUser(JSON.parse(stored));
     }
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/login", {
-      method: "POST",
+      method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body:    JSON.stringify({ email, password }),
     });
 
     if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error ?? "Erreur de connexion");
+      const { message, error } = await res.json();
+      throw new Error(message ?? error ?? "Erreur de connexion");
     }
 
     const { token, user: authUser } = await res.json();
@@ -63,14 +66,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (email: string, name: string, password: string) => {
     const res = await fetch("/api/auth/register", {
-      method: "POST",
+      method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, name, password }),
+      body:    JSON.stringify({ email, name, password }),
     });
 
     if (!res.ok) {
-      const { error } = await res.json();
-      throw new Error(error ?? "Erreur d'inscription");
+      const { message, error } = await res.json();
+      throw new Error(message ?? error ?? "Erreur d'inscription");
     }
 
     const { token, user: authUser } = await res.json();
@@ -85,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  const getToken = () => localStorage.getItem(TOKEN_KEY);
+  const getToken = () =>
+    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
 
-  // profile = subset de UserProfile compatible avec les pages existantes
   const profile: UserProfile | null = user
     ? { uid: user.id, email: user.email, name: user.name }
     : null;
@@ -97,6 +100,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         profile,
+        isLoading,
         login,
         register,
         logout,

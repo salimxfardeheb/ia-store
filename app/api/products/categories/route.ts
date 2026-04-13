@@ -4,8 +4,8 @@ import { prisma } from "@/lib/prisma";
 // GET /api/products/categories
 export async function GET() {
   const rows = await prisma.product.findMany({
-    where: { status: "ACTIVE" },
-    select: { category: true },
+    where:    { status: "ACTIVE", deletedAt: null },
+    select:   { category: true },
     distinct: ["category"],
   });
 
