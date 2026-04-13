@@ -24,7 +24,8 @@
       "Bash(\"C:/Program Files/Git/bin/git.exe\" status --short)",
       "Bash(\"C:/Program Files/Git/bin/git.exe\" add \"prisma/migrations/20260412000001_add_product_soft_delete/\")",
       "Bash(\"C:/Program Files/Git/bin/git.exe\" push origin main)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(grep -v \"^$\")"
     ]
   }
 }

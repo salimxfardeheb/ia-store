@@ -55,15 +55,6 @@ export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1, "Le panier est vide"),
 });
 
-// ─── Customer ─────────────────────────────────────────────────────────────────
-
-export const customerWriteSchema = z.object({
-  name:    z.string().min(1, "Nom requis").max(200),
-  phone:   z.string().min(8, "Téléphone invalide").max(20),
-  email:   z.string().email().or(z.literal("")).optional(),
-  address: z.string().max(500).optional(),
-});
-
 // ─── POS ──────────────────────────────────────────────────────────────────────
 
 // productId + quantity + size are the only fields trusted from the client.
@@ -76,7 +67,6 @@ export const posItemSchema = z.object({
 
 export const posBodySchema = z.object({
   customer: z.object({
-    id:      z.string().optional(),
     name:    z.string().min(1, "Nom client requis").max(200),
     phone:   z.string().min(8, "Téléphone invalide").max(20),
     email:   z.string().email().or(z.literal("")).optional(),
@@ -95,6 +85,19 @@ export const cartItemSchema = z.object({
 });
 
 export const cartBodySchema = z.array(cartItemSchema).max(100, "Panier trop grand");
+
+// ─── User management (admin) ──────────────────────────────────────────────────
+
+export const userCreateSchema = z.object({
+  name:     z.string().min(1, "Nom requis").max(200),
+  email:    z.string().email("Email invalide"),
+  password: z.string().min(8, "Le mot de passe doit contenir au moins 8 caractères"),
+  role:     z.enum(["ADMIN", "SELLER", "CLIENT"]),
+});
+
+export const userRoleSchema = z.object({
+  role: z.enum(["ADMIN", "SELLER", "CLIENT"]),
+});
 
 // ─── Change password ──────────────────────────────────────────────────────────
 

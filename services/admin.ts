@@ -1,4 +1,5 @@
-import { Product, Order, OrderStatus, Customer, PosCartItem } from "@/app/variables";
+import { Product, Order, OrderStatus, PosCartItem } from "@/app/variables";
+import type { UnifiedCustomer } from "@/app/api/admin/customers/route";
 
 // ─── Auth-aware fetch ─────────────────────────────────────────────────────────
 // Reads the JWT from localStorage and attaches it to every request automatically.
@@ -114,9 +115,11 @@ export async function updateOrder(id: string, status: OrderStatus): Promise<void
   }
 }
 
-// ─── Customers ────────────────────────────────────────────────────────────────
+// ─── Customers (unified: online Users + offline order contacts) ───────────────
 
-export async function getCustomers(token: string, q = ""): Promise<Customer[]> {
+export { type UnifiedCustomer };
+
+export async function getCustomers(token: string, q = ""): Promise<UnifiedCustomer[]> {
   const url = q
     ? `/api/admin/customers?q=${encodeURIComponent(q)}`
     : "/api/admin/customers";
@@ -127,30 +130,10 @@ export async function getCustomers(token: string, q = ""): Promise<Customer[]> {
   return res.json();
 }
 
-export async function createCustomer(
-  token: string,
-  data: { name: string; phone: string; email?: string; address?: string }
-): Promise<Customer> {
-  const res = await authFetch("/api/admin/customers", {
-    method:  "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization:  `Bearer ${token}`,
-    },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) {
-    const { message, error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));
-    throw new Error(message ?? error ?? "Erreur inconnue");
-  }
-  return res.json();
-}
-
 // ─── POS ──────────────────────────────────────────────────────────────────────
 
 export interface PosPayload {
   customer: {
-    id?:      string;
     name:     string;
     phone:    string;
     email?:   string;

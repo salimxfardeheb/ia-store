@@ -31,19 +31,6 @@ model User {
   cartItems CartItem[]
 }
 
-// ─── Customer (ventes en magasin) ────────────────────────────────────────────
-
-model Customer {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String   @unique
-  email     String?
-  address   String?
-  createdAt DateTime @default(now())
-
-  orders Order[]
-}
-
 // ─── Product ─────────────────────────────────────────────────────────────────
 
 model Product {
@@ -88,8 +75,6 @@ model Order {
   id            String       @id @default(cuid())
   user          User?        @relation(fields: [userId], references: [id])
   userId        String?
-  customer      Customer?    @relation(fields: [customerId], references: [id])
-  customerId    String?
   channel       OrderChannel @default(ONLINE)
   total         Float
   status        OrderStatus  @default(PENDING)

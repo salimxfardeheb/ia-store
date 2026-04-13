@@ -1,7 +1,7 @@
 import type React from "react";
 import {
   LayoutDashboard, ShoppingBag, Package, Users, BarChart3,
-  Wallet, Calendar, Settings, ShoppingCart
+  Wallet, Calendar, Settings, ShoppingCart, UserRound
 } from "lucide-react";
 
 export type AdminRole = "ADMIN" | "SELLER";
@@ -75,18 +75,6 @@ export interface Product {
   createdAt: string;
   mainImage: string;
   extraImages?: string[];
-}
-
-//  ─── Customer (ventes en magasin) ────────────────────────────────────────────
-
-export interface Customer {
-  id:        string;
-  name:      string;
-  phone:     string;
-  email?:    string | null;
-  address?:  string | null;
-  createdAt: string;
-  _count?:   { orders: number };
 }
 
 export interface PosCartItem {
@@ -185,6 +173,7 @@ export const NAV_ITEMS: { id: string; icon: React.ComponentType<{ size?: number;
   { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders",     roles: ["ADMIN"]            },
   { id: "pos",        icon: ShoppingCart,    label: "Nouvelle vente",  href: "/admin/pos",        roles: ["ADMIN", "SELLER"]  },
   { id: "customers",  icon: Users,           label: "Clients",         href: "/admin/customers",  roles: ["ADMIN", "SELLER"]  },
+  { id: "users",      icon: UserRound,       label: "Comptes",         href: "/admin/users",      roles: ["ADMIN"]            },
   { id: "analytics",  icon: BarChart3,       label: "Analytiques",     href: "/admin/analytics",  roles: ["ADMIN"]            },
   { id: "finance",    icon: Wallet,          label: "Finance",         href: "/admin/finance",    roles: ["ADMIN"]            },
 ];

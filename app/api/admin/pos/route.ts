@@ -16,36 +16,7 @@ export async function POST(req: NextRequest) {
 
   try {
     const order = await prisma.$transaction(async (tx) => {
-      // 1. Resolve customer
-      let customerId: string;
-      if (customer.id) {
-        // Verify the customer actually exists — never trust an unverified FK
-        const existing = await tx.customer.findUnique({
-          where:  { id: customer.id },
-          select: { id: true },
-        });
-        if (!existing) throw new Error("Client introuvable");
-        customerId = customer.id;
-      } else {
-        const existing = await tx.customer.findUnique({
-          where: { phone: customer.phone.trim() },
-        });
-        if (existing) {
-          customerId = existing.id;
-        } else {
-          const created = await tx.customer.create({
-            data: {
-              name:    customer.name.trim(),
-              phone:   customer.phone.trim(),
-              email:   customer.email?.trim()   || null,
-              address: customer.address?.trim() || null,
-            },
-          });
-          customerId = created.id;
-        }
-      }
-
-      // 2. Fetch DB prices and build product map — never trust client-supplied values
+      // 1. Fetch DB prices and build product map — never trust client-supplied values
       const productIds = items.map((i) => i.productId);
       const dbProducts = await tx.product.findMany({
         where:   { id: { in: productIds } },
@@ -64,7 +35,7 @@ export async function POST(req: NextRequest) {
           throw new Error(`Produit indisponible : ${product.name}`);
         }
 
-        // 3. Atomic conditional stock decrement — eliminates TOCTOU race condition
+        // 2. Atomic conditional stock decrement — eliminates TOCTOU race condition
         if (item.size) {
           const sizeUpdated = await tx.productSize.updateMany({
             where: { productId: item.productId, size: item.size, quantity: { gte: item.quantity } },
@@ -89,16 +60,15 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // 4. Recalculate total server-side from DB prices — never trust client total
+      // 3. Recalculate total server-side — never trust client total
       const serverTotal = items.reduce((sum, item) => {
         const p = productMap.get(item.productId)!;
         return sum + p.price * item.quantity;
       }, 0);
 
-      // 5. Create order: CONFIRMED + OFFLINE
+      // 4. Create order: CONFIRMED + OFFLINE — snapshot fields only, no FK to customer
       return tx.order.create({
         data: {
-          customerId,
           channel:       "OFFLINE",
           status:        "CONFIRMED",
           total:         serverTotal,

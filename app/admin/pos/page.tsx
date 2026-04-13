@@ -7,9 +7,10 @@ import {
   User, AlertCircle, CreditCard, Banknote, ChevronRight,
 } from "lucide-react";
 import AdminHeader from "../components/AdminHeader";
-import { Product, Customer, PosCartItem } from "@/app/variables";
+import { Product, PosCartItem } from "@/app/variables";
+import type { UnifiedCustomer } from "@/app/api/admin/customers/route";
 import { getAllProducts as getShopProducts } from "@/services/products";
-import { getCustomers, createCustomer, createOfflineSale } from "@/services/admin";
+import { getCustomers, createOfflineSale } from "@/services/admin";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -216,8 +217,8 @@ export default function PosPage() {
 
   // Customer
   const [customerSearch,    setCustomerSearch]    = useState("");
-  const [customerResults,   setCustomerResults]   = useState<Customer[]>([]);
-  const [selectedCustomer,  setSelectedCustomer]  = useState<Customer | null>(null);
+  const [customerResults,   setCustomerResults]   = useState<UnifiedCustomer[]>([]);
+  const [selectedCustomer,  setSelectedCustomer]  = useState<UnifiedCustomer | null>(null);
   const [showNewCustomer,   setShowNewCustomer]   = useState(false);
   const [newCustomerForm,   setNewCustomerForm]   = useState({ name: "", phone: "", email: "", address: "" });
   const [customerSearching, setCustomerSearching] = useState(false);
@@ -341,29 +342,24 @@ export default function PosPage() {
     (e: React.ChangeEvent<HTMLInputElement>) =>
       setNewCustomerForm((f) => ({ ...f, [field]: e.target.value }));
 
-  const handleCreateCustomer = async () => {
+  const handleConfirmNewCustomer = () => {
     if (!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()) return;
-    try {
-      const c = await createCustomer(token, {
-        name:    newCustomerForm.name.trim(),
-        phone:   newCustomerForm.phone.trim(),
-        email:   newCustomerForm.email.trim()   || undefined,
-        address: newCustomerForm.address.trim() || undefined,
-      });
-      setSelectedCustomer(c);
-      setShowNewCustomer(false);
-      setCustomerSearch("");
-      setCustomerResults([]);
-    } catch (err) {
-      // DUPLICATE_PHONE: silently re-use the existing customer instead of erroring
-      if (err instanceof Error && err.message.includes("existe déjà")) {
-        const existing = await getCustomers(token, newCustomerForm.phone.trim());
-        if (existing[0]) setSelectedCustomer(existing[0]);
-        setShowNewCustomer(false);
-      } else {
-        setSaleError(err instanceof Error ? err.message : "Erreur création client");
-      }
-    }
+    // Build a synthetic UnifiedCustomer from the form (no DB write needed)
+    const synthetic: UnifiedCustomer = {
+      id:          `new:${newCustomerForm.phone.trim()}`,
+      name:        newCustomerForm.name.trim(),
+      phone:       newCustomerForm.phone.trim(),
+      email:       newCustomerForm.email.trim() || null,
+      address:     newCustomerForm.address.trim() || null,
+      channel:     "offline",
+      ordersCount: 0,
+      lastOrderAt: null,
+      createdAt:   new Date().toISOString(),
+    };
+    setSelectedCustomer(synthetic);
+    setShowNewCustomer(false);
+    setCustomerSearch("");
+    setCustomerResults([]);
   };
 
   // ── Confirm sale ──
@@ -381,18 +377,7 @@ export default function PosPage() {
       return;
     }
 
-    const customer = selectedCustomer ?? (
-      newCustomerForm.phone.trim()
-        ? {
-            name:    newCustomerForm.name || "Client",
-            phone:   newCustomerForm.phone,
-            email:   newCustomerForm.email,
-            address: newCustomerForm.address,
-          }
-        : null
-    );
-
-    if (!customer) {
+    if (!selectedCustomer) {
       setSaleError("Veuillez sélectionner ou créer un client");
       isSubmitting.current = false;
       return;
@@ -401,20 +386,12 @@ export default function PosPage() {
     setConfirming(true);
     try {
       const { id } = await createOfflineSale(token, {
-        customer: selectedCustomer
-          ? {
-              id:      selectedCustomer.id,
-              name:    selectedCustomer.name,
-              phone:   selectedCustomer.phone,
-              email:   selectedCustomer.email   ?? undefined,
-              address: selectedCustomer.address ?? undefined,
-            }
-          : {
-              name:    newCustomerForm.name || "Client",
-              phone:   newCustomerForm.phone,
-              email:   newCustomerForm.email   || undefined,
-              address: newCustomerForm.address || undefined,
-            },
+        customer: {
+          name:    selectedCustomer.name,
+          phone:   selectedCustomer.phone ?? "",
+          email:   selectedCustomer.email   ?? undefined,
+          address: selectedCustomer.address ?? undefined,
+        },
         items: cart,
         paymentMethod,
         total: cartTotal,
@@ -537,7 +514,7 @@ export default function PosPage() {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={handleCreateCustomer}
+                    onClick={handleConfirmNewCustomer}
                     disabled={!newCustomerForm.name.trim() || !newCustomerForm.phone.trim()}
                     className="text-[10px] uppercase tracking-widest bg-black text-white px-4 py-2 font-serif disabled:opacity-30 hover:bg-black/80 transition-colors"
                   >
