@@ -13,11 +13,7 @@ export default function ProductGrid() {
   const { addToCart } = useCart();
 
   useEffect(() => {
-    const loadProducts = async () => {
-      const data = await getAllProducts();
-      setProducts(data);
-    };
-    loadProducts();
+    getAllProducts(undefined, 6).then(setProducts);
   }, []);
 
   return (
@@ -42,7 +38,7 @@ export default function ProductGrid() {
 
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-        {products.slice(0, 6).map((product, index) => (
+        {products.map((product, index) => (
           <motion.div
             key={product.id}
             initial={{ opacity: 0, y: 20 }}

@@ -1,46 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireOwner, isNextResponse } from "@/lib/rbac";
-import { productWriteSchema, safeParse, apiError } from "@/lib/validation";
-import { Product } from "@/app/variables";
-
-// ─── Status mapping ───────────────────────────────────────────────────────────
-
-function toPrismaStatus(s: string) {
-  if (s === "Actif")   return "ACTIVE";
-  if (s === "Archivé") return "ARCHIVED";
-  return "DRAFT";
-}
-
-function fromPrismaStatus(s: string): Product["status"] {
-  if (s === "ACTIVE")   return "Actif";
-  if (s === "ARCHIVED") return "Archivé";
-  return "Brouillon";
-}
-
-function toProduct(p: {
-  id: string; name: string; category: string; price: number; stock: number;
-  status: string; mainImage: string; extraImages: string; createdAt: Date;
-  sizes: { size: string; quantity: number }[];
-}): Product {
-  let extraImages: string[] = [];
-  try { extraImages = JSON.parse(p.extraImages || "[]"); } catch { /* ignore */ }
-
-  return {
-    id:          p.id,
-    name:        p.name,
-    category:    p.category,
-    price:       p.price,
-    stock:       p.stock,
-    status:      fromPrismaStatus(p.status),
-    mainImage:   p.mainImage,
-    extraImages,
-    createdAt:   p.createdAt.toLocaleDateString("fr-FR", {
-      day: "numeric", month: "short", year: "numeric",
-    }),
-    sizes: p.sizes,
-  };
-}
+import { productWriteSchema, safeParse } from "@/lib/validation";
+import { toPrismaStatus, toProduct } from "@/lib/productStatus";
 
 // GET /api/admin/products — list all non-deleted products (ADMIN + SELLER)
 export async function GET(req: NextRequest) {

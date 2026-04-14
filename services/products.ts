@@ -1,11 +1,11 @@
 import { Product } from "@/app/variables";
 
-export async function getAllProducts(category?: string): Promise<Product[]> {
-  const url = category && category !== "Tous"
-    ? `/api/products?category=${encodeURIComponent(category)}`
-    : "/api/products";
-
-  const res = await fetch(url);
+export async function getAllProducts(category?: string, limit?: number): Promise<Product[]> {
+  const params = new URLSearchParams();
+  if (category && category !== "Tous") params.set("category", category);
+  if (limit && limit > 0) params.set("limit", String(limit));
+  const qs  = params.size ? `?${params.toString()}` : "";
+  const res = await fetch(`/api/products${qs}`);
   if (!res.ok) return [];
   return res.json();
 }

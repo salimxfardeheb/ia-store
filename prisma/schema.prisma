@@ -48,6 +48,8 @@ model Product {
   sizes      ProductSize[]
   orderItems OrderItem[]
   cartItems  CartItem[]
+
+  @@index([status, deletedAt])
 }
 
 model ProductSize {
@@ -91,6 +93,9 @@ model Order {
 
   createdAt DateTime    @default(now())
   items     OrderItem[]
+
+  @@index([userId])
+  @@index([channel, userId])
 }
 
 model OrderItem {

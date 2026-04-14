@@ -4,6 +4,12 @@ import { requireAdmin, isNextResponse } from "@/lib/rbac";
 import { handleDbError } from "@/lib/validation";
 import { Order } from "@/app/variables";
 
+const VALID_ORDER_STATUSES = new Set([
+  "PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED", "RETURNED",
+] as const);
+
+type PrismaOrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CANCELLED" | "RETURNED";
+
 // GET /api/admin/orders?page=1&limit=50&status=<status> (ADMIN + SELLER)
 export async function GET(req: NextRequest) {
   const auth = requireAdmin(req);
@@ -13,9 +19,12 @@ export async function GET(req: NextRequest) {
   const page   = Math.max(1, parseInt(searchParams.get("page")  ?? "1",  10) || 1);
   const limit  = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10) || 50));
   const skip   = (page - 1) * limit;
-  const status = searchParams.get("status")?.toUpperCase() ?? undefined;
+  const rawStatus = searchParams.get("status")?.toUpperCase();
+  const status    = rawStatus && VALID_ORDER_STATUSES.has(rawStatus as PrismaOrderStatus)
+    ? (rawStatus as PrismaOrderStatus)
+    : undefined;
 
-  const where = status ? { status: status as any } : undefined;
+  const where = status ? { status } : undefined;
 
   try {
     const [orders, total] = await prisma.$transaction([
