@@ -6,12 +6,14 @@ interface ProductGridProps {
   filtered: Product[];
   setEditProduct: (product: Product | null) => void;
   setDeleteId: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export default function ProductGrid({
   filtered,
   setEditProduct,
   setDeleteId,
+  readOnly = false,
 }: ProductGridProps) {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -47,20 +49,22 @@ export default function ProductGrid({
               </span>
             </div>
             {/* Hover actions */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center space-x-2 opacity-0 group-hover:opacity-100">
-              <button
-                onClick={() => setEditProduct(product)}
-                className="p-2 bg-white hover:bg-black hover:text-white transition-colors"
-              >
-                <Edit2 size={13} strokeWidth={1.5} />
-              </button>
-              <button
-                onClick={() => setDeleteId(product.id)}
-                className="p-2 bg-white hover:bg-black hover:text-white transition-colors"
-              >
-                <Trash2 size={13} strokeWidth={1.5} />
-              </button>
-            </div>
+            {!readOnly && (
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center space-x-2 opacity-0 group-hover:opacity-100">
+                <button
+                  onClick={() => setEditProduct(product)}
+                  className="p-2 bg-white hover:bg-black hover:text-white transition-colors"
+                >
+                  <Edit2 size={13} strokeWidth={1.5} />
+                </button>
+                <button
+                  onClick={() => setDeleteId(product.id)}
+                  className="p-2 bg-white hover:bg-black hover:text-white transition-colors"
+                >
+                  <Trash2 size={13} strokeWidth={1.5} />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="p-4">
@@ -97,18 +101,20 @@ export default function ProductGrid({
         </motion.div>
       ))}
 
-      {/* Add new card */}
-      <motion.button
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        onClick={() => setEditProduct(null)}
-        className="border-2 border-dashed border-black/10 h-full min-h-70 flex flex-col items-center justify-center text-black/20 hover:border-black/30 hover:text-black/40 transition-all"
-      >
-        <Plus size={24} strokeWidth={1} className="mb-2" />
-        <span className="text-[8px] uppercase tracking-[0.3em] font-serif">
-          Ajouter
-        </span>
-      </motion.button>
+      {/* Add new card — ADMIN only */}
+      {!readOnly && (
+        <motion.button
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          onClick={() => setEditProduct(null)}
+          className="border-2 border-dashed border-black/10 h-full min-h-70 flex flex-col items-center justify-center text-black/20 hover:border-black/30 hover:text-black/40 transition-all"
+        >
+          <Plus size={24} strokeWidth={1} className="mb-2" />
+          <span className="text-[8px] uppercase tracking-[0.3em] font-serif">
+            Ajouter
+          </span>
+        </motion.button>
+      )}
     </div>
   );
 }

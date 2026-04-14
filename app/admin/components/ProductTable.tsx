@@ -9,6 +9,7 @@ interface ProductTableProps {
   handleSort: (key: keyof Product) => void;
   setEditProduct: (product: Product | null) => void;
   setDeleteId: (id: string) => void;
+  readOnly?: boolean;
 }
 
 export default function ProductTable({
@@ -17,21 +18,24 @@ export default function ProductTable({
   handleSort,
   setEditProduct,
   setDeleteId,
+  readOnly = false,
 }: ProductTableProps) {
+  const columns = [
+    { key: "name",      label: "Produit"    },
+    { key: "category",  label: "Catégorie"  },
+    { key: "price",     label: "Prix"       },
+    { key: "stock",     label: "Stock"      },
+    { key: "status",    label: "Statut"     },
+    { key: "createdAt", label: "Ajouté le"  },
+    ...(!readOnly ? [{ key: null, label: "" }] : []),
+  ];
+
   return (
     <div className="bg-white border overflow-hidden border-[rgba(0,0,0,0.08)]">
       <table className="w-full text-left">
         <thead>
           <tr className="border-b border-[rgba(0,0,0,0.08)]">
-            {[
-              { key: "name", label: "Produit" },
-              { key: "category", label: "Catégorie" },
-              { key: "price", label: "Prix" },
-              { key: "stock", label: "Stock" },
-              { key: "status", label: "Statut" },
-              { key: "createdAt", label: "Ajouté le" },
-              { key: null, label: "" },
-            ].map(({ key, label }) => (
+            {columns.map(({ key, label }) => (
               <th key={label} className="px-5 py-3 font-normal font-serif">
                 {key ? (
                   <button
@@ -102,24 +106,26 @@ export default function ProductTable({
                 <td className="px-5 py-3.5 text-[10px] text-black/30 font-serif">
                   {product.createdAt}
                 </td>
-                <td className="px-5 py-3.5">
-                  <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => setEditProduct(product)}
-                      className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors"
-                      title="Modifier"
-                    >
-                      <Edit2 size={12} strokeWidth={1.5} />
-                    </button>
-                    <button
-                      onClick={() => setDeleteId(product.id)}
-                      className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors"
-                      title="Supprimer"
-                    >
-                      <Trash2 size={12} strokeWidth={1.5} />
-                    </button>
-                  </div>
-                </td>
+                {!readOnly && (
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => setEditProduct(product)}
+                        className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors"
+                        title="Modifier"
+                      >
+                        <Edit2 size={12} strokeWidth={1.5} />
+                      </button>
+                      <button
+                        onClick={() => setDeleteId(product.id)}
+                        className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors"
+                        title="Supprimer"
+                      >
+                        <Trash2 size={12} strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </motion.tr>
             ))}
           </AnimatePresence>

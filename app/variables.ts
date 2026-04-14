@@ -182,9 +182,9 @@ export const STATUS_STYLE: Record<string, string> = {
 };
 
 export const NAV_ITEMS: { id: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string; href: string; roles: AdminRole[] }[] = [
-  { id: "overview",   icon: LayoutDashboard, label: "Vue d'ensemble",  href: "/admin",            roles: ["ADMIN"]            },
-  { id: "catalog",    icon: Package,         label: "Catalogue",       href: "/admin/catalog",    roles: ["ADMIN"]            },
-  { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders",     roles: ["ADMIN"]            },
+  { id: "overview",   icon: LayoutDashboard, label: "Vue d'ensemble",  href: "/admin",            roles: ["ADMIN", "SELLER"]  },
+  { id: "catalog",    icon: Package,         label: "Catalogue",       href: "/admin/catalog",    roles: ["ADMIN", "SELLER"]  },
+  { id: "orders",     icon: ShoppingBag,     label: "Commandes",       href: "/admin/orders",     roles: ["ADMIN", "SELLER"]  },
   { id: "pos",        icon: ShoppingCart,    label: "Nouvelle vente",  href: "/admin/pos",        roles: ["ADMIN", "SELLER"]  },
   { id: "customers",  icon: Users,           label: "Clients",         href: "/admin/customers",  roles: ["ADMIN", "SELLER"]  },
   { id: "users",      icon: UserRound,       label: "Comptes",         href: "/admin/users",      roles: ["ADMIN"]            },

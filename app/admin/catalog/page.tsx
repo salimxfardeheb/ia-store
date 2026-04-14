@@ -9,9 +9,12 @@ import ProductTable from "../components/ProductTable";
 import ProductGrid from "../components/ProductGrid";
 import { Product, STATUSES } from "@/app/variables";
 import { addProduct, updateProduct, getAllProducts, getCategories, deleteProduct } from "@/services/admin";
+import { useAuth } from "@/app/context/AuthContext";
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CatalogPage() {
+  const { user } = useAuth();
+  const readOnly = user?.role === "SELLER";
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -76,6 +79,7 @@ export default function CatalogPage() {
   };
 
   const handleSave = async (product: Product) => {
+    if (readOnly) return;
     const isNew = !products.find((p) => p.id === product.id);
     try {
       if (isNew) {
@@ -94,6 +98,7 @@ export default function CatalogPage() {
   };
 
   const handleDelete = async (id: string) => {
+    if (readOnly) return;
     await deleteProduct(id);
     setProducts((prev) => prev.filter((p) => p.id !== id));
     setDeleteId(null);
@@ -204,14 +209,16 @@ export default function CatalogPage() {
             ))}
           </div>
 
-          {/* Add */}
-          <button
-            onClick={() => setEditProduct(null)}
-            className="flex items-center space-x-2 bg-black text-white px-5 py-2.5 text-[9px] uppercase tracking-widest hover:bg-black/80 transition-colors ml-auto font-serif"
-          >
-            <Plus size={13} strokeWidth={1.5} />
-            <span>Nouveau produit</span>
-          </button>
+          {/* Add — ADMIN only */}
+          {!readOnly && (
+            <button
+              onClick={() => setEditProduct(null)}
+              className="flex items-center space-x-2 bg-black text-white px-5 py-2.5 text-[9px] uppercase tracking-widest hover:bg-black/80 transition-colors ml-auto font-serif"
+            >
+              <Plus size={13} strokeWidth={1.5} />
+              <span>Nouveau produit</span>
+            </button>
+          )}
         </div>
 
         {/* Results count */}
@@ -248,6 +255,7 @@ export default function CatalogPage() {
                 handleSort={handleSort}
                 setEditProduct={setEditProduct}
                 setDeleteId={setDeleteId}
+                readOnly={readOnly}
               />
             </motion.div>
           )}
@@ -263,6 +271,7 @@ export default function CatalogPage() {
                 filtered={filtered}
                 setEditProduct={setEditProduct}
                 setDeleteId={setDeleteId}
+                readOnly={readOnly}
               />
             </motion.div>
           )}
