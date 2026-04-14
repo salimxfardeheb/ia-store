@@ -23,8 +23,12 @@ export async function PUT(
   const [data, err] = safeParse(productWriteSchema, body);
   if (err) return err;
 
-  // Replace sizes atomically: delete then recreate inside same update
-  await prisma.productSize.deleteMany({ where: { productId: id } });
+  // Replace sizes + variants atomically: delete-then-recreate in a transaction
+  await prisma.$transaction(async (tx) => {
+    await tx.productSize.deleteMany({ where: { productId: id } });
+    // VariantSize rows are cascade-deleted when Variant rows are deleted
+    await tx.variant.deleteMany({ where: { productId: id } });
+  });
 
   const updated = await prisma.product.update({
     where: { id },
@@ -39,8 +43,21 @@ export async function PUT(
       sizes: {
         create: data.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
       },
+      variants: {
+        create: data.variants.map((v) => ({
+          color: v.color,
+          sku:   v.sku,
+          sizes: {
+            create: v.sizes.map((s) => ({
+              name:  s.name,
+              stock: s.stock,
+              price: s.price,
+            })),
+          },
+        })),
+      },
     },
-    include: { sizes: true },
+    include: { sizes: true, variants: { include: { sizes: true } } },
   });
 
   return NextResponse.json(toProduct(updated));

@@ -64,6 +64,21 @@ export interface SizeEntry {
   quantity: number;
 }
 
+// ─── Variantes couleur ───────────────────────────────────────────────────────
+
+export interface VariantSizeEntry {
+  name: string;
+  stock: number;
+  price?: number; // null/undefined = hérite du prix de base du produit
+}
+
+export interface VariantEntry {
+  id?: string;
+  color: string;
+  sku?: string;
+  sizes: VariantSizeEntry[];
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -71,6 +86,7 @@ export interface Product {
   price: number;
   stock: number;
   sizes: SizeEntry[];
+  variants?: VariantEntry[];
   status: "Actif" | "Brouillon" | "Archivé";
   createdAt: string;
   mainImage: string;

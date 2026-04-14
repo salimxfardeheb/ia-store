@@ -2,17 +2,25 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { X, ChevronDown, Upload, ImagePlus } from "lucide-react";
+import { X, ChevronDown, Upload, ImagePlus, Layers } from "lucide-react";
 import { uploadImage } from "@/services/admin";
 import {
   Product,
   SIZE_OPTIONS,
   SHOE_SIZE_OPTIONS,
   SizeEntry,
+  VariantEntry,
 } from "@/app/variables";
+import VariantBuilder from "@/app/admin/components/VariantBuilder";
 
 const totalStock = (sizes: SizeEntry[]) =>
   sizes.reduce((sum, s) => sum + s.quantity, 0);
+
+const totalVariantsStock = (variants: VariantEntry[]) =>
+  variants.reduce(
+    (sum, v) => sum + v.sizes.reduce((s, sz) => s + sz.stock, 0),
+    0,
+  );
 
 export default function ProductModel({
   product,
@@ -33,6 +41,11 @@ export default function ProductModel({
   const [uploading, setUploading] = useState(false);
   const isNew = !product;
 
+  // Activer le mode variantes couleur
+  const [useVariants, setUseVariants] = useState(
+    () => (product?.variants?.length ?? 0) > 0,
+  );
+
   // Image previews (local blobs avant upload)
   const [mainPreview, setMainPreview] = useState<string>(product?.mainImage ?? "");
   const [extraPreviews, setExtraPreviews] = useState<string[]>(product?.extraImages ?? []);
@@ -52,6 +65,7 @@ export default function ProductModel({
       price: 0,
       stock: 0,
       sizes: [],
+      variants: [],
       status: "Brouillon",
       createdAt: new Date().toLocaleDateString("fr-FR", {
         day: "numeric",
@@ -381,69 +395,126 @@ export default function ProductModel({
             </div>
           </div>
 
-          {/* ── Sizes + quantities ──────────────────────────────── */}
+          {/* ── Toggle variantes couleur ─────────────────────────── */}
           <div>
-            <div className="flex items-baseline justify-between mb-3">
-              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 font-serif">
-                Tailles & quantités
-              </label>
-              {selectedSizes.length > 0 && (
-                <span className="text-[8px] text-black/25 font-serif italic">
-                  {selectedSizes.length} taille{selectedSizes.length > 1 ? "s" : ""} sélectionnée{selectedSizes.length > 1 ? "s" : ""}
-                </span>
+            <button
+              type="button"
+              onClick={() => {
+                setUseVariants((v) => !v);
+                // Réinitialise l'autre mode pour éviter les données mixtes
+                if (!useVariants) {
+                  setForm((f) => ({ ...f, sizes: [], stock: 0 }));
+                } else {
+                  setForm((f) => ({ ...f, variants: [], stock: 0 }));
+                }
+              }}
+              className={`flex items-center gap-2.5 px-4 py-2.5 border text-[9px] uppercase tracking-widest font-serif transition-all w-full ${
+                useVariants
+                  ? "bg-black text-white border-black"
+                  : "bg-white text-black/40 border-black/10 hover:border-black/30 hover:text-black"
+              }`}
+            >
+              <Layers size={13} strokeWidth={1.5} />
+              {useVariants ? "Variantes couleur activées" : "Activer les variantes couleur"}
+              <span className="ml-auto text-[7px] opacity-50 normal-case italic font-light">
+                {useVariants ? "(clic pour désactiver)" : "(couleurs + tailles par couleur)"}
+              </span>
+            </button>
+          </div>
+
+          {/* ── Mode variantes : VariantBuilder ──────────────────── */}
+          {useVariants && (
+            <div>
+              <div className="flex items-baseline justify-between mb-3">
+                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 font-serif">
+                  Couleurs & tailles
+                </label>
+                {(form.variants?.length ?? 0) > 0 && (
+                  <span className="text-[8px] text-black/25 font-serif italic">
+                    {form.variants!.length} couleur{form.variants!.length > 1 ? "s" : ""} —{" "}
+                    {totalVariantsStock(form.variants!)} unités
+                  </span>
+                )}
+              </div>
+              <VariantBuilder
+                variants={form.variants ?? []}
+                sizeOptions={sizeOptions}
+                onChange={(variants) =>
+                  setForm((f) => ({
+                    ...f,
+                    variants,
+                    stock: totalVariantsStock(variants),
+                  }))
+                }
+              />
+            </div>
+          )}
+
+          {/* ── Mode simple : tailles & quantités ───────────────── */}
+          {!useVariants && (
+            <div>
+              <div className="flex items-baseline justify-between mb-3">
+                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 font-serif">
+                  Tailles & quantités
+                </label>
+                {selectedSizes.length > 0 && (
+                  <span className="text-[8px] text-black/25 font-serif italic">
+                    {selectedSizes.length} taille{selectedSizes.length > 1 ? "s" : ""} sélectionnée{selectedSizes.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {sizeOptions.map((s) => {
+                  const isSelected = !!form.sizes.find((e) => e.size === s);
+                  return (
+                    <button key={s} type="button" onClick={() => toggleSize(s)}
+                      className={`px-3 py-1.5 text-[9px] uppercase tracking-widest border transition-all font-serif ${
+                        isSelected
+                          ? "bg-black text-white border-black"
+                          : "bg-white text-black/40 border-black/10 hover:border-black/30"
+                      }`}>
+                      {s}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {form.sizes.length > 0 && (
+                <div className="mt-4 border border-[rgba(0,0,0,0.08)] divide-y divide-[rgba(0,0,0,0.05)]">
+                  {form.sizes.map(({ size, quantity }) => (
+                    <div key={size} className="flex items-center justify-between px-4 py-2.5">
+                      <span className="text-[9px] uppercase tracking-widest text-black/60 font-serif w-10">{size}</span>
+                      <div className="flex items-center gap-0">
+                        <button type="button" onClick={() => updateQuantity(size, quantity - 1)}
+                          className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors text-sm font-light">−</button>
+                        <input type="number" min={0} value={quantity}
+                          onChange={(e) => updateQuantity(size, Number(e.target.value))}
+                          className="w-12 text-center text-[11px] font-serif border-x border-[rgba(0,0,0,0.08)] py-1.5 focus:outline-none bg-[#F7F7F7] focus:bg-white transition-colors" />
+                        <button type="button" onClick={() => updateQuantity(size, quantity + 1)}
+                          className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors text-sm font-light">+</button>
+                      </div>
+                      <span className="text-[8px] text-black/25 font-serif italic w-16 text-right">{quantity} unité{quantity !== 1 ? "s" : ""}</span>
+                      <button type="button" onClick={() => toggleSize(size)}
+                        className="ml-3 text-black/20 hover:text-black transition-colors">
+                        <X size={11} strokeWidth={1.5} />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="flex items-center justify-between px-4 py-2.5 bg-[#F7F7F7]">
+                    <span className="text-[8px] uppercase tracking-[0.2em] text-black/30 font-serif">Total</span>
+                    <span className="text-[11px] font-serif text-black italic">{form.stock} unité{form.stock !== 1 ? "s" : ""}</span>
+                  </div>
+                </div>
+              )}
+
+              {form.sizes.length === 0 && (
+                <p className="mt-3 text-[9px] text-black/20 font-serif italic">
+                  Sélectionnez les tailles disponibles ci-dessus.
+                </p>
               )}
             </div>
-
-            <div className="flex flex-wrap gap-2">
-              {sizeOptions.map((s) => {
-                const isSelected = !!form.sizes.find((e) => e.size === s);
-                return (
-                  <button key={s} type="button" onClick={() => toggleSize(s)}
-                    className={`px-3 py-1.5 text-[9px] uppercase tracking-widest border transition-all font-serif ${
-                      isSelected
-                        ? "bg-black text-white border-black"
-                        : "bg-white text-black/40 border-black/10 hover:border-black/30"
-                    }`}>
-                    {s}
-                  </button>
-                );
-              })}
-            </div>
-
-            {form.sizes.length > 0 && (
-              <div className="mt-4 border border-[rgba(0,0,0,0.08)] divide-y divide-[rgba(0,0,0,0.05)]">
-                {form.sizes.map(({ size, quantity }) => (
-                  <div key={size} className="flex items-center justify-between px-4 py-2.5">
-                    <span className="text-[9px] uppercase tracking-widest text-black/60 font-serif w-10">{size}</span>
-                    <div className="flex items-center gap-0">
-                      <button type="button" onClick={() => updateQuantity(size, quantity - 1)}
-                        className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors text-sm font-light">−</button>
-                      <input type="number" min={0} value={quantity}
-                        onChange={(e) => updateQuantity(size, Number(e.target.value))}
-                        className="w-12 text-center text-[11px] font-serif border-x border-[rgba(0,0,0,0.08)] py-1.5 focus:outline-none bg-[#F7F7F7] focus:bg-white transition-colors" />
-                      <button type="button" onClick={() => updateQuantity(size, quantity + 1)}
-                        className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors text-sm font-light">+</button>
-                    </div>
-                    <span className="text-[8px] text-black/25 font-serif italic w-16 text-right">{quantity} unité{quantity !== 1 ? "s" : ""}</span>
-                    <button type="button" onClick={() => toggleSize(size)}
-                      className="ml-3 text-black/20 hover:text-black transition-colors">
-                      <X size={11} strokeWidth={1.5} />
-                    </button>
-                  </div>
-                ))}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-[#F7F7F7]">
-                  <span className="text-[8px] uppercase tracking-[0.2em] text-black/30 font-serif">Total</span>
-                  <span className="text-[11px] font-serif text-black italic">{form.stock} unité{form.stock !== 1 ? "s" : ""}</span>
-                </div>
-              </div>
-            )}
-
-            {form.sizes.length === 0 && (
-              <p className="mt-3 text-[9px] text-black/20 font-serif italic">
-                Sélectionnez les tailles disponibles ci-dessus.
-              </p>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Footer */}

@@ -46,6 +46,7 @@ model Product {
   deletedAt   DateTime?     // null = active; non-null = soft-deleted
 
   sizes      ProductSize[]
+  variants   Variant[]
   orderItems OrderItem[]
   cartItems  CartItem[]
 
@@ -58,6 +59,31 @@ model ProductSize {
   quantity  Int
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
+}
+
+// ─── Variant (couleur → tailles) ─────────────────────────────────────────────
+
+model Variant {
+  id        String        @id @default(cuid())
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  color     String        // Ex: "Rouge", "Marine", "#3B82F6"
+  sku       String?       // Ex: "PROD-RED-S-001"
+  sizes     VariantSize[]
+
+  @@unique([productId, color])
+  @@index([productId])
+}
+
+model VariantSize {
+  id        Int     @id @default(autoincrement())
+  variant   Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  variantId String
+  name      String          // Ex: "S", "M", "42", "Sur mesure"
+  stock     Int     @default(0)
+  price     Float?          // null = hérite du prix de base du produit
+
+  @@unique([variantId, name])
 }
 
 enum ProductStatus {

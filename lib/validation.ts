@@ -18,16 +18,42 @@ export const sizeEntrySchema = z.object({
   quantity: z.number().int().min(0, "La quantité ne peut pas être négative"),
 });
 
-export const productWriteSchema = z.object({
-  name:        z.string().min(1, "Nom requis").max(200),
-  category:    z.string().min(1, "Catégorie requise").max(100),
-  price:       z.number().positive("Le prix doit être positif"),
-  stock:       z.number().int().min(0, "Le stock ne peut pas être négatif"),
-  status:      z.enum(["Actif", "Archivé", "Brouillon"]),
-  mainImage:   z.string().default(""),
-  extraImages: z.array(z.string()).default([]),
-  sizes:       z.array(sizeEntrySchema).default([]),
+export const variantSizeSchema = z.object({
+  name:  z.string().min(1, "Le nom de taille est requis"),
+  stock: z.number().int().min(0, "Le stock ne peut pas être négatif"),
+  price: z.number().positive().optional(),
 });
+
+export const variantSchema = z.object({
+  color: z.string().min(1, "La couleur est requise"),
+  sku:   z.string().optional(),
+  sizes: z
+    .array(variantSizeSchema)
+    .min(1, "Chaque couleur doit avoir au moins une taille")
+    .refine(
+      (sizes) => new Set(sizes.map((s) => s.name)).size === sizes.length,
+      "Doublons de tailles détectés dans une variante"
+    ),
+});
+
+export const productWriteSchema = z
+  .object({
+    name:        z.string().min(1, "Nom requis").max(200),
+    category:    z.string().min(1, "Catégorie requise").max(100),
+    price:       z.number().positive("Le prix doit être positif"),
+    stock:       z.number().int().min(0, "Le stock ne peut pas être négatif"),
+    status:      z.enum(["Actif", "Archivé", "Brouillon"]),
+    mainImage:   z.string().default(""),
+    extraImages: z.array(z.string()).default([]),
+    sizes:       z.array(sizeEntrySchema).default([]),
+    variants:    z.array(variantSchema).default([]),
+  })
+  .refine(
+    (d) =>
+      d.variants.length === 0 ||
+      new Set(d.variants.map((v) => v.color)).size === d.variants.length,
+    "Deux variantes ne peuvent pas avoir la même couleur"
+  );
 
 // ─── Online order ─────────────────────────────────────────────────────────────
 

@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const products = await prisma.product.findMany({
     where:   { deletedAt: null },
-    include: { sizes: true },
+    include: { sizes: true, variants: { include: { sizes: true } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -39,8 +39,21 @@ export async function POST(req: NextRequest) {
       sizes: {
         create: data.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
       },
+      variants: {
+        create: data.variants.map((v) => ({
+          color: v.color,
+          sku:   v.sku,
+          sizes: {
+            create: v.sizes.map((s) => ({
+              name:  s.name,
+              stock: s.stock,
+              price: s.price,
+            })),
+          },
+        })),
+      },
     },
-    include: { sizes: true },
+    include: { sizes: true, variants: { include: { sizes: true } } },
   });
 
   return NextResponse.json(toProduct(product), { status: 201 });

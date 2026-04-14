@@ -12,6 +12,12 @@ export type ProductRow = {
   extraImages: string;
   createdAt:   Date;
   sizes:       { size: string; quantity: number }[];
+  variants:    {
+    id:    string;
+    color: string;
+    sku:   string | null;
+    sizes: { id: number; name: string; stock: number; price: number | null }[];
+  }[];
 };
 
 /** French display label → Prisma enum value */
@@ -46,5 +52,15 @@ export function toProduct(p: ProductRow): Product {
       day: "numeric", month: "short", year: "numeric",
     }),
     sizes: p.sizes,
+    variants: p.variants.map((v) => ({
+      id:    v.id,
+      color: v.color,
+      sku:   v.sku ?? undefined,
+      sizes: v.sizes.map((s) => ({
+        name:  s.name,
+        stock: s.stock,
+        price: s.price ?? undefined,
+      })),
+    })),
   };
 }
