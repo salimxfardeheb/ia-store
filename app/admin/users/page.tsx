@@ -11,7 +11,7 @@ import { formatDate } from "@/app/variables";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type Role = "ADMIN" | "SELLER" | "CLIENT";
+type Role = "ADMIN" | "SELLER";
 
 interface AppUser {
   id:        string;
@@ -26,13 +26,11 @@ interface AppUser {
 const ROLE_LABELS: Record<Role, string> = {
   ADMIN:  "Administrateur",
   SELLER: "Vendeur",
-  CLIENT: "Client",
 };
 
 const ROLE_STYLES: Record<Role, string> = {
   ADMIN:  "bg-black text-white",
   SELLER: "bg-black/10 text-black",
-  CLIENT: "bg-black/5 text-black/50",
 };
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
@@ -93,7 +91,7 @@ interface CreateModalProps {
 }
 
 function CreateUserModal({ token, onClose, onCreated }: CreateModalProps) {
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "CLIENT" as Role });
+  const [form, setForm] = useState({ name: "", email: "", password: "", role: "SELLER" as Role });
   const [error, setError]   = useState("");
   const [saving, setSaving] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
@@ -216,7 +214,6 @@ function CreateUserModal({ token, onClose, onCreated }: CreateModalProps) {
                 onChange={set("role")}
                 className="w-full border border-[rgba(0,0,0,0.12)] text-[12px] py-2.5 px-3 font-serif focus:outline-none focus:border-black transition-colors appearance-none bg-white"
               >
-                <option value="CLIENT">Client</option>
                 <option value="SELLER">Vendeur</option>
                 <option value="ADMIN">Administrateur</option>
               </select>
@@ -297,7 +294,7 @@ function RoleSelector({
               exit={{ opacity: 0, y: 4 }}
               className="absolute left-0 top-full mt-1 z-20 bg-white border border-[rgba(0,0,0,0.1)] shadow-lg min-w-[140px]"
             >
-              {(["CLIENT", "SELLER", "ADMIN"] as Role[]).map((role) => (
+              {(["SELLER", "ADMIN"] as Role[]).map((role) => (
                 <button
                   key={role}
                   onClick={() => handleSelect(role)}

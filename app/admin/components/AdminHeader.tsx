@@ -1,6 +1,7 @@
 "use client";
 
-import { Bell, Search } from "lucide-react";
+import { Bell, Search, Home } from "lucide-react";
+import Link from "next/link";
 
 interface AdminHeaderProps {
   title: string;
@@ -28,6 +29,18 @@ export default function AdminHeader({ title, subtitle }: AdminHeaderProps) {
       </div>
 
       <div className="flex items-center space-x-2.5">
+        {/* Home */}
+        <Link
+          href="/"
+          className="flex items-center space-x-2 p-2.5 border bg-white hover:bg-black hover:text-white transition-colors border-[rgba(0,0,0,0.08)] group"
+          title="Retour à l'accueil"
+        >
+          <Home size={15} strokeWidth={1.5} className="text-black group-hover:text-white" />
+          <span className="text-[9px] uppercase tracking-widest font-serif text-black group-hover:text-white hidden sm:inline">
+            Accueil
+          </span>
+        </Link>
+
         {/* Search */}
         <div className="relative">
           <Search

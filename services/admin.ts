@@ -1,5 +1,4 @@
-import { Product, Order, OrderStatus, PosCartItem } from "@/app/variables";
-import type { UnifiedCustomer } from "@/app/api/admin/customers/route";
+import { Product, Order, OrderStatus, PosCartItem, UnifiedCustomer } from "@/app/variables";
 
 // ─── Auth-aware fetch ─────────────────────────────────────────────────────────
 // Reads the JWT from localStorage and attaches it to every request automatically.
@@ -116,8 +115,6 @@ export async function updateOrder(id: string, status: OrderStatus): Promise<void
 }
 
 // ─── Customers (unified: online Users + offline order contacts) ───────────────
-
-export { type UnifiedCustomer };
 
 export async function getCustomers(token: string, q = ""): Promise<UnifiedCustomer[]> {
   const url = q

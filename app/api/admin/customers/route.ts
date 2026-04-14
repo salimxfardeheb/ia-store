@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, isNextResponse } from "@/lib/rbac";
+import type { UnifiedCustomer } from "@/app/variables";
 
-export interface UnifiedCustomer {
-  id:          string;
-  name:        string;
-  email:       string | null;
-  phone:       string | null;
-  address:     string | null;
-  channel:     "online" | "offline";
-  ordersCount: number;
-  lastOrderAt: string | null;
-  createdAt:   string;
-}
+export type { UnifiedCustomer };
 
 // GET /api/admin/customers?q=<search>  (ADMIN + SELLER)
 // Returns a unified list of:

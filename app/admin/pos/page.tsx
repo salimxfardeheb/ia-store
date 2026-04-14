@@ -7,10 +7,8 @@ import {
   User, AlertCircle, CreditCard, Banknote, ChevronRight,
 } from "lucide-react";
 import AdminHeader from "../components/AdminHeader";
-import { Product, PosCartItem } from "@/app/variables";
-import type { UnifiedCustomer } from "@/app/api/admin/customers/route";
-import { getAllProducts as getShopProducts } from "@/services/products";
-import { getCustomers, createOfflineSale } from "@/services/admin";
+import { Product, PosCartItem, UnifiedCustomer } from "@/app/variables";
+import { getAllProducts as getShopProducts, getCustomers, createOfflineSale } from "@/services/admin";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 

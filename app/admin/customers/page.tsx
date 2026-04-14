@@ -6,7 +6,7 @@ import { Search, Users, Phone, Mail, ShoppingBag, Globe, Store } from "lucide-re
 import AdminHeader from "../components/AdminHeader";
 import { useAuth } from "@/app/context/AuthContext";
 import { getCustomers } from "@/services/admin";
-import type { UnifiedCustomer } from "@/app/api/admin/customers/route";
+import { type UnifiedCustomer } from "@/app/variables";
 import { formatDate } from "@/app/variables";
 
 // ─── Channel badge ────────────────────────────────────────────────────────────

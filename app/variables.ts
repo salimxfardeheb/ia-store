@@ -77,6 +77,20 @@ export interface Product {
   extraImages?: string[];
 }
 
+// ─── Unified customer (online Users + offline order contacts) ─────────────────
+
+export interface UnifiedCustomer {
+  id:          string;
+  name:        string;
+  email:       string | null;
+  phone:       string | null;
+  address:     string | null;
+  channel:     "online" | "offline";
+  ordersCount: number;
+  lastOrderAt: string | null;
+  createdAt:   string;
+}
+
 export interface PosCartItem {
   productId: string;
   name:      string;

@@ -223,7 +223,7 @@ const Navbar = () => {
                             <span>Mon Profil</span>
                           </Link>
 
-                          {user?.role === "ADMIN" && (
+                          {(user?.role === "ADMIN" || user?.role === "SELLER") && (
                             <Link
                               href="/admin"
                               onClick={() => setIsUserMenuOpen(false)}

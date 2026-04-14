@@ -16,14 +16,15 @@ export async function GET(req: NextRequest) {
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
 
   const users = await prisma.user.findMany({
-    where: q
-      ? {
-          OR: [
-            { name:  { contains: q, mode: "insensitive" } },
-            { email: { contains: q, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
+    where: {
+      role: { in: ["ADMIN", "SELLER"] },
+      ...(q && {
+        OR: [
+          { name:  { contains: q, mode: "insensitive" } },
+          { email: { contains: q, mode: "insensitive" } },
+        ],
+      }),
+    },
     select:  USER_SELECT,
     orderBy: { createdAt: "desc" },
   });
