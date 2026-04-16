@@ -88,6 +88,10 @@ export default function ProductModel({
   const [showAddCategory, setShowAddCategory] = useState(validCategories.length === 0);
   const [newCategoryInput, setNewCategoryInput] = useState("");
   const [useVariants, setUseVariants] = useState(() => (product?.variants?.length ?? 0) > 0);
+  const [quickFill,   setQuickFill]   = useState(() => (product?.variants?.length ?? 0) === 0 && (product?.variants !== undefined ? false : true));
+  const [quickColors, setQuickColors] = useState<string[]>([]);
+  const [quickSizes,  setQuickSizes]  = useState<string[]>([]);
+  const [quickQty,    setQuickQty]    = useState<Record<string, number>>({});
 
   const [mainPreview, setMainPreview] = useState(product?.mainImage ?? "");
   const [mainFile,    setMainFile]    = useState<File | null>(null);
@@ -464,9 +468,13 @@ export default function ProductModel({
                   if (e.target.value === "__add__") {
                     setShowAddCategory(true);
                   } else {
-                    setForm((f) => ({ ...f, category: e.target.value, sizes: [], stock: 0 }));
+                    setForm((f) => ({ ...f, category: e.target.value, sizes: [], variants: [], stock: 0 }));
                     setErrors((e) => ({ ...e, category: undefined }));
                     setShowAddCategory(false);
+                    setQuickSizes([]);
+                    setQuickQty({});
+                    setQuickColors([]);
+                    if (useVariants) setQuickFill(true);
                   }
                 }}
                 className={`w-full border text-[11px] py-2.5 px-3 focus:outline-none appearance-none bg-[#F7F7F7] transition-colors font-serif ${
@@ -755,6 +763,19 @@ export default function ProductModel({
   // ── Step: Variants ────────────────────────────────────────────────────────
 
   function StepVariants() {
+    const canValidateQuick = quickColors.length > 0 && quickSizes.length > 0;
+
+    const applyQuickFill = () => {
+      if (!canValidateQuick) return;
+      const variants = quickColors.map((color) => ({
+        color,
+        sku: "",
+        sizes: quickSizes.map((name) => ({ name, stock: quickQty[name] ?? 0 })),
+      }));
+      setForm((f) => ({ ...f, variants, stock: totalVariantsStock(variants) }));
+      setQuickFill(false);
+    };
+
     return (
       <div className="space-y-4">
         {/* Mode toggle */}
@@ -778,6 +799,7 @@ export default function ProductModel({
             onClick={() => {
               setUseVariants(true);
               setForm((f) => ({ ...f, sizes: [], stock: 0 }));
+              if ((form.variants?.length ?? 0) === 0) setQuickFill(true);
             }}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[9px] uppercase tracking-widest font-serif transition-all border-l border-black/10 ${
               useVariants
@@ -872,13 +894,183 @@ export default function ProductModel({
           </div>
         )}
 
-        {/* Color variants */}
-        {useVariants && (
-          <div>
+        {/* Quick-fill form */}
+        {useVariants && quickFill && (
+          <div className="space-y-5">
+
+            {/* Couleurs */}
+            <div>
+              <p className="text-[8px] uppercase tracking-[0.3em] text-black/40 mb-2 font-serif">Couleurs</p>
+              <div className="p-3 border border-black/8 bg-[#F7F7F7] space-y-2">
+                <div className="flex flex-wrap gap-2">
+                  {PRESET_COLORS.map((c) => {
+                    const isSelected = quickColors.includes(c.name);
+                    return (
+                      <button
+                        key={c.name}
+                        type="button"
+                        title={c.name}
+                        onClick={() =>
+                          setQuickColors((prev) =>
+                            isSelected ? prev.filter((x) => x !== c.name) : [...prev, c.name]
+                          )
+                        }
+                        className={`w-8 h-8 rounded-full border-2 transition-all ${
+                          isSelected
+                            ? "border-black scale-110 shadow-sm"
+                            : "border-black/10 hover:scale-105"
+                        }`}
+                        style={{ backgroundColor: c.hex }}
+                      />
+                    );
+                  })}
+                </div>
+                {quickColors.length > 0 && (
+                  <p className="text-[8px] text-black/40 font-serif italic">
+                    {quickColors.join(", ")}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Tailles */}
+            <div>
+              <p className="text-[8px] uppercase tracking-[0.3em] text-black/40 mb-2 font-serif">Tailles</p>
+              <div className="p-3 border border-black/8 bg-[#F7F7F7]">
+                <div className="flex flex-wrap gap-2">
+                  {sizeOptions.map((s) => {
+                    const isSelected = quickSizes.includes(s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          setQuickSizes((prev) =>
+                            isSelected ? prev.filter((x) => x !== s) : [...prev, s]
+                          );
+                          if (isSelected) {
+                            setQuickQty((prev) => {
+                              const next = { ...prev };
+                              delete next[s];
+                              return next;
+                            });
+                          } else {
+                            setQuickQty((prev) => ({ ...prev, [s]: 1 }));
+                          }
+                        }}
+                        className={`px-3 py-1.5 text-[9px] uppercase tracking-widest border transition-all font-serif ${
+                          isSelected
+                            ? "bg-black text-white border-black"
+                            : "bg-white text-black/40 border-black/10 hover:border-black/30"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Quantité des tailles */}
+            {quickSizes.length > 0 && (
+              <div>
+                <p className="text-[8px] uppercase tracking-[0.3em] text-black/40 mb-2 font-serif">
+                  Quantité des tailles
+                </p>
+                <div className="border border-black/8 divide-y divide-black/5">
+                  {quickSizes.map((s) => {
+                    const qty = quickQty[s] ?? 0;
+                    return (
+                      <div key={s} className="grid grid-cols-[1fr_auto] items-center px-3 py-2">
+                        <span className="text-[9px] uppercase tracking-widest text-black/60 font-serif">{s}</span>
+                        <div className="flex items-center w-32">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuickQty((prev) => ({ ...prev, [s]: Math.max(0, (prev[s] ?? 0) - 1) }))
+                            }
+                            className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors"
+                          >
+                            −
+                          </button>
+                          <input
+                            type="number"
+                            min={0}
+                            value={qty}
+                            onChange={(e) =>
+                              setQuickQty((prev) => ({
+                                ...prev,
+                                [s]: Math.max(0, Number(e.target.value)),
+                              }))
+                            }
+                            className="w-14 text-center text-[11px] font-serif border-x border-black/8 py-1.5 focus:outline-none bg-[#F7F7F7] focus:bg-white transition-colors"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setQuickQty((prev) => ({ ...prev, [s]: (prev[s] ?? 0) + 1 }))
+                            }
+                            className="w-7 h-7 flex items-center justify-center text-black/30 hover:text-black transition-colors"
+                          >
+                            +
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={applyQuickFill}
+                disabled={!canValidateQuick}
+                className={`flex-1 py-2.5 text-[9px] uppercase tracking-widest font-serif transition-all ${
+                  canValidateQuick
+                    ? "bg-black text-white hover:bg-black/80"
+                    : "bg-black/8 text-black/25 cursor-not-allowed"
+                }`}
+              >
+                {canValidateQuick
+                  ? `Appliquer à ${quickColors.length} couleur${quickColors.length > 1 ? "s" : ""}`
+                  : "Valider"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setQuickFill(false)}
+                className="px-4 py-2.5 border text-[9px] uppercase tracking-widest text-black/40 hover:text-black hover:border-black/30 transition-all font-serif border-black/10"
+              >
+                Saisir manuellement
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Color variants — manual VariantBuilder */}
+        {useVariants && !quickFill && (
+          <div className="space-y-3">
             {(form.variants?.length ?? 0) > 0 && (
-              <p className="text-[8px] text-black/30 font-serif italic mb-3">
-                {form.variants!.length} couleur{form.variants!.length > 1 ? "s" : ""} — {computedStock} unités totales
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[8px] text-black/30 font-serif italic">
+                  {form.variants!.length} couleur{form.variants!.length > 1 ? "s" : ""} — {computedStock} unités totales
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setQuickColors([]);
+                    setQuickSizes([]);
+                    setQuickQty({});
+                    setQuickFill(true);
+                  }}
+                  className="text-[8px] uppercase tracking-widest text-black/30 hover:text-black font-serif transition-colors border-b border-transparent hover:border-black/30"
+                >
+                  ↺ Recommencer
+                </button>
+              </div>
             )}
             <VariantBuilder
               variants={form.variants ?? []}

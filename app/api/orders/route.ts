@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
   const productIds  = [...new Set(items.map((i) => i.id))];
   const dbProducts  = await prisma.product.findMany({
     where:  { id: { in: productIds }, status: "ACTIVE", deletedAt: null },
-    select: { id: true, name: true, price: true, mainImage: true, category: true, stock: true, sizes: true },
+    select: {
+      id: true, name: true, price: true, mainImage: true, category: true, stock: true,
+      sizes: true,
+      variants: { select: { sizes: { select: { name: true, stock: true } } } },
+    },
   });
 
   if (dbProducts.length !== productIds.length) {
@@ -54,13 +58,29 @@ export async function POST(req: NextRequest) {
   for (const item of items) {
     const product = productMap.get(item.id)!;
     if (item.selectedSize) {
+      // Simple sizes (ProductSize table)
       const sizeEntry = product.sizes.find((s) => s.size === item.selectedSize);
-      if (!sizeEntry || item.quantity > sizeEntry.quantity) {
-        return apiError(
-          "STOCK_INSUFFICIENT",
-          `Stock insuffisant pour ${product.name} · Taille ${item.selectedSize} (disponible : ${sizeEntry?.quantity ?? 0})`,
-          422
-        );
+      if (sizeEntry) {
+        if (item.quantity > sizeEntry.quantity) {
+          return apiError(
+            "STOCK_INSUFFICIENT",
+            `Stock insuffisant pour ${product.name} · Taille ${item.selectedSize} (disponible : ${sizeEntry.quantity})`,
+            422
+          );
+        }
+      } else {
+        // Variant sizes (VariantSize table) — sum stock across all color variants
+        const variantStock = product.variants
+          .flatMap((v) => v.sizes)
+          .filter((s) => s.name === item.selectedSize)
+          .reduce((sum, s) => sum + s.stock, 0);
+        if (item.quantity > variantStock) {
+          return apiError(
+            "STOCK_INSUFFICIENT",
+            `Stock insuffisant pour ${product.name} · Taille ${item.selectedSize} (disponible : ${variantStock})`,
+            422
+          );
+        }
       }
     } else if (item.quantity > product.stock) {
       return apiError(

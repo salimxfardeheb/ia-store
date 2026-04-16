@@ -79,10 +79,23 @@ export default function Checkout() {
     // Vérifier le stock disponible pour chaque article
     const errors: string[] = [];
     for (const item of cart) {
-      const sizeEntry = item.selectedSize
-        ? item.sizes.find((s) => s.size === item.selectedSize)
-        : undefined;
-      const available = sizeEntry ? sizeEntry.quantity : item.stock;
+      let available: number;
+      if (item.selectedSize) {
+        const flat = item.sizes.find((s) => s.size === item.selectedSize);
+        if (flat) {
+          available = flat.quantity;
+        } else {
+          // Produit avec variantes couleur — chercher dans VariantSize
+          let variantStock = 0;
+          for (const v of item.variants ?? []) {
+            const vs = v.sizes?.find((s) => s.name === item.selectedSize);
+            if (vs) { variantStock += vs.stock; }
+          }
+          available = variantStock || item.stock;
+        }
+      } else {
+        available = item.stock;
+      }
       if (item.quantity > available) {
         const label = `${item.name}${item.selectedSize ? ` · Taille ${item.selectedSize}` : ""}`;
         errors.push(`${label} — stock disponible : ${available}`);

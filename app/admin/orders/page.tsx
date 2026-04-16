@@ -55,7 +55,7 @@ export default function OrdersPage() {
       <AdminHeader title="Commandes" subtitle="Gestion" />
 
       {/* KPIs */}
-      <div className="grid grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-7 gap-3 mb-8">
         {(["all", ...STATUS_FLOW] as const).map((s) => {
           const cfg = s === "all" ? null : STATUS_CONFIG[s];
           const count = s === "all" ? orders.length : (counts[s] ?? 0);

@@ -105,6 +105,8 @@ export default function ProductDetail() {
     setSelectedSize("");
     setSizeError(false);
     setQuantity(1);
+    const colorImg = product.extraImages?.find((img) => img.color === color);
+    setSelectedImage(colorImg?.url ?? product.mainImage);
   };
 
   const handleAddToCart = () => {

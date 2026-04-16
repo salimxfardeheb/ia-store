@@ -63,25 +63,37 @@ export async function PATCH(
         for (const item of order.items) {
           if (!item.productId) continue;
 
-          // Re-read the product inside the transaction for a consistent view
           const product = await tx.product.findUnique({
-            where:   { id: item.productId },
-            include: { sizes: item.size ? { where: { size: item.size } } : false },
+            where: { id: item.productId },
+            select: { stock: true },
           });
-
           if (!product) continue;
 
           if (item.size) {
-            // Atomic conditional decrement — eliminates TOCTOU race condition
+            // Try ProductSize first (simple products)
             const sizeUpdated = await tx.productSize.updateMany({
               where: { productId: item.productId, size: item.size, quantity: { gte: item.quantity } },
               data:  { quantity: { decrement: item.quantity } },
             });
+
             if (sizeUpdated.count === 0) {
-              const sizeRow = (product as any).sizes?.[0];
-              throw new Error(
-                `Stock insuffisant pour un article (${item.size}) — disponible : ${sizeRow?.quantity ?? 0}`
-              );
+              // Variant product — find first variant with sufficient stock for this size
+              const variantSize = await tx.variantSize.findFirst({
+                where: {
+                  name:    item.size,
+                  stock:   { gte: item.quantity },
+                  variant: { productId: item.productId },
+                },
+              });
+              if (!variantSize) {
+                throw new Error(
+                  `Stock insuffisant pour un article (${item.size}) — disponible : 0`
+                );
+              }
+              await tx.variantSize.update({
+                where: { id: variantSize.id },
+                data:  { stock: { decrement: item.quantity } },
+              });
             }
           }
 
@@ -107,10 +119,24 @@ export async function PATCH(
           });
 
           if (item.size) {
-            await tx.productSize.updateMany({
+            // Try ProductSize first
+            const sizeRestored = await tx.productSize.updateMany({
               where: { productId: item.productId, size: item.size },
               data:  { quantity: { increment: item.quantity } },
             });
+
+            if (sizeRestored.count === 0) {
+              // Variant product — restore to first variant that has this size
+              const variantSize = await tx.variantSize.findFirst({
+                where: { name: item.size, variant: { productId: item.productId } },
+              });
+              if (variantSize) {
+                await tx.variantSize.update({
+                  where: { id: variantSize.id },
+                  data:  { stock: { increment: item.quantity } },
+                });
+              }
+            }
           }
         }
       }
