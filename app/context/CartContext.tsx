@@ -20,6 +20,19 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+/** Retourne le stock max disponible pour un item + taille.
+ *  Priorité : taille flat (ProductSize) → taille variante (VariantSize) → stock global */
+function getMaxStock(item: { sizes?: { size: string; quantity: number }[]; variants?: { sizes?: { name: string; stock: number }[] }[]; stock: number }, size?: string): number {
+  if (!size) return item.stock;
+  const flat = item.sizes?.find((s) => s.size === size);
+  if (flat) return flat.quantity;
+  for (const v of item.variants ?? []) {
+    const vs = v.sizes?.find((s) => s.name === size);
+    if (vs) return vs.stock;
+  }
+  return item.stock;
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartLoaded, setIsCartLoaded] = useState(false);
@@ -34,7 +47,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const token = getToken();
       if (token) {
         loadCart(token).then((items) => {
-          if (items.length > 0) setCart(items);
+          if (items.length > 0) {
+            const clamped = items.map((item) => {
+              const max = getMaxStock(item, item.selectedSize);
+              return { ...item, quantity: Math.min(item.quantity, Math.max(1, max)) };
+            });
+            setCart(clamped);
+          }
           setIsCartLoaded(true);
         });
       } else {
@@ -69,9 +88,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const existing = prev.find(
         (item) => item.id === product.id && item.selectedSize === size
       );
-      // Plafond stock pour cette taille
-      const sizeEntry = size ? product.sizes.find((s) => s.size === size) : undefined;
-      const maxQty = sizeEntry ? sizeEntry.quantity : product.stock;
+      const maxQty = getMaxStock(product, size);
       const currentQty = existing?.quantity ?? 0;
       if (currentQty >= maxQty) return prev;
 
@@ -98,8 +115,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((prev) =>
       prev.map((item) => {
         if (item.id !== productId || item.selectedSize !== size) return item;
-        const sizeEntry = size ? item.sizes.find((s) => s.size === size) : undefined;
-        const maxQty = sizeEntry ? sizeEntry.quantity : item.stock;
+        const maxQty = getMaxStock(item, size);
         return { ...item, quantity: Math.max(1, Math.min(maxQty, item.quantity + delta)) };
       })
     );

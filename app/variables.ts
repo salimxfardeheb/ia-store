@@ -79,6 +79,11 @@ export interface VariantEntry {
   sizes: VariantSizeEntry[];
 }
 
+export interface ProductImage {
+  url: string;
+  color?: string; // couleur associée à cette image (ex: "Rouge", "Marine")
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -90,7 +95,7 @@ export interface Product {
   status: "Actif" | "Brouillon" | "Archivé";
   createdAt: string;
   mainImage: string;
-  extraImages?: string[];
+  extraImages?: ProductImage[];
 }
 
 // ─── Unified customer (online Users + offline order contacts) ─────────────────

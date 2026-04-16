@@ -44,7 +44,12 @@ export const productWriteSchema = z
     stock:       z.number().int().min(0, "Le stock ne peut pas être négatif"),
     status:      z.enum(["Actif", "Archivé", "Brouillon"]),
     mainImage:   z.string().default(""),
-    extraImages: z.array(z.string()).default([]),
+    extraImages: z.array(
+      z.object({
+        url:   z.string().min(1),
+        color: z.string().optional(),
+      })
+    ).default([]),
     sizes:       z.array(sizeEntrySchema).default([]),
     variants:    z.array(variantSchema).default([]),
   })

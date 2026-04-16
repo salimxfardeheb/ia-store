@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
   const productIds  = [...new Set(items.map((i) => i.id))];
   const dbProducts  = await prisma.product.findMany({
     where:  { id: { in: productIds }, status: "ACTIVE", deletedAt: null },
-    select: { id: true, name: true, price: true, mainImage: true, category: true },
+    select: { id: true, name: true, price: true, mainImage: true, category: true, stock: true, sizes: true },
   });
 
   if (dbProducts.length !== productIds.length) {
@@ -49,6 +49,27 @@ export async function POST(req: NextRequest) {
   }
 
   const productMap = new Map(dbProducts.map((p) => [p.id, p]));
+
+  // Vérifier le stock disponible pour chaque article + taille
+  for (const item of items) {
+    const product = productMap.get(item.id)!;
+    if (item.selectedSize) {
+      const sizeEntry = product.sizes.find((s) => s.size === item.selectedSize);
+      if (!sizeEntry || item.quantity > sizeEntry.quantity) {
+        return apiError(
+          "STOCK_INSUFFICIENT",
+          `Stock insuffisant pour ${product.name} · Taille ${item.selectedSize} (disponible : ${sizeEntry?.quantity ?? 0})`,
+          422
+        );
+      }
+    } else if (item.quantity > product.stock) {
+      return apiError(
+        "STOCK_INSUFFICIENT",
+        `Stock insuffisant pour ${product.name} (disponible : ${product.stock})`,
+        422
+      );
+    }
+  }
 
   // Recalculate total server-side — never trust client-provided prices
   const serverTotal = items.reduce((sum, item) => {

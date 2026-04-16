@@ -2,16 +2,41 @@
 
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { X, ChevronDown, Upload, ImagePlus, Layers } from "lucide-react";
+import { X, ChevronDown, Upload, ImagePlus, Layers, Palette, AlertCircle } from "lucide-react";
 import { uploadImage } from "@/services/admin";
 import {
   Product,
+  ProductImage,
   SIZE_OPTIONS,
   SHOE_SIZE_OPTIONS,
   SizeEntry,
   VariantEntry,
 } from "@/app/variables";
 import VariantBuilder from "@/app/admin/components/VariantBuilder";
+
+// ─── Palette partagée avec VariantBuilder ─────────────────────────────────────
+
+const PRESET_COLORS: { name: string; hex: string }[] = [
+  { name: "Noir",     hex: "#0A0A0A" },
+  { name: "Blanc",    hex: "#FFFFFF" },
+  { name: "Gris",     hex: "#6B7280" },
+  { name: "Beige",    hex: "#D2B48C" },
+  { name: "Marine",   hex: "#1E3A5F" },
+  { name: "Bleu",     hex: "#3B82F6" },
+  { name: "Rouge",    hex: "#EF4444" },
+  { name: "Rose",     hex: "#EC4899" },
+  { name: "Orange",   hex: "#F97316" },
+  { name: "Jaune",    hex: "#EAB308" },
+  { name: "Vert",     hex: "#22C55E" },
+  { name: "Violet",   hex: "#A855F7" },
+  { name: "Marron",   hex: "#92400E" },
+  { name: "Bordeaux", hex: "#881337" },
+];
+
+const hexOf = (name: string) =>
+  PRESET_COLORS.find((c) => c.name === name)?.hex ?? "#CCCCCC";
+
+// ─── Helpers stock ────────────────────────────────────────────────────────────
 
 const totalStock = (sizes: SizeEntry[]) =>
   sizes.reduce((sum, s) => sum + s.quantity, 0);
@@ -22,6 +47,14 @@ const totalVariantsStock = (variants: VariantEntry[]) =>
     0,
   );
 
+// ─── Type état unifié pour les images supplémentaires ────────────────────────
+
+type ExtraItem =
+  | { kind: "existing"; url: string; color?: string }
+  | { kind: "new"; file: File; preview: string; color?: string };
+
+// ─── Composant principal ──────────────────────────────────────────────────────
+
 export default function ProductModel({
   product,
   onClose,
@@ -31,7 +64,7 @@ export default function ProductModel({
 }: {
   product: Product | null;
   onClose: () => void;
-  onSave: (p: Product) => void;
+  onSave: (p: Product) => Promise<void>;
   categories: string[];
   onAddCategory: (cat: string) => void;
 }) {
@@ -41,18 +74,29 @@ export default function ProductModel({
   const [uploading, setUploading] = useState(false);
   const isNew = !product;
 
-  // Activer le mode variantes couleur
   const [useVariants, setUseVariants] = useState(
     () => (product?.variants?.length ?? 0) > 0,
   );
 
-  // Image previews (local blobs avant upload)
+  // Image principale
   const [mainPreview, setMainPreview] = useState<string>(product?.mainImage ?? "");
-  const [extraPreviews, setExtraPreviews] = useState<string[]>(product?.extraImages ?? []);
-
-  // Fichiers en attente d'upload
   const [mainFile, setMainFile] = useState<File | null>(null);
-  const [extraFiles, setExtraFiles] = useState<File[]>([]);
+
+  // Images supplémentaires — sans limite fixe, avec couleur optionnelle
+  const [extraItems, setExtraItems] = useState<ExtraItem[]>(
+    () =>
+      (product?.extraImages ?? []).map((img) => ({
+        kind: "existing" as const,
+        url: img.url,
+        color: img.color,
+      })),
+  );
+
+  // Index de l'image dont le sélecteur de couleur est ouvert (-1 = fermé)
+  const [colorPickerIdx, setColorPickerIdx] = useState<number>(-1);
+
+  // Erreur de soumission (validation ou API)
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const mainInputRef = useRef<HTMLInputElement>(null);
   const extraInputRef = useRef<HTMLInputElement>(null);
@@ -77,6 +121,8 @@ export default function ProductModel({
     },
   );
 
+  // ── Tailles ──────────────────────────────────────────────────────────────
+
   const toggleSize = (size: string) => {
     setForm((f) => {
       const exists = f.sizes.find((s) => s.size === size);
@@ -96,6 +142,8 @@ export default function ProductModel({
     });
   };
 
+  // ── Catégorie ─────────────────────────────────────────────────────────────
+
   const handleAddCategory = () => {
     const trimmed = newCategoryInput.trim();
     if (!trimmed || categories.includes(trimmed)) return;
@@ -104,6 +152,8 @@ export default function ProductModel({
     setNewCategoryInput("");
     setShowAddCategory(false);
   };
+
+  // ── Images ────────────────────────────────────────────────────────────────
 
   const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -115,48 +165,99 @@ export default function ProductModel({
   const handleExtraImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
-    // Max 4 images supplémentaires
-    const allowed = files.slice(0, 4 - extraFiles.length);
-    setExtraFiles((prev) => [...prev, ...allowed]);
-    setExtraPreviews((prev) => [
+    setExtraItems((prev) => [
       ...prev,
-      ...allowed.map((f) => URL.createObjectURL(f)),
+      ...files.map((file) => ({
+        kind: "new" as const,
+        file,
+        preview: URL.createObjectURL(file),
+        color: undefined,
+      })),
     ]);
+    e.target.value = "";
   };
 
   const removeExtraImage = (index: number) => {
-    setExtraFiles((prev) => prev.filter((_, i) => i !== index));
-    setExtraPreviews((prev) => prev.filter((_, i) => i !== index));
+    setExtraItems((prev) => prev.filter((_, i) => i !== index));
+    if (colorPickerIdx === index) setColorPickerIdx(-1);
   };
+
+  const setImageColor = (index: number, color: string | undefined) => {
+    setExtraItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, color } : item)),
+    );
+    setColorPickerIdx(-1);
+  };
+
+  // ── Soumission ───────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
     if (!mainPreview || !form.category) return;
+
+    // ── Validation : doublons de couleurs ────────────────────────────────
+    if (useVariants && (form.variants?.length ?? 0) > 0) {
+      const colors = (form.variants ?? [])
+        .map((v) => v.color.toLowerCase().trim())
+        .filter(Boolean);
+      if (new Set(colors).size !== colors.length) {
+        setSubmitError("Chaque variante doit avoir une couleur unique.");
+        return;
+      }
+      // Vérifie aussi qu'aucune variante n'a de couleur vide
+      if ((form.variants ?? []).some((v) => !v.color.trim())) {
+        setSubmitError("Toutes les variantes doivent avoir une couleur.");
+        return;
+      }
+    }
+
+    setSubmitError(null);
     setUploading(true);
+
     try {
-      // Upload image principale
       let mainImageUrl = form.mainImage;
       if (mainFile) {
         mainImageUrl = await uploadImage(mainFile);
       }
 
-      // Upload images supplémentaires
-      const extraUrls: string[] = [...(form.extraImages ?? [])];
-      for (const file of extraFiles) {
-        const url = await uploadImage(file);
-        extraUrls.push(url);
+      const extraImages: ProductImage[] = [];
+      for (const item of extraItems) {
+        const url =
+          item.kind === "existing" ? item.url : await uploadImage(item.file);
+        extraImages.push({ url, ...(item.color ? { color: item.color } : {}) });
       }
 
-      onSave({ ...form, mainImage: mainImageUrl, extraImages: extraUrls });
+      // Normalise les couleurs des variantes (trim) avant envoi
+      const normalizedVariants = (form.variants ?? []).map((v) => ({
+        ...v,
+        color: v.color.trim(),
+      }));
+
+      await onSave({
+        ...form,
+        variants: normalizedVariants,
+        mainImage: mainImageUrl,
+        extraImages,
+      });
     } catch (err) {
-      console.error("Erreur upload :", err);
+      const raw = err instanceof Error ? err.message : "Une erreur est survenue";
+      // Traduit les messages backend en français lisible
+      const msg =
+        raw.includes("couleur") || raw.includes("color") || raw.includes("DUPLICATE")
+          ? "Deux variantes ont la même couleur. Corrigez les doublons et réessayez."
+          : raw;
+      setSubmitError(msg);
     } finally {
       setUploading(false);
     }
   };
 
   const sizeOptions =
-    form.category.toLocaleLowerCase().includes("chaussure") ? SHOE_SIZE_OPTIONS : SIZE_OPTIONS;
+    form.category.toLocaleLowerCase().includes("chaussure")
+      ? SHOE_SIZE_OPTIONS
+      : SIZE_OPTIONS;
   const selectedSizes = form.sizes.map((s) => s.size);
+
+  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <motion.div
@@ -190,7 +291,7 @@ export default function ProductModel({
         </div>
 
         {/* Form scrollable */}
-        <div className="px-7 py-6 space-y-5 overflow-y-auto">
+        <div className="px-7 py-6 space-y-5 overflow-y-auto" onClick={() => setColorPickerIdx(-1)}>
 
           {/* ── Images ─────────────────────────────────────────── */}
           <div>
@@ -198,94 +299,166 @@ export default function ProductModel({
               Images
             </label>
 
-            <div className="flex gap-3">
-              {/* Image principale */}
-              <div className="flex-1">
-                <p className="text-[8px] text-black/30 font-serif mb-1.5">
-                  Principale <span className="text-black/50">*</span>
+            {/* Image principale */}
+            <div className="mb-3">
+              <p className="text-[8px] text-black/30 font-serif mb-1.5">
+                Principale <span className="text-black/50">*</span>
+              </p>
+              <button
+                type="button"
+                onClick={() => mainInputRef.current?.click()}
+                className={`w-24 h-24 border-2 border-dashed flex flex-col items-center justify-center transition-all relative overflow-hidden shrink-0 ${
+                  mainPreview
+                    ? "border-transparent"
+                    : "border-black/10 hover:border-black/30"
+                }`}
+              >
+                {mainPreview ? (
+                  <>
+                    <img src={mainPreview} alt="main" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all flex items-center justify-center">
+                      <Upload size={14} className="text-white opacity-0 group-hover:opacity-100" strokeWidth={1.5} />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <ImagePlus size={18} strokeWidth={1} className="text-black/20 mb-1" />
+                    <span className="text-[8px] text-black/20 font-serif">Ajouter</span>
+                  </>
+                )}
+              </button>
+              <input
+                ref={mainInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleMainImageChange}
+              />
+              {!mainPreview && (
+                <p className="mt-1 text-[8px] text-red-400/70 font-serif italic">
+                  Obligatoire
+                </p>
+              )}
+            </div>
+
+            {/* Images supplémentaires */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-[8px] text-black/30 font-serif">
+                  Supplémentaires{" "}
+                  {extraItems.length > 0 && (
+                    <span className="text-black/20 italic">({extraItems.length})</span>
+                  )}
                 </p>
                 <button
                   type="button"
-                  onClick={() => mainInputRef.current?.click()}
-                  className={`w-full aspect-square border-2 border-dashed flex flex-col items-center justify-center transition-all relative overflow-hidden ${
-                    mainPreview
-                      ? "border-transparent"
-                      : "border-black/10 hover:border-black/30"
-                  }`}
+                  onClick={(e) => { e.stopPropagation(); extraInputRef.current?.click(); }}
+                  className="flex items-center gap-1 text-[8px] uppercase tracking-widest text-black/40 hover:text-black border border-[rgba(0,0,0,0.08)] hover:border-black/30 px-2.5 py-1 font-serif transition-all"
                 >
-                  {mainPreview ? (
-                    <>
-                      <img
-                        src={mainPreview}
-                        alt="main"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/0 hover:bg-black/20 transition-all flex items-center justify-center">
-                        <Upload size={16} className="text-white opacity-0 group-hover:opacity-100" strokeWidth={1.5} />
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <ImagePlus size={20} strokeWidth={1} className="text-black/20 mb-1" />
-                      <span className="text-[8px] text-black/20 font-serif">Ajouter</span>
-                    </>
-                  )}
+                  <ImagePlus size={10} strokeWidth={1.5} />
+                  Ajouter
                 </button>
-                <input
-                  ref={mainInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleMainImageChange}
-                />
               </div>
 
-              {/* Images supplémentaires */}
-              <div className="flex-2">
-                <p className="text-[8px] text-black/30 font-serif mb-1.5">
-                  Supplémentaires <span className="text-black/25 italic">(max 4)</span>
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {extraPreviews.map((src, i) => (
-                    <div key={i} className="relative aspect-square overflow-hidden border border-[rgba(0,0,0,0.08)]">
-                      <img src={src} alt={`extra-${i}`} className="w-full h-full object-cover" />
-                      <button
-                        type="button"
-                        onClick={() => removeExtraImage(i)}
-                        className="absolute top-1 right-1 bg-black/60 hover:bg-black p-0.5 transition-colors"
+              {/* Grille d'images */}
+              {extraItems.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {extraItems.map((item, i) => {
+                    const src = item.kind === "existing" ? item.url : item.preview;
+                    const isPickerOpen = colorPickerIdx === i;
+                    return (
+                      <div
+                        key={i}
+                        className="relative w-20 h-20 border border-[rgba(0,0,0,0.08)] overflow-visible shrink-0"
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        <X size={10} className="text-white" />
-                      </button>
-                    </div>
-                  ))}
+                        <img src={src} alt={`extra-${i}`} className="w-full h-full object-cover" />
 
-                  {extraPreviews.length < 4 && (
-                    <button
-                      type="button"
-                      onClick={() => extraInputRef.current?.click()}
-                      className="aspect-square border-2 border-dashed border-black/10 hover:border-black/30 flex flex-col items-center justify-center transition-all"
-                    >
-                      <ImagePlus size={16} strokeWidth={1} className="text-black/20 mb-1" />
-                      <span className="text-[8px] text-black/20 font-serif">Ajouter</span>
-                    </button>
-                  )}
+                        {/* Bouton supprimer */}
+                        <button
+                          type="button"
+                          onClick={() => removeExtraImage(i)}
+                          className="absolute -top-1.5 -right-1.5 bg-black hover:bg-black/70 p-0.5 transition-colors z-10"
+                        >
+                          <X size={9} className="text-white" />
+                        </button>
+
+                        {/* Badge couleur */}
+                        <button
+                          type="button"
+                          onClick={() => setColorPickerIdx(isPickerOpen ? -1 : i)}
+                          className="absolute bottom-0 left-0 right-0 flex items-center justify-center gap-1 py-0.5 transition-all bg-black/0 hover:bg-black/30"
+                          title={item.color ? `Couleur : ${item.color}` : "Attribuer une couleur"}
+                        >
+                          {item.color ? (
+                            <>
+                              <span
+                                className="w-2.5 h-2.5 rounded-full border border-white/50 shrink-0"
+                                style={{ backgroundColor: hexOf(item.color) }}
+                              />
+                              <span className="text-[7px] text-white font-serif drop-shadow truncate max-w-[44px]">
+                                {item.color}
+                              </span>
+                            </>
+                          ) : (
+                            <Palette size={10} className="text-white/60" strokeWidth={1.5} />
+                          )}
+                        </button>
+
+                        {/* Sélecteur de couleur */}
+                        {isPickerOpen && (
+                          <div className="absolute top-[calc(100%+4px)] left-0 z-20 bg-white border border-[rgba(0,0,0,0.12)] shadow-lg p-2.5 w-48">
+                            <p className="text-[7px] uppercase tracking-[0.25em] text-black/30 font-serif mb-2">
+                              Couleur de l'image
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 mb-2">
+                              {PRESET_COLORS.map((c) => (
+                                <button
+                                  key={c.name}
+                                  type="button"
+                                  title={c.name}
+                                  onClick={() => setImageColor(i, c.name)}
+                                  className={`w-5 h-5 rounded-full border-2 transition-all ${
+                                    item.color === c.name
+                                      ? "border-black scale-110"
+                                      : "border-[rgba(0,0,0,0.08)] hover:scale-105 hover:border-black/30"
+                                  }`}
+                                  style={{ backgroundColor: c.hex }}
+                                />
+                              ))}
+                            </div>
+                            {item.color && (
+                              <button
+                                type="button"
+                                onClick={() => setImageColor(i, undefined)}
+                                className="text-[8px] text-black/35 hover:text-black font-serif transition-colors"
+                              >
+                                ✕ Retirer la couleur
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <input
-                  ref={extraInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={handleExtraImagesChange}
-                />
-              </div>
-            </div>
+              )}
 
-            {!mainPreview && (
-              <p className="mt-1.5 text-[8px] text-red-400/70 font-serif italic">
-                L'image principale est obligatoire
-              </p>
-            )}
+              {extraItems.length === 0 && (
+                <p className="text-[8px] text-black/20 font-serif italic">
+                  Aucune image supplémentaire. Cliquez sur « Ajouter » pour en insérer.
+                </p>
+              )}
+
+              <input
+                ref={extraInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={handleExtraImagesChange}
+              />
+            </div>
           </div>
 
           {/* ── Nom ────────────────────────────────────────────── */}
@@ -401,7 +574,6 @@ export default function ProductModel({
               type="button"
               onClick={() => {
                 setUseVariants((v) => !v);
-                // Réinitialise l'autre mode pour éviter les données mixtes
                 if (!useVariants) {
                   setForm((f) => ({ ...f, sizes: [], stock: 0 }));
                 } else {
@@ -517,8 +689,18 @@ export default function ProductModel({
           )}
         </div>
 
+        {/* Erreur de soumission */}
+        {submitError && (
+          <div className="px-7 pb-0 pt-3 shrink-0 border-t border-[rgba(0,0,0,0.08)]">
+            <div className="flex items-start gap-2 text-[8px] text-red-500 bg-red-50 border border-red-200 px-3 py-2.5 font-serif leading-relaxed">
+              <AlertCircle size={12} className="shrink-0 mt-px" />
+              <span>{submitError}</span>
+            </div>
+          </div>
+        )}
+
         {/* Footer */}
-        <div className="px-7 py-5 border-t flex justify-end space-x-3 border-[rgba(0,0,0,0.08)] shrink-0">
+        <div className={`px-7 py-5 flex justify-end space-x-3 shrink-0 ${submitError ? "pt-3" : "border-t border-[rgba(0,0,0,0.08)]"}`}>
           <button onClick={onClose}
             className="px-6 py-2.5 border text-[9px] uppercase tracking-widest text-black/50 hover:text-black hover:border-black/30 transition-all font-serif border-[rgba(0,0,0,0.08)]">
             Annuler
@@ -526,13 +708,16 @@ export default function ProductModel({
           <button
             onClick={handleSubmit}
             disabled={!mainPreview || !form.category || uploading}
-            className={`px-6 py-2.5 text-white text-[9px] uppercase tracking-widest transition-all font-serif ${
+            className={`px-6 py-2.5 text-white text-[9px] uppercase tracking-widest transition-all font-serif flex items-center gap-2 ${
               !mainPreview || !form.category || uploading
                 ? "bg-black/30 cursor-not-allowed"
                 : "bg-black hover:bg-black/80"
             }`}
           >
-            {uploading ? "Envoi..." : isNew ? "Créer le produit" : "Enregistrer"}
+            {uploading && (
+              <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            )}
+            {uploading ? "Envoi en cours…" : isNew ? "Créer le produit" : "Enregistrer"}
           </button>
         </div>
       </motion.div>

@@ -1,4 +1,4 @@
-import type { Product } from "@/app/variables";
+import type { Product, ProductImage } from "@/app/variables";
 
 /** Subset of the Prisma Product row needed for mapping */
 export type ProductRow = {
@@ -36,8 +36,19 @@ export function fromPrismaStatus(s: string): Product["status"] {
 
 /** Map a raw Prisma product row to the shared Product interface */
 export function toProduct(p: ProductRow): Product {
-  let extraImages: string[] = [];
-  try { extraImages = JSON.parse(p.extraImages || "[]"); } catch { /* ignore */ }
+  let extraImages: ProductImage[] = [];
+  try {
+    const parsed: unknown[] = JSON.parse(p.extraImages || "[]");
+    // Rétrocompatibilité : ancienne forme = tableau de strings
+    extraImages = parsed
+      .map((item): ProductImage | null => {
+        if (typeof item === "string") return { url: item };
+        if (item && typeof item === "object" && "url" in item)
+          return item as ProductImage;
+        return null;
+      })
+      .filter((x): x is ProductImage => x !== null);
+  } catch { /* ignore */ }
 
   return {
     id:          p.id,

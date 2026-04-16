@@ -105,7 +105,8 @@ export default function Checkout() {
       setSuccess(true);
       clearCart();
     } catch (err) {
-      console.error(err);
+      const msg = err instanceof Error ? err.message : "Erreur lors de la création de la commande";
+      setStockErrors([msg]);
     } finally {
       setSubmitting(false);
     }

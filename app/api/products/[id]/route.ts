@@ -10,13 +10,38 @@ export async function GET(
   const { id } = await params;
 
   const product = await prisma.product.findUnique({
-    where:   { id },
-    include: { sizes: true },
+    where: { id },
+    include: {
+      sizes: true,
+      variants: { include: { sizes: true } },
+    },
   });
 
   if (!product || product.deletedAt) {
     return apiError("NOT_FOUND", "Produit introuvable", 404);
   }
 
-  return NextResponse.json(product);
+  // extraImages is stored as a JSON string in the DB — parse it
+  let extraImages: unknown[] = [];
+  try {
+    const parsed = JSON.parse(product.extraImages || "[]");
+    extraImages = Array.isArray(parsed) ? parsed : [];
+  } catch {
+    extraImages = [];
+  }
+
+  return NextResponse.json({
+    ...product,
+    extraImages,
+    variants: product.variants.map((v) => ({
+      id: v.id,
+      color: v.color,
+      sku: v.sku ?? undefined,
+      sizes: v.sizes.map((s) => ({
+        name: s.name,
+        stock: s.stock,
+        price: s.price ?? undefined,
+      })),
+    })),
+  });
 }

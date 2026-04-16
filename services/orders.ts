@@ -60,7 +60,10 @@ export async function createOrder(
     body: JSON.stringify(data),
   });
 
-  if (!res.ok) throw new Error("Erreur lors de la création de la commande");
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.message ?? "Erreur lors de la création de la commande");
+  }
   const { id } = await res.json();
   return id;
 }

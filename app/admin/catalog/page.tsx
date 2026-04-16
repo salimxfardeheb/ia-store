@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Search, ChevronDown, Trash2 } from "lucide-react";
+import { Plus, Search, ChevronDown, Trash2, CheckCircle } from "lucide-react";
 import AdminHeader from "../components/AdminHeader";
 import ProductModel from "../components/ProductModel";
 import ProductTable from "../components/ProductTable";
@@ -28,7 +28,15 @@ export default function CatalogPage() {
   );
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [view, setView] = useState<"table" | "grid">("table");
-  
+  const [toast, setToast] = useState<string | null>(null);
+
+  // Auto-dismiss toast après 3 s
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
 
   // Fetch products from Firestore on mount
   useEffect(() => {
@@ -78,23 +86,21 @@ export default function CatalogPage() {
     }
   };
 
+  // Les erreurs NE sont PAS capturées ici — elles remontent à ProductModel
+  // qui les affiche dans la modale (modale reste ouverte en cas d'erreur).
   const handleSave = async (product: Product) => {
     if (readOnly) return;
     const isNew = !products.find((p) => p.id === product.id);
-    try {
-      if (isNew) {
-        const created = await addProduct(product);
-        setProducts((prev) => [...prev, created]);
-      } else {
-        const updated = await updateProduct(product, product.id);
-        setProducts((prev) =>
-          prev.map((p) => (p.id === product.id ? updated : p)),
-        );
-      }
-      setEditProduct(undefined);
-    } catch (err) {
-      console.error("Erreur :", err);
+    if (isNew) {
+      const created = await addProduct(product);
+      setProducts((prev) => [...prev, created]);
+      setToast("Produit créé avec succès");
+    } else {
+      const updated = await updateProduct(product, product.id);
+      setProducts((prev) => prev.map((p) => (p.id === product.id ? updated : p)));
+      setToast("Modifications enregistrées");
     }
+    setEditProduct(undefined);
   };
 
   const handleDelete = async (id: string) => {
@@ -335,6 +341,21 @@ export default function CatalogPage() {
             categories={categories}
             onAddCategory={(newCat) => setCategories([...categories, newCat])}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Toast succès */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 12 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2.5 bg-black text-white px-5 py-3 text-[9px] uppercase tracking-widest font-serif shadow-xl"
+          >
+            <CheckCircle size={13} strokeWidth={1.5} />
+            {toast}
+          </motion.div>
         )}
       </AnimatePresence>
     </>

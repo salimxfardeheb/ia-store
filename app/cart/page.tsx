@@ -39,69 +39,80 @@ export default function Cart() {
         {/* Items List */}
         <div className="lg:col-span-2 space-y-0 border-t border-black/8">
           <AnimatePresence mode="popLayout">
-            {cart.map((item) => (
-              <motion.div
-                key={`${item.id}-${item.selectedSize ?? ''}`}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="flex items-start space-x-6 py-8 border-b border-black/8"
-              >
-                {/* Image */}
-                <div className="w-28 aspect-3/4 bg-[#f5f5f5] overflow-hidden shrink-0">
-                  <img
-                    src={item.mainImage}
-                    alt={item.name}
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
+            {cart.map((item) => {
+              // Priorité : taille flat → taille variante → stock global
+              const flatEntry    = item.selectedSize ? item.sizes?.find((s) => s.size === item.selectedSize) : undefined;
+              const variantEntry = !flatEntry && item.selectedSize
+                ? (item.variants ?? []).flatMap((v) => v.sizes ?? []).find((s) => s.name === item.selectedSize)
+                : undefined;
+              const maxQty = flatEntry ? flatEntry.quantity : variantEntry ? variantEntry.stock : item.stock;
+              const atMax = item.quantity >= maxQty;
 
-                <div className="grow">
-                  <div className="flex justify-between items-start mb-1">
-                    <div>
-                      <h3 className="font-serif text-xl italic">{item.name}</h3>
-                      <p className="text-black/30 text-[10px] uppercase tracking-[0.25em] mt-0.5">
-                        {item.category}
-                        {item.selectedSize && <span className="ml-2">· Taille {item.selectedSize}</span>}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => removeFromCart(item.id, item.selectedSize)}
-                      className="p-1.5 hover:bg-black/5 transition-colors"
-                    >
-                      <X size={15} strokeWidth={1.5} />
-                    </button>
+              return (
+                <motion.div
+                  key={`${item.id}-${item.selectedSize ?? ''}`}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="flex items-start space-x-6 py-8 border-b border-black/8"
+                >
+                  {/* Image */}
+                  <div className="w-28 aspect-3/4 bg-[#f5f5f5] overflow-hidden shrink-0">
+                    <img
+                      src={item.mainImage}
+                      alt={item.name}
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
 
-                  <div className="flex justify-between items-center mt-6">
-                    {/* Quantity */}
-                    <div className="flex items-center border border-black/10">
+                  <div className="grow">
+                    <div className="flex justify-between items-start mb-1">
+                      <div>
+                        <h3 className="font-serif text-xl italic">{item.name}</h3>
+                        <p className="text-black/30 text-[10px] uppercase tracking-[0.25em] mt-0.5">
+                          {item.category}
+                          {item.selectedSize && <span className="ml-2">· Taille {item.selectedSize}</span>}
+                        </p>
+                      </div>
                       <button
-                        onClick={() => updateQuantity(item.id, -1, item.selectedSize)}
-                        className="w-9 h-9 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors"
+                        onClick={() => removeFromCart(item.id, item.selectedSize)}
+                        className="p-1.5 hover:bg-black/5 transition-colors"
                       >
-                        <Minus size={13} strokeWidth={1.5} />
+                        <X size={15} strokeWidth={1.5} />
                       </button>
-                      <span className="w-9 text-center text-sm font-medium font-serif">
-                        {item.quantity}
+                    </div>
+
+                    <div className="flex justify-between items-center mt-6">
+                      {/* Quantity */}
+                      <div className="flex items-center border border-black/10">
+                        <button
+                          onClick={() => updateQuantity(item.id, -1, item.selectedSize)}
+                          className="w-9 h-9 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors"
+                        >
+                          <Minus size={13} strokeWidth={1.5} />
+                        </button>
+                        <span className="w-9 text-center text-sm font-medium font-serif">
+                          {item.quantity}
+                        </span>
+                        <button
+                          onClick={() => updateQuantity(item.id, 1, item.selectedSize)}
+                          disabled={atMax}
+                          className={`w-9 h-9 flex items-center justify-center transition-colors ${atMax ? 'text-black/10 cursor-not-allowed' : 'text-black/30 hover:text-black hover:bg-black/5'}`}
+                        >
+                          <Plus size={13} strokeWidth={1.5} />
+                        </button>
+                      </div>
+
+                      <span className="font-serif text-lg italic">
+                        {(item.price * item.quantity).toLocaleString("fr-FR")} DA
                       </span>
-                      <button
-                        onClick={() => updateQuantity(item.id, 1, item.selectedSize)}
-                        className="w-9 h-9 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors"
-                      >
-                        <Plus size={13} strokeWidth={1.5} />
-                      </button>
                     </div>
-
-                    <span className="font-serif text-lg italic">
-                      {(item.price * item.quantity).toLocaleString("fr-FR")} DA
-                    </span>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </AnimatePresence>
         </div>
 

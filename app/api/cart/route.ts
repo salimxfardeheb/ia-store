@@ -17,11 +17,21 @@ export async function GET(req: NextRequest) {
   try {
     const items = await prisma.cartItem.findMany({
       where:   { userId: user.id },
-      include: { product: { include: { sizes: true } } },
+      include: { product: { include: { sizes: true, variants: { include: { sizes: true } } } } },
     });
 
     return NextResponse.json(
-      items.map((i) => ({ ...i.product, quantity: i.quantity, selectedSize: i.size ?? undefined }))
+      items.map((i) => ({
+        ...i.product,
+        variants: i.product.variants.map((v) => ({
+          id:    v.id,
+          color: v.color,
+          sku:   v.sku ?? undefined,
+          sizes: v.sizes.map((s) => ({ name: s.name, stock: s.stock, price: s.price ?? undefined })),
+        })),
+        quantity:     i.quantity,
+        selectedSize: i.size ?? undefined,
+      }))
     );
   } catch (err) {
     return handleDbError(err);
