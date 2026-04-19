@@ -24,8 +24,24 @@ export default function OrdersPage() {
     getOrders(token).then(setOrders);
   }, [user]);
 
-  const openClaim = (order: Order, productName: string) => {
+  const openClaim = async (order: Order, productName: string) => {
     setClaimTarget({ orderId: order.id, productName });
+    const res = await fetch("/api/flowmerce-url", {
+      method:  "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        orderId:       order.id,
+        customerEmail: order.form.email,
+        productName,
+        customerName:  order.form.name,
+        customerPhone: order.form.phone ?? "",
+        orderDate:     order.createdAt instanceof Date
+          ? order.createdAt.toISOString().split("T")[0]
+          : "",
+      }),
+    });
+    const { url } = await res.json();
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   };
 
   return (
