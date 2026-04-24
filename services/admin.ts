@@ -160,6 +160,24 @@ export async function createOfflineSale(
   return res.json();
 }
 
+// ─── Refus livraison ──────────────────────────────────────────────────────────
+
+export async function reportRefusal(
+  orderId: string,
+  reason: string
+): Promise<{ ok: boolean; fraudScore: number | null }> {
+  const res = await authFetch(`/api/admin/orders/${orderId}/report-refusal`, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify({ reason }),
+  });
+  if (!res.ok) {
+    const { message, error } = await res.json().catch(() => ({ error: "Échec du signalement" }));
+    throw new Error(message ?? error ?? "Échec du signalement");
+  }
+  return res.json();
+}
+
 // ─── Upload ───────────────────────────────────────────────────────────────────
 
 export async function uploadImage(file: File): Promise<string> {
