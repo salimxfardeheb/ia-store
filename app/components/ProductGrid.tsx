@@ -1,20 +1,33 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
 import { useEffect, useState } from "react";
 import { Product } from "../variables";
 import { getAllProducts } from "@/services/products";
+import { QuickAddModal } from "./QuickAddModal";
+import { FavoriteButton } from "./FavoriteButton";
 
 export default function ProductGrid() {
   const [products, setProducts] = useState<Product[]>([]);
+  const [quickAdd, setQuickAdd] = useState<Product | null>(null);
   const { addToCart } = useCart();
 
   useEffect(() => {
     getAllProducts(undefined, 6).then(setProducts);
   }, []);
+
+  const handleQuickAdd = (product: Product) => {
+    const hasVariants = (product.variants?.length ?? 0) > 0;
+    const hasSizes = (product.sizes?.length ?? 0) > 0;
+    if (hasVariants || hasSizes) {
+      setQuickAdd(product);
+      return;
+    }
+    addToCart(product);
+  };
 
   return (
     <section className="py-24 px-6 max-w-7xl mx-auto">
@@ -64,9 +77,14 @@ export default function ProductGrid() {
 
               <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
 
+              {/* Favorite */}
+              <div className="absolute top-6 right-6 z-10">
+                <FavoriteButton product={product} variant="card" />
+              </div>
+
               {/* Quick Add */}
               <button
-                onClick={() => addToCart(product)}
+                onClick={() => handleQuickAdd(product)}
                 className="absolute bottom-6 right-6 w-12 h-12 bg-white rounded-full flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 luxury-shadow z-10"
               >
                 <Plus size={20} strokeWidth={1.5} />
@@ -109,6 +127,15 @@ export default function ProductGrid() {
           Voir tous les produits
         </Link>
       </div>
+
+      <AnimatePresence>
+        {quickAdd && (
+          <QuickAddModal
+            product={quickAdd}
+            onClose={() => setQuickAdd(null)}
+          />
+        )}
+      </AnimatePresence>
     </section>
   );
 }

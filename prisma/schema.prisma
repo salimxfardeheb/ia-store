@@ -29,6 +29,7 @@ model User {
 
   orders    Order[]
   cartItems CartItem[]
+  favorites Favorite[]
 }
 
 // ─── Product ─────────────────────────────────────────────────────────────────
@@ -49,6 +50,7 @@ model Product {
   variants   Variant[]
   orderItems OrderItem[]
   cartItems  CartItem[]
+  favorites  Favorite[]
 
   @@index([status, deletedAt])
 }
@@ -147,6 +149,20 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   RETURNED
+}
+
+// ─── Favorites (wishlist) ────────────────────────────────────────────────────
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
 }
 
 // ─── Cart ────────────────────────────────────────────────────────────────────

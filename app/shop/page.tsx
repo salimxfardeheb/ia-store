@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { Product } from "../variables";
 import { useEffect, useState } from 'react';
 import { getAllProducts, getCategories } from '@/services/products';
+import { QuickAddModal } from '@/app/components/QuickAddModal';
+import { FavoriteButton } from '@/app/components/FavoriteButton';
 
 type SortOption = "newest" | "price-asc" | "price-desc"
 
@@ -23,6 +25,17 @@ export default function Shop() {
   const [activeCategory, setActiveCategory] = useState("Tous");
   const [sort, setSort] = useState<SortOption>("newest");
   const [showSort, setShowSort] = useState(false);
+  const [quickAdd, setQuickAdd] = useState<Product | null>(null);
+
+  const handleQuickAdd = (product: Product) => {
+    const hasVariants = (product.variants?.length ?? 0) > 0;
+    const hasSizes = (product.sizes?.length ?? 0) > 0;
+    if (hasVariants || hasSizes) {
+      setQuickAdd(product);
+      return;
+    }
+    addToCart(product);
+  };
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -142,8 +155,12 @@ export default function Shop() {
               </Link>
               <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
 
+              <div className="absolute top-6 right-6 z-10">
+                <FavoriteButton product={product} variant="card" />
+              </div>
+
               <button
-                onClick={() => addToCart(product)}
+                onClick={() => handleQuickAdd(product)}
                 className="absolute bottom-6 right-6 w-12 h-12 bg-white flex items-center justify-center opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500 luxury-shadow z-10"
               >
                 <Plus size={20} strokeWidth={1.5} />
@@ -174,6 +191,15 @@ export default function Shop() {
           </p>
         </div>
       )}
+
+      <AnimatePresence>
+        {quickAdd && (
+          <QuickAddModal
+            product={quickAdd}
+            onClose={() => setQuickAdd(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

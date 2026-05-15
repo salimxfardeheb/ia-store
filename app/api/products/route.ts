@@ -13,10 +13,38 @@ export async function GET(req: NextRequest) {
       deletedAt: null,
       ...(category && category !== "Tous" ? { category } : {}),
     },
-    include: { sizes: true },
+    include: {
+      sizes:    true,
+      variants: { include: { sizes: true } },
+    },
     orderBy: { createdAt: "desc" },
     ...(limit > 0 ? { take: limit } : {}),
   });
 
-  return NextResponse.json(products);
+  const shaped = products.map((p) => {
+    let extraImages: unknown[] = [];
+    try {
+      const parsed = JSON.parse(p.extraImages || "[]");
+      extraImages = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      extraImages = [];
+    }
+
+    return {
+      ...p,
+      extraImages,
+      variants: p.variants.map((v) => ({
+        id: v.id,
+        color: v.color,
+        sku: v.sku ?? undefined,
+        sizes: v.sizes.map((s) => ({
+          name: s.name,
+          stock: s.stock,
+          price: s.price ?? undefined,
+        })),
+      })),
+    };
+  });
+
+  return NextResponse.json(shaped);
 }

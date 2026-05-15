@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { useAuth } from '@/app/context/AuthContext';
 import { ArrowRight, Mail, Lock } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -14,6 +14,11 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Only honor internal redirects (starting with "/") to avoid open-redirect issues
+  const rawNext = searchParams.get("next") ?? "/";
+  const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +27,7 @@ export default function Login() {
 
     try {
       await login(email, password);
-      router.push('/');
+      router.push(next);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
     } finally {

@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronDown,
   LayoutDashboard,
+  Heart,
 } from "lucide-react";
 import {
   motion,
@@ -19,6 +20,7 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
+import { useFavorites } from "@/app/context/FavoritesContext";
 import { useAuth } from "../context/AuthContext";
 import Logo from "./logo";
 
@@ -38,6 +40,7 @@ const Navbar = () => {
 
   const { user, isAuthenticated, logout } = useAuth();
   const { cartCount } = useCart();
+  const { favoritesCount } = useFavorites();
   const pathname = usePathname();
   const router = useRouter();
   const { scrollY } = useScroll();
@@ -256,6 +259,27 @@ const Navbar = () => {
                 )}
               </div>
 
+              {/* Favorites */}
+              <Link
+                href="/favorites"
+                aria-label="Mes favoris"
+                className={`relative ${hoverOpacity}`}
+              >
+                <Heart size={18} strokeWidth={1.5} />
+                <AnimatePresence>
+                  {favoritesCount > 0 && (
+                    <motion.span
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className="absolute -top-1.5 -right-1.5 bg-[#2C2416] text-[#F5F0E8] text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold"
+                    >
+                      {favoritesCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </Link>
+
               {/* Cart */}
               <Link href="/cart" className={`relative ${hoverOpacity}`}>
                 <ShoppingBag size={18} strokeWidth={1.5} />
@@ -323,6 +347,7 @@ const Navbar = () => {
                 {[
                   { href: "/", label: "Home" },
                   ...NAV_LINKS,
+                  { href: "/favorites", label: `Favoris (${favoritesCount})` },
                   { href: "/cart", label: `My Bag (${cartCount})` },
                 ].map(({ href, label }, i) => (
                   <motion.div

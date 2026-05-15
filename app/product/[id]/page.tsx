@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Product as P } from "@/app/variables";
 import { useEffect, useState } from "react";
 import { getProductById } from "@/services/products";
+import { FavoriteButton } from "@/app/components/FavoriteButton";
 
 const isHex = (c: string) => /^#[0-9A-Fa-f]{6}$/.test(c);
 
@@ -361,6 +362,9 @@ export default function ProductDetail() {
                   <ShoppingBag size={15} strokeWidth={1.5} />
                   <span>Ajouter au panier</span>
                 </button>
+
+                {/* Favorite */}
+                <FavoriteButton product={product} variant="bare" size={20} className="h-14 w-14 border border-black/15 hover:border-black" />
               </div>
             </div>
 

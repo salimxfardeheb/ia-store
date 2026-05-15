@@ -117,6 +117,12 @@ export const cartItemSchema = z.object({
 
 export const cartBodySchema = z.array(cartItemSchema).max(100, "Panier trop grand");
 
+// ─── Favorites (wishlist) ─────────────────────────────────────────────────────
+
+export const favoriteBodySchema = z.object({
+  productId: z.string().min(1, "ID produit requis"),
+});
+
 // ─── User management (admin) ──────────────────────────────────────────────────
 
 export const userCreateSchema = z.object({
