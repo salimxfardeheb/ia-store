@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireOwner, isNextResponse } from "@/lib/rbac";
+import { requireOwner, isNextResponse, invalidateRoleCache } from "@/lib/rbac";
 import { userRoleSchema, safeParse, apiError, handleDbError } from "@/lib/validation";
 
 const USER_SELECT = {
@@ -12,7 +12,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const { id } = await params;
@@ -31,6 +31,7 @@ export async function PATCH(
       data:   { role: data.role },
       select: USER_SELECT,
     });
+    invalidateRoleCache(id);
     return NextResponse.json(user);
   } catch (e) {
     return handleDbError(e);
@@ -42,7 +43,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const { id } = await params;
@@ -53,6 +54,7 @@ export async function DELETE(
 
   try {
     await prisma.user.delete({ where: { id } });
+    invalidateRoleCache(id);
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleDbError(e);

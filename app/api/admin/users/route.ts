@@ -10,7 +10,7 @@ const USER_SELECT = {
 
 // GET /api/admin/users?q=<search>  (ADMIN only)
 export async function GET(req: NextRequest) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/users  (ADMIN only)
 export async function POST(req: NextRequest) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const body = await req.json().catch(() => null);

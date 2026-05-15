@@ -12,7 +12,7 @@ type PrismaOrderStatus = "PENDING" | "CONFIRMED" | "SHIPPED" | "DELIVERED" | "CA
 
 // GET /api/admin/orders?page=1&limit=50&status=<status> (ADMIN + SELLER)
 export async function GET(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const { searchParams } = new URL(req.url);

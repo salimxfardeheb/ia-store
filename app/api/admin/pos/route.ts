@@ -5,7 +5,7 @@ import { posBodySchema, safeParse, apiError } from "@/lib/validation";
 
 // POST /api/admin/pos — create an offline sale (ADMIN + SELLER)
 export async function POST(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const body = await req.json().catch(() => null);

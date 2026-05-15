@@ -14,7 +14,7 @@ export type { UnifiedCustomer };
 // Pagination is applied on the merged result. X-Total-Count returns the
 // merged total before slicing so the client can render a pager.
 export async function GET(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const url     = new URL(req.url);

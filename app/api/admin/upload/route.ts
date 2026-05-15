@@ -43,7 +43,7 @@ function detectMimeType(buf: Buffer): string | null {
 
 // POST /api/admin/upload — upload an image to Cloudinary (ADMIN + SELLER)
 export async function POST(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const formData = await req.formData().catch(() => null);

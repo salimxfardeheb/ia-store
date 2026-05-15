@@ -5,7 +5,7 @@ import { requireAdmin, isNextResponse } from "@/lib/rbac";
 // GET /api/admin/search?q=<term>  (ADMIN + SELLER)
 // Returns up to 4 results per entity: products, orders, customers
 export async function GET(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const q = new URL(req.url).searchParams.get("q")?.trim() ?? "";

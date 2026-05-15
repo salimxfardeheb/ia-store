@@ -6,7 +6,7 @@ import { toPrismaStatus, toProduct } from "@/lib/productStatus";
 
 // GET /api/admin/products — list all non-deleted products (ADMIN + SELLER)
 export async function GET(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const products = await prisma.product.findMany({
@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
 // POST /api/admin/products — create a product (ADMIN only)
 export async function POST(req: NextRequest) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const body = await req.json().catch(() => null);

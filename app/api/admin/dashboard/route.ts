@@ -36,7 +36,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 // GET /api/admin/dashboard (ADMIN + SELLER)
 export async function GET(req: NextRequest) {
-  const auth = requireAdmin(req);
+  const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
 
   const thisMonth  = monthRange(0);

@@ -9,7 +9,7 @@ export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const { id } = await params;
@@ -68,7 +68,7 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = requireOwner(req);
+  const auth = await requireOwner(req);
   if (isNextResponse(auth)) return auth;
 
   const { id } = await params;
