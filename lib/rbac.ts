@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTokenFromRequest, verifyToken, JwtPayload } from "./auth";
 import { prisma } from "./prisma";
+import { requireSameOrigin } from "./csrf";
 
 type AuthResult = JwtPayload | NextResponse;
 type Role = JwtPayload["role"];
@@ -53,6 +54,9 @@ async function extractUser(req: NextRequest): Promise<JwtPayload | null> {
 
 /** Requires ADMIN or SELLER role — for operations both roles can perform */
 export async function requireAdmin(req: NextRequest): Promise<AuthResult> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = await extractUser(req);
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
@@ -65,6 +69,9 @@ export async function requireAdmin(req: NextRequest): Promise<AuthResult> {
 
 /** Requires ADMIN role only — for owner-exclusive operations */
 export async function requireOwner(req: NextRequest): Promise<AuthResult> {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = await extractUser(req);
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });

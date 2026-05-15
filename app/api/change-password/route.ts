@@ -4,8 +4,12 @@ import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { checkRateLimit } from "@/lib/rateLimit";
 import { changePasswordSchema, safeParse, apiError, handleDbError } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const token = getTokenFromRequest(req);
   if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
@@ -14,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   // 5 tentatives / minute / utilisateur — empêche un bruteforce du
   // currentPassword si une session est volée.
-  const rl = checkRateLimit(`pwchange:${user.id}`, { max: 5, windowMs: 60_000 });
+  const rl = await checkRateLimit(`pwchange:${user.id}`, { max: 5, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Trop de tentatives. Réessayez dans quelques instants." },

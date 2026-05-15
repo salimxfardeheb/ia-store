@@ -179,35 +179,9 @@ export interface ReclamationForm {
   description: string;
 }
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-export const revenueData = [
-  { name: "Jan", revenue: 45000, expenses: 32000 },
-  { name: "Fév", revenue: 52000, expenses: 34000 },
-  { name: "Mar", revenue: 48000, expenses: 31000 },
-  { name: "Avr", revenue: 61000, expenses: 38000 },
-  { name: "Mai", revenue: 55000, expenses: 35000 },
-  { name: "Jun", revenue: 67000, expenses: 40000 },
-  { name: "Jul", revenue: 72000, expenses: 42000 },
-];
-
-
 
 export const PIE_COLORS = ["#0A0A0A", "#3A3A3A", "#7A7A7A", "#CACACA"];
 
-
-export const STATUS_STYLES: Record<string, string> = {
-  "Livré":      "bg-black text-white",
-  "En attente": "bg-black/10 text-black",
-  "Retardé":    "bg-black text-white border border-black/20",
-  "Confirmé":   "bg-black/5 text-black",
-  "Expédié":    "bg-black/80 text-white",
-};
-
-export const STATUS_STYLE: Record<string, string> = {
-  "Actif":    "bg-black text-white",
-  "Brouillon":"bg-black/8 text-black",
-  "Archivé":  "bg-black/5 text-black/40",
-};
 
 export const NAV_ITEMS: { id: string; icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>; label: string; href: string; roles: AdminRole[] }[] = [
   { id: "overview",   icon: LayoutDashboard, label: "Vue d'ensemble",  href: "/admin",            roles: ["ADMIN", "SELLER"]  },

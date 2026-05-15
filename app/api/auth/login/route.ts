@@ -4,17 +4,21 @@ import { prisma } from "@/lib/prisma";
 import { signToken, AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth";
 import { checkRateLimit, resetRateLimit, getClientIp } from "@/lib/rateLimit";
 import { apiError } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 // Pré-calculé une seule fois au démarrage : bcrypt.compare doit faire
 // le travail complet même si l'email n'existe pas, sinon timing leak.
 const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing-balance", 12);
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const ip  = getClientIp(req);
   const key = `login:${ip}`;
 
   // 10 attempts per 60-second window per IP
-  const rl = checkRateLimit(key, { max: 10, windowMs: 60_000 });
+  const rl = await checkRateLimit(key, { max: 10, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Trop de tentatives. Réessayez dans quelques instants." },
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Successful login — clear the rate-limit window for this IP
-  resetRateLimit(key);
+  await resetRateLimit(key);
 
   const token = signToken({
     id:    user.id,

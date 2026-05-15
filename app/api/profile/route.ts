@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { profileUpdateSchema, safeParse, handleDbError } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -32,6 +33,9 @@ export async function GET(req: NextRequest) {
 
 // PATCH /api/profile
 export async function PATCH(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = getUser(req);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 

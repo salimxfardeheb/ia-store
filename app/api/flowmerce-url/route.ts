@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
+import { requireSameOrigin } from "@/lib/csrf";
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   // 1. Authentification : JWT obligatoire (cookie httpOnly ou Bearer)
   const token = getTokenFromRequest(req);
   const user  = token ? verifyToken(token) : null;

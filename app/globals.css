@@ -11,11 +11,9 @@
 @theme {
   --font-serif: "'Cormorant Garamond', Georgia, serif" ;
   --font-mono: "'JetBrains Mono', 'Fira Code', monospace";
-  --bg-bg: #F7F7F7;
   --bg-dark: #0A0A0A;
   --bg-mid: #3A3A3A;
   --bg-muted: #9A9A9A;
-  --bg-brrder: rgba(0,0,0,0.08);
   --bg-accent: #0A0A0A;
   
 }

@@ -4,6 +4,7 @@ import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { createOrderSchema, safeParse, apiError } from "@/lib/validation";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { normalizePhoneDZ } from "@/lib/phone";
+import { requireSameOrigin } from "@/lib/csrf";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -34,12 +35,15 @@ export async function GET(req: NextRequest) {
 
 // POST /api/orders — create an online order (guest or authenticated)
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = getUser(req);
 
   // ─── Rate-limit IP : bloque tôt le flood (avant parsing/DB) ─────────────
   // 5 commandes / 10 min / IP — limite franche contre les bots invités.
   const ipKey = `order:ip:${getClientIp(req)}`;
-  const ipRl = checkRateLimit(ipKey, { max: 5, windowMs: 10 * 60_000 });
+  const ipRl = await checkRateLimit(ipKey, { max: 5, windowMs: 10 * 60_000 });
   if (!ipRl.allowed) return tooManyRequests(ipRl.retryAfter);
 
   const body = await req.json().catch(() => null);
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest) {
 
   // ─── Rate-limit téléphone : 3 commandes / 10 min ──────────────────────
   // Empêche un même numéro de spammer la table, même via IP différentes.
-  const phoneRl = checkRateLimit(
+  const phoneRl = await checkRateLimit(
     `order:phone:${normalizedPhone}`,
     { max: 3, windowMs: 10 * 60_000 }
   );
@@ -68,7 +72,7 @@ export async function POST(req: NextRequest) {
   // Plus souple pour les comptes connectés (cas légitimes : reprise après
   // erreur paiement, etc.).
   if (user) {
-    const userRl = checkRateLimit(
+    const userRl = await checkRateLimit(
       `order:user:${user.id}`,
       { max: 10, windowMs: 10 * 60_000 }
     );

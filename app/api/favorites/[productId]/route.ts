@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { apiError, handleDbError } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -14,6 +15,9 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ productId: string }> }
 ) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = getUser(req);
   if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 

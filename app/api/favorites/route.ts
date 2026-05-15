@@ -7,6 +7,7 @@ import {
   apiError,
   handleDbError,
 } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -68,6 +69,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/favorites — add a product to favorites (idempotent)
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = getUser(req);
   if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 

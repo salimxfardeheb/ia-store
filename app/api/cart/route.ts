@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { cartBodySchema, safeParse, apiError, handleDbError } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -44,6 +45,9 @@ export async function GET(req: NextRequest) {
 
 // POST /api/cart  — save cart (replaces all items)
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = getUser(req);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
@@ -89,6 +93,9 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/cart  — clear cart
 export async function DELETE(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   const user = getUser(req);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 

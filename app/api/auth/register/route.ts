@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { signToken, AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { apiError, handleDbError } from "@/lib/validation";
+import { requireSameOrigin } from "@/lib/csrf";
 
 const registerSchema = z.object({
   email:    z.string().email("Email invalide"),
@@ -13,8 +14,11 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  const csrf = requireSameOrigin(req);
+  if (csrf) return csrf;
+
   // 5 inscriptions par minute / IP — empêche le flood de comptes
-  const rl = checkRateLimit(`register:${getClientIp(req)}`, { max: 5, windowMs: 60_000 });
+  const rl = await checkRateLimit(`register:${getClientIp(req)}`, { max: 5, windowMs: 60_000 });
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Trop de tentatives. Réessayez dans quelques instants." },
