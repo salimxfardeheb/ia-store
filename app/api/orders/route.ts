@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { createOrderSchema, safeParse, apiError } from "@/lib/validation";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { normalizePhoneDZ } from "@/lib/phone";
 
 function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
+}
+
+function tooManyRequests(retryAfter?: number) {
+  return NextResponse.json(
+    { code: "RATE_LIMITED", message: "Trop de commandes envoyées. Réessayez dans quelques minutes." },
+    { status: 429, headers: { "Retry-After": String(retryAfter ?? 60) } }
+  );
 }
 
 // GET /api/orders — orders of the authenticated user
@@ -27,11 +36,51 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const user = getUser(req);
 
+  // ─── Rate-limit IP : bloque tôt le flood (avant parsing/DB) ─────────────
+  // 5 commandes / 10 min / IP — limite franche contre les bots invités.
+  const ipKey = `order:ip:${getClientIp(req)}`;
+  const ipRl = checkRateLimit(ipKey, { max: 5, windowMs: 10 * 60_000 });
+  if (!ipRl.allowed) return tooManyRequests(ipRl.retryAfter);
+
   const body = await req.json().catch(() => null);
   const [data, err] = safeParse(createOrderSchema, body);
   if (err) return err;
 
   const { form, items } = data;
+
+  // ─── Normalisation téléphone DZ → E.164 ────────────────────────────────
+  // Stocker un format unique évite les doublons (0612… vs +21361…) et
+  // permet un rate-limit fiable par numéro.
+  const normalizedPhone = normalizePhoneDZ(form.phone);
+  if (!normalizedPhone) {
+    return apiError("VALIDATION_ERROR", "Numéro de téléphone invalide", 400);
+  }
+
+  // ─── Rate-limit téléphone : 3 commandes / 10 min ──────────────────────
+  // Empêche un même numéro de spammer la table, même via IP différentes.
+  const phoneRl = checkRateLimit(
+    `order:phone:${normalizedPhone}`,
+    { max: 3, windowMs: 10 * 60_000 }
+  );
+  if (!phoneRl.allowed) return tooManyRequests(phoneRl.retryAfter);
+
+  // ─── Rate-limit user (si authentifié) : 10 / 10 min ───────────────────
+  // Plus souple pour les comptes connectés (cas légitimes : reprise après
+  // erreur paiement, etc.).
+  if (user) {
+    const userRl = checkRateLimit(
+      `order:user:${user.id}`,
+      { max: 10, windowMs: 10 * 60_000 }
+    );
+    if (!userRl.allowed) return tooManyRequests(userRl.retryAfter);
+  }
+
+  // TODO captcha : ajouter Cloudflare Turnstile sur les guests
+  // (clé `TURNSTILE_SECRET_KEY` + vérif serveur de `cf-turnstile-response`).
+
+  // Email vide en DB pollue les analytics : normaliser, mais garder "" si
+  // pas fourni (colonne NOT NULL — migration séparée pour passer nullable).
+  const normalizedEmail = form.email.trim().toLowerCase();
 
   // Fetch all referenced products from DB to get authoritative prices
   const productIds  = [...new Set(items.map((i) => i.id))];
@@ -119,8 +168,8 @@ export async function POST(req: NextRequest) {
         paymentMethod: form.paymentMethod,
         deliveryType:  form.deliveryType,
         name:          form.name,
-        phone:         form.phone,
-        email:         form.email,
+        phone:         normalizedPhone,
+        email:         normalizedEmail,
         city:          form.city,
         address:       form.address,
         postalCode:    form.postalCode,
