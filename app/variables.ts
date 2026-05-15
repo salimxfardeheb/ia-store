@@ -118,6 +118,7 @@ export interface PosCartItem {
   price:     number;
   quantity:  number;
   size?:     string;
+  color?:    string; // couleur variante (uniquement produits à variantes)
   mainImage: string;
   category:  string;
   maxStock:  number; // used for qty cap validation
@@ -155,11 +156,13 @@ export interface Order {
 
 export interface OrderForm extends Profile {
   paymentMethod: "cash" | "card";
-  deliveryType: "home" | "bureau";
+  deliveryType: "home" | "bureau" | "store";
 }
 
 export interface CartItem extends Product {
-  quantity: number;
+  quantity:       number;
+  selectedSize?:  string;
+  selectedColor?: string;
 }
 
 

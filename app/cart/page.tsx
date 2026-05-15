@@ -40,17 +40,29 @@ export default function Cart() {
         <div className="lg:col-span-2 space-y-0 border-t border-black/8">
           <AnimatePresence mode="popLayout">
             {cart.map((item) => {
-              // Priorité : taille flat → taille variante → stock global
-              const flatEntry    = item.selectedSize ? item.sizes?.find((s) => s.size === item.selectedSize) : undefined;
-              const variantEntry = !flatEntry && item.selectedSize
-                ? (item.variants ?? []).flatMap((v) => v.sizes ?? []).find((s) => s.name === item.selectedSize)
-                : undefined;
-              const maxQty = flatEntry ? flatEntry.quantity : variantEntry ? variantEntry.stock : item.stock;
+              // Si la couleur est fournie, on scope sur cette variante exacte ;
+              // sinon priorité : taille flat → stock global.
+              let maxQty: number;
+              if (item.selectedColor) {
+                const variant = item.variants?.find((v) => v.color === item.selectedColor);
+                if (!variant) {
+                  maxQty = 0;
+                } else if (item.selectedSize) {
+                  maxQty = variant.sizes?.find((s) => s.name === item.selectedSize)?.stock ?? 0;
+                } else {
+                  maxQty = (variant.sizes ?? []).reduce((s, vs) => s + vs.stock, 0);
+                }
+              } else if (item.selectedSize) {
+                const flat = item.sizes?.find((s) => s.size === item.selectedSize);
+                maxQty = flat ? flat.quantity : item.stock;
+              } else {
+                maxQty = item.stock;
+              }
               const atMax = item.quantity >= maxQty;
 
               return (
                 <motion.div
-                  key={`${item.id}-${item.selectedSize ?? ''}`}
+                  key={`${item.id}-${item.selectedSize ?? ''}-${item.selectedColor ?? ''}`}
                   layout
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -73,11 +85,12 @@ export default function Cart() {
                         <h3 className="font-serif text-xl italic">{item.name}</h3>
                         <p className="text-black/30 text-[10px] uppercase tracking-[0.25em] mt-0.5">
                           {item.category}
+                          {item.selectedColor && <span className="ml-2">· {item.selectedColor}</span>}
                           {item.selectedSize && <span className="ml-2">· Taille {item.selectedSize}</span>}
                         </p>
                       </div>
                       <button
-                        onClick={() => removeFromCart(item.id, item.selectedSize)}
+                        onClick={() => removeFromCart(item.id, item.selectedSize, item.selectedColor)}
                         className="p-1.5 hover:bg-black/5 transition-colors"
                       >
                         <X size={15} strokeWidth={1.5} />
@@ -88,7 +101,7 @@ export default function Cart() {
                       {/* Quantity */}
                       <div className="flex items-center border border-black/10">
                         <button
-                          onClick={() => updateQuantity(item.id, -1, item.selectedSize)}
+                          onClick={() => updateQuantity(item.id, -1, item.selectedSize, item.selectedColor)}
                           className="w-9 h-9 flex items-center justify-center text-black/30 hover:text-black hover:bg-black/5 transition-colors"
                         >
                           <Minus size={13} strokeWidth={1.5} />
@@ -97,7 +110,7 @@ export default function Cart() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => updateQuantity(item.id, 1, item.selectedSize)}
+                          onClick={() => updateQuantity(item.id, 1, item.selectedSize, item.selectedColor)}
                           disabled={atMax}
                           className={`w-9 h-9 flex items-center justify-center transition-colors ${atMax ? 'text-black/10 cursor-not-allowed' : 'text-black/30 hover:text-black hover:bg-black/5'}`}
                         >

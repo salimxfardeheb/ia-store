@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getTokenFromHeader, verifyToken, JwtPayload } from "./auth";
+import { getTokenFromRequest, verifyToken, JwtPayload } from "./auth";
 
 type AuthResult = JwtPayload | NextResponse;
 
 function extractUser(req: NextRequest): JwtPayload | null {
-  const token = getTokenFromHeader(req.headers.get("Authorization"));
+  const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
 }

@@ -25,7 +25,7 @@ import {
 
 export default function Checkout() {
   const { cart, cartTotal, clearCart } = useCart();
-  const { user, profile, getToken } = useAuth();
+  const { user, profile } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<OrderForm>({
@@ -41,10 +41,9 @@ export default function Checkout() {
   });
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) return;
+    if (!user) return;
     const load = async () => {
-      const data = await getProfile(token);
+      const data = await getProfile();
       if (data)
         setForm((prev) => ({
           ...prev,
@@ -76,29 +75,30 @@ export default function Checkout() {
   const handleSubmit = async () => {
     if (!isValid || submitting) return;
 
-    // Vérifier le stock disponible pour chaque article
+    // Vérifier le stock disponible pour chaque article — couleur prise en compte
     const errors: string[] = [];
     for (const item of cart) {
       let available: number;
-      if (item.selectedSize) {
-        const flat = item.sizes.find((s) => s.size === item.selectedSize);
-        if (flat) {
-          available = flat.quantity;
+      if (item.selectedColor) {
+        const variant = item.variants?.find((v) => v.color === item.selectedColor);
+        if (!variant) {
+          available = 0;
+        } else if (item.selectedSize) {
+          available = variant.sizes?.find((s) => s.name === item.selectedSize)?.stock ?? 0;
         } else {
-          // Produit avec variantes couleur — chercher dans VariantSize
-          let variantStock = 0;
-          for (const v of item.variants ?? []) {
-            const vs = v.sizes?.find((s) => s.name === item.selectedSize);
-            if (vs) { variantStock += vs.stock; }
-          }
-          available = variantStock || item.stock;
+          available = (variant.sizes ?? []).reduce((s, vs) => s + vs.stock, 0);
         }
+      } else if (item.selectedSize) {
+        const flat = item.sizes.find((s) => s.size === item.selectedSize);
+        available = flat ? flat.quantity : item.stock;
       } else {
         available = item.stock;
       }
       if (item.quantity > available) {
-        const label = `${item.name}${item.selectedSize ? ` · Taille ${item.selectedSize}` : ""}`;
-        errors.push(`${label} — stock disponible : ${available}`);
+        const parts = [item.name];
+        if (item.selectedColor) parts.push(item.selectedColor);
+        if (item.selectedSize)  parts.push(`Taille ${item.selectedSize}`);
+        errors.push(`${parts.join(" · ")} — stock disponible : ${available}`);
       }
     }
     if (errors.length > 0) {
@@ -109,7 +109,7 @@ export default function Checkout() {
 
     setSubmitting(true);
     try {
-      const id = await createOrder(getToken(), {
+      const id = await createOrder({
         form,
         items: cart,
         total: cartTotal,
@@ -414,7 +414,7 @@ export default function Checkout() {
             {/* Articles */}
             <div className="space-y-4 mb-6 border-b border-black/8 pb-6">
               {cart.map((item) => (
-                <div key={`${item.id}-${item.selectedSize ?? ''}`} className="flex items-center gap-3">
+                <div key={`${item.id}-${item.selectedSize ?? ''}-${item.selectedColor ?? ''}`} className="flex items-center gap-3">
                   <div className="w-12 aspect-3/4 bg-[#f5f5f5] overflow-hidden shrink-0">
                     <img
                       src={item.mainImage}

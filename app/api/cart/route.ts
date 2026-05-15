@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getTokenFromHeader, verifyToken } from "@/lib/auth";
+import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { cartBodySchema, safeParse, apiError, handleDbError } from "@/lib/validation";
 
 function getUser(req: NextRequest) {
-  const token = getTokenFromHeader(req.headers.get("Authorization"));
+  const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
 }
@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
 
   try {
     const items = await prisma.cartItem.findMany({
-      where:   { userId: user.id },
+      where: {
+        userId:  user.id,
+        product: { status: "ACTIVE", deletedAt: null },
+      },
       include: { product: { include: { sizes: true, variants: { include: { sizes: true } } } } },
     });
 
@@ -29,8 +32,9 @@ export async function GET(req: NextRequest) {
           sku:   v.sku ?? undefined,
           sizes: v.sizes.map((s) => ({ name: s.name, stock: s.stock, price: s.price ?? undefined })),
         })),
-        quantity:     i.quantity,
-        selectedSize: i.size ?? undefined,
+        quantity:      i.quantity,
+        selectedSize:  i.size  ?? undefined,
+        selectedColor: i.color ?? undefined,
       }))
     );
   } catch (err) {
@@ -70,7 +74,8 @@ export async function POST(req: NextRequest) {
             userId:    user.id,
             productId: i.id,
             quantity:  i.quantity,
-            size:      i.selectedSize ?? null,
+            size:      i.selectedSize  ?? null,
+            color:     i.selectedColor ?? null,
           })),
         });
       }

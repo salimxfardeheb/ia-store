@@ -9,7 +9,7 @@ import { OrderCard, STATUS_CONFIG } from "../components/OrderCard";
 import { getOrders } from "@/services/orders";
 
 export default function OrdersPage() {
-  const { user, getToken } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [claimTarget, setClaimTarget] = useState<{
@@ -19,9 +19,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
-    const token = getToken();
-    if (!token) return;
-    getOrders(token).then(setOrders);
+    getOrders().then(setOrders);
   }, [user]);
 
   const openClaim = async (order: Order, productName: string) => {

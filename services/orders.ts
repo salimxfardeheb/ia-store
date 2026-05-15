@@ -1,14 +1,10 @@
 import { Order, OrderForm } from "@/app/variables";
 import { CartItem } from "@/services/cart";
 
-function authHeader(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
+// Auth est porté par le cookie HttpOnly — on a juste besoin de credentials:'include'.
 
-export async function getOrders(token: string): Promise<Order[]> {
-  const res = await fetch("/api/orders", {
-    headers: authHeader(token),
-  });
+export async function getOrders(): Promise<Order[]> {
+  const res = await fetch("/api/orders", { credentials: "include" });
   if (!res.ok) return [];
   const data = await res.json();
 
@@ -26,7 +22,16 @@ export async function getOrders(token: string): Promise<Order[]> {
     total: number;
     status: string;
     createdAt: string;
-    items: CartItem[];
+    items: {
+      productId: string | null;
+      name: string;
+      price: number;
+      quantity: number;
+      size:  string | null;
+      color: string | null;
+      mainImage: string;
+      category: string;
+    }[];
   }) => ({
     id: o.id,
     form: {
@@ -40,7 +45,23 @@ export async function getOrders(token: string): Promise<Order[]> {
       paymentMethod: o.paymentMethod,
       deliveryType: o.deliveryType,
     },
-    items: o.items,
+    items: o.items.map((i) => ({
+      // OrderItem snapshot → CartItem-shaped row used in UI
+      id:            i.productId ?? "",
+      name:          i.name,
+      price:         i.price,
+      quantity:      i.quantity,
+      selectedSize:  i.size  ?? undefined,
+      selectedColor: i.color ?? undefined,
+      mainImage:     i.mainImage,
+      category:      i.category,
+      // Filler fields required by CartItem extends Product but unused in order display
+      stock:         0,
+      sizes:         [],
+      status:        "Actif" as const,
+      createdAt:     "",
+      extraImages:   [],
+    })),
     total: o.total,
     status: o.status.toLowerCase(),
     createdAt: new Date(o.createdAt),
@@ -48,16 +69,13 @@ export async function getOrders(token: string): Promise<Order[]> {
 }
 
 export async function createOrder(
-  token: string | null,
   data: { form: OrderForm; items: CartItem[]; total: number }
 ): Promise<string> {
   const res = await fetch("/api/orders", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? authHeader(token) : {}),
-    },
-    body: JSON.stringify(data),
+    method:      "POST",
+    credentials: "include",
+    headers:     { "Content-Type": "application/json" },
+    body:        JSON.stringify(data),
   });
 
   if (!res.ok) {

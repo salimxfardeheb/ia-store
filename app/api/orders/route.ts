@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getTokenFromHeader, verifyToken } from "@/lib/auth";
+import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { createOrderSchema, safeParse, apiError } from "@/lib/validation";
 
 function getUser(req: NextRequest) {
-  const token = getTokenFromHeader(req.headers.get("Authorization"));
+  const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
 }
@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
     where:  { id: { in: productIds }, status: "ACTIVE", deletedAt: null },
     select: {
       id: true, name: true, price: true, mainImage: true, category: true, stock: true,
-      sizes: true,
-      variants: { select: { sizes: { select: { name: true, stock: true } } } },
+      sizes:    true,
+      variants: { select: { color: true, sizes: { select: { name: true, stock: true } } } },
     },
   });
 
@@ -54,38 +54,52 @@ export async function POST(req: NextRequest) {
 
   const productMap = new Map(dbProducts.map((p) => [p.id, p]));
 
-  // Vérifier le stock disponible pour chaque article + taille
+  // Vérifier le stock disponible pour chaque article — scope par couleur si fournie
   for (const item of items) {
     const product = productMap.get(item.id)!;
-    if (item.selectedSize) {
-      // Simple sizes (ProductSize table)
-      const sizeEntry = product.sizes.find((s) => s.size === item.selectedSize);
-      if (sizeEntry) {
-        if (item.quantity > sizeEntry.quantity) {
-          return apiError(
-            "STOCK_INSUFFICIENT",
-            `Stock insuffisant pour ${product.name} · Taille ${item.selectedSize} (disponible : ${sizeEntry.quantity})`,
-            422
-          );
-        }
-      } else {
-        // Variant sizes (VariantSize table) — sum stock across all color variants
-        const variantStock = product.variants
-          .flatMap((v) => v.sizes)
-          .filter((s) => s.name === item.selectedSize)
-          .reduce((sum, s) => sum + s.stock, 0);
-        if (item.quantity > variantStock) {
-          return apiError(
-            "STOCK_INSUFFICIENT",
-            `Stock insuffisant pour ${product.name} · Taille ${item.selectedSize} (disponible : ${variantStock})`,
-            422
-          );
-        }
+    const hasVariants = product.variants.length > 0;
+
+    // Produit à variantes : la couleur est obligatoire pour scoper le stock
+    if (hasVariants && !item.selectedColor) {
+      return apiError(
+        "VALIDATION_ERROR",
+        `Couleur requise pour ${product.name}`,
+        422
+      );
+    }
+
+    let available: number;
+    let label: string;
+
+    if (item.selectedColor) {
+      const variant = product.variants.find((v) => v.color === item.selectedColor);
+      if (!variant) {
+        return apiError(
+          "VALIDATION_ERROR",
+          `Couleur inconnue pour ${product.name} : ${item.selectedColor}`,
+          422
+        );
       }
-    } else if (item.quantity > product.stock) {
+      if (item.selectedSize) {
+        available = variant.sizes.find((s) => s.name === item.selectedSize)?.stock ?? 0;
+        label = `${product.name} · ${item.selectedColor} · Taille ${item.selectedSize}`;
+      } else {
+        available = variant.sizes.reduce((sum, s) => sum + s.stock, 0);
+        label = `${product.name} · ${item.selectedColor}`;
+      }
+    } else if (item.selectedSize) {
+      const sizeEntry = product.sizes.find((s) => s.size === item.selectedSize);
+      available = sizeEntry?.quantity ?? 0;
+      label = `${product.name} · Taille ${item.selectedSize}`;
+    } else {
+      available = product.stock;
+      label = product.name;
+    }
+
+    if (item.quantity > available) {
       return apiError(
         "STOCK_INSUFFICIENT",
-        `Stock insuffisant pour ${product.name} (disponible : ${product.stock})`,
+        `Stock insuffisant pour ${label} (disponible : ${available})`,
         422
       );
     }
@@ -118,7 +132,8 @@ export async function POST(req: NextRequest) {
               name:      p.name,
               price:     p.price,  // DB price
               quantity:  item.quantity,
-              size:      item.selectedSize ?? null,
+              size:      item.selectedSize  ?? null,
+              color:     item.selectedColor ?? null,
               mainImage: p.mainImage,
               category:  p.category,
             };

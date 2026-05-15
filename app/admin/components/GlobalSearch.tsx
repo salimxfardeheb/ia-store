@@ -3,7 +3,6 @@
 import { Search, Package, ShoppingBag, Users, X } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
 
 interface SearchResults {
   products:  Array<{ id: string; name: string; category: string; mainImage: string; status: string }>;
@@ -20,7 +19,6 @@ export default function GlobalSearch() {
   const inputRef     = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const router       = useRouter();
-  const { getToken } = useAuth();
 
   // Global "/" shortcut → focus search
   const handleGlobalKey = useCallback((e: KeyboardEvent) => {
@@ -58,9 +56,8 @@ export default function GlobalSearch() {
     const timer = setTimeout(async () => {
       setIsLoading(true);
       try {
-        const token = getToken();
-        const res   = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`, {
-          headers: { Authorization: `Bearer ${token}` },
+        const res = await fetch(`/api/admin/search?q=${encodeURIComponent(query)}`, {
+          credentials: "include",
         });
         if (res.ok) {
           const data: SearchResults = await res.json();
@@ -72,7 +69,7 @@ export default function GlobalSearch() {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [query, getToken]);
+  }, [query]);
 
   const clear = () => {
     setQuery("");

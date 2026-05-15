@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Readable } from "stream";
+import type { UploadApiResponse } from "cloudinary";
 import cloudinary from "@/lib/cloudinary";
 import { requireAdmin, isNextResponse } from "@/lib/rbac";
 import { apiError } from "@/lib/validation";
@@ -72,12 +74,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const dataUri = `data:${realMime};base64,${buffer.toString("base64")}`;
-
+  // upload_stream évite l'encodage base64 (+33% RAM/CPU) imposé par upload(dataUri).
   try {
-    const result = await cloudinary.uploader.upload(dataUri, {
-      folder:        "ia-store",
-      resource_type: "image",
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { folder: "ia-store", resource_type: "image" },
+        (error, uploaded) => {
+          if (error || !uploaded) reject(error ?? new Error("Upload failed"));
+          else resolve(uploaded);
+        }
+      );
+      Readable.from(buffer).pipe(stream);
     });
 
     return NextResponse.json({ url: result.secure_url });

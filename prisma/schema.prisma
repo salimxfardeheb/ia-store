@@ -138,6 +138,7 @@ model OrderItem {
   price     Float
   quantity  Int
   size      String?  // taille sélectionnée (null pour anciennes commandes)
+  color     String?  // couleur variante sélectionnée (null si produit sans variantes)
   mainImage String
   category  String
 }
@@ -175,6 +176,7 @@ model CartItem {
   productId String
   quantity  Int     @default(1)
   size      String? // taille sélectionnée (null si pas de taille)
+  color     String? // couleur variante sélectionnée (null si produit sans variantes)
 
-  @@unique([userId, productId, size])
+  @@unique([userId, productId, size, color])
 }

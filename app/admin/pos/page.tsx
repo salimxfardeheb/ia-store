@@ -12,19 +12,52 @@ import { getAllProducts as getShopProducts, getCustomers, createOfflineSale } fr
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 
-// ─── Size Picker Modal ────────────────────────────────────────────────────────
+// ─── Variant Picker Modal ─────────────────────────────────────────────────────
+// Couvre les deux cas :
+//   • Produit à variantes  → choix couleur + taille, scoped sur VariantSize
+//   • Produit simple avec tailles → choix taille uniquement, scoped sur ProductSize
 
-function SizePickerModal({
+const isHex = (c: string) => /^#[0-9A-Fa-f]{6}$/.test(c);
+
+function VariantPickerModal({
   product,
   onConfirm,
   onClose,
 }: {
   product: Product;
-  onConfirm: (size: string, maxStock: number) => void;
+  onConfirm: (args: { size: string; color?: string; maxStock: number }) => void;
   onClose: () => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const availableSizes = product.sizes.filter((s) => s.quantity > 0);
+  const hasVariants = (product.variants?.length ?? 0) > 0;
+
+  const [selectedColor, setSelectedColor] = useState<string | null>(
+    hasVariants ? product.variants![0].color : null
+  );
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
+  const activeVariant = hasVariants
+    ? product.variants!.find((v) => v.color === selectedColor) ?? null
+    : null;
+
+  const availableSizes = hasVariants
+    ? (activeVariant?.sizes ?? []).map((s) => ({ name: s.name, stock: s.stock }))
+    : product.sizes.map((s) => ({ name: s.size, stock: s.quantity }));
+
+  const handleConfirm = () => {
+    if (!selectedSize) return;
+    const row = availableSizes.find((s) => s.name === selectedSize);
+    if (!row || row.stock <= 0) return;
+    onConfirm({
+      size:     selectedSize,
+      color:    hasVariants ? selectedColor ?? undefined : undefined,
+      maxStock: row.stock,
+    });
+  };
+
+  const canConfirm =
+    !!selectedSize &&
+    (availableSizes.find((s) => s.name === selectedSize)?.stock ?? 0) > 0 &&
+    (!hasVariants || !!selectedColor);
 
   return (
     <motion.div
@@ -44,7 +77,7 @@ function SizePickerModal({
         <div className="flex justify-between items-start mb-4">
           <div>
             <p className="text-[9px] uppercase tracking-[0.4em] text-black/30 font-serif mb-1">
-              Choisir la taille
+              {hasVariants ? "Couleur & taille" : "Choisir la taille"}
             </p>
             <p className="font-serif font-medium text-sm">{product.name}</p>
           </div>
@@ -53,36 +86,73 @@ function SizePickerModal({
           </button>
         </div>
 
+        {hasVariants && (
+          <div className="mb-4">
+            <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-2">
+              Couleur
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {product.variants!.map((v) => (
+                <button
+                  key={v.color}
+                  onClick={() => {
+                    setSelectedColor(v.color);
+                    setSelectedSize(null);
+                  }}
+                  title={v.color}
+                  className={`transition-all ${
+                    isHex(v.color)
+                      ? `w-8 h-8 rounded-full border-2 ${
+                          selectedColor === v.color
+                            ? "border-black scale-110"
+                            : "border-transparent hover:border-black/30"
+                        }`
+                      : `px-3 h-9 text-[10px] uppercase tracking-widest font-serif border ${
+                          selectedColor === v.color
+                            ? "bg-black text-white border-black"
+                            : "border-black/15 hover:border-black"
+                        }`
+                  }`}
+                  style={isHex(v.color) ? { backgroundColor: v.color } : {}}
+                >
+                  {isHex(v.color) ? null : v.color}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-2">
+          Taille
+        </p>
         <div className="flex flex-wrap gap-2 mb-5">
-          {availableSizes.map(({ size, quantity }) => (
+          {availableSizes.map(({ name, stock }) => (
             <button
-              key={size}
-              onClick={() => setSelected(size)}
+              key={name}
+              disabled={stock === 0}
+              onClick={() => setSelectedSize(name)}
               className={`w-12 h-12 border text-xs font-serif transition-all ${
-                selected === size
-                  ? "bg-black text-white border-black"
-                  : "border-black/15 hover:border-black"
+                stock === 0
+                  ? "opacity-25 cursor-not-allowed border-black/10 line-through"
+                  : selectedSize === name
+                    ? "bg-black text-white border-black"
+                    : "border-black/15 hover:border-black"
               }`}
-              title={`${quantity} en stock`}
+              title={stock > 0 ? `${stock} en stock` : "Rupture"}
             >
-              {size}
+              {name}
             </button>
           ))}
           {availableSizes.length === 0 && (
             <p className="text-[11px] text-black/40 font-serif italic">
-              Rupture de stock
+              Aucune taille disponible
             </p>
           )}
         </div>
 
         <button
-          disabled={!selected}
-          onClick={() => {
-            if (!selected) return;
-            const maxStock =
-              product.sizes.find((s) => s.size === selected)?.quantity ?? 0;
-            onConfirm(selected, maxStock);
-          }}
+          disabled={!canConfirm}
+          onClick={handleConfirm}
           className="w-full bg-black text-white text-[10px] uppercase tracking-widest py-2.5 font-serif disabled:opacity-30 hover:bg-black/80 transition-colors"
         >
           Ajouter au panier
@@ -94,6 +164,13 @@ function SizePickerModal({
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
+function totalVariantStock(product: Product): number {
+  return (product.variants ?? []).reduce(
+    (sum, v) => sum + (v.sizes ?? []).reduce((s, vs) => s + vs.stock, 0),
+    0
+  );
+}
+
 function ProductCard({
   product,
   onAdd,
@@ -101,7 +178,9 @@ function ProductCard({
   product: Product;
   onAdd: (product: Product) => void;
 }) {
-  const outOfStock = product.stock === 0;
+  const hasVariants  = (product.variants?.length ?? 0) > 0;
+  const displayStock = hasVariants ? totalVariantStock(product) : product.stock;
+  const outOfStock   = displayStock === 0;
 
   return (
     <button
@@ -132,7 +211,7 @@ function ProductCard({
       </p>
       <div className="flex items-center justify-between">
         <span className="text-[12px] font-serif">{product.price.toLocaleString("fr-DZ")} DA</span>
-        <span className="text-[9px] text-black/30 font-serif">{product.stock} dispo</span>
+        <span className="text-[9px] text-black/30 font-serif">{displayStock} dispo</span>
       </div>
 
       {outOfStock && (
@@ -167,8 +246,10 @@ function CartRow({
 
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-serif font-medium truncate">{item.name}</p>
-        {item.size && (
-          <p className="text-[9px] text-black/40 font-serif uppercase tracking-widest">{item.size}</p>
+        {(item.color || item.size) && (
+          <p className="text-[9px] text-black/40 font-serif uppercase tracking-widest">
+            {[item.color, item.size].filter(Boolean).join(" · ")}
+          </p>
         )}
         <p className="text-[11px] text-black/60 font-serif">
           {(item.price * item.quantity).toLocaleString("fr-DZ")} DA
@@ -205,9 +286,8 @@ function CartRow({
 // ─── POS Page ─────────────────────────────────────────────────────────────────
 
 export default function PosPage() {
-  const { getToken, user, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
   const router = useRouter();
-  const token  = getToken() ?? "";
 
   // Products
   const [products,       setProducts]       = useState<Product[]>([]);
@@ -225,8 +305,8 @@ export default function PosPage() {
   const [cart,          setCart]    = useState<PosCartItem[]>([]);
   const [paymentMethod, setPayment] = useState<"cash" | "card">("cash");
 
-  // Size picker
-  const [sizePicker, setSizePicker] = useState<Product | null>(null);
+  // Variant picker (couleur + taille pour variantes, taille uniquement pour produits simples)
+  const [variantPicker, setVariantPicker] = useState<Product | null>(null);
 
   // Sale
   const [confirming,        setConfirming]        = useState(false);
@@ -260,42 +340,48 @@ export default function PosPage() {
     }
     const t = setTimeout(async () => {
       setCustomerSearching(true);
-      const results = await getCustomers(token, customerSearch);
-      setCustomerResults(results);
+      const data = await getCustomers({ q: customerSearch });
+      setCustomerResults(data.items);
       setCustomerSearching(false);
     }, 300);
     return () => clearTimeout(t);
-  }, [isAuthorized, customerSearch, token]);
+  }, [isAuthorized, customerSearch]);
 
   // ── Cart helpers (hooks must be declared before any conditional return) ──
 
-  const addToCart = useCallback((product: Product, size?: string, maxStock?: number) => {
-    const key = `${product.id}::${size ?? ""}`;
-    setCart((prev) => {
-      const existing = prev.find((i) => `${i.productId}::${i.size ?? ""}` === key);
-      const stock    = maxStock ?? product.stock;
-      if (existing) {
-        return prev.map((i) =>
-          `${i.productId}::${i.size ?? ""}` === key
-            ? { ...i, quantity: Math.min(i.quantity + 1, stock) }
-            : i
+  const addToCart = useCallback(
+    (product: Product, size?: string, color?: string, maxStock?: number) => {
+      const key = `${product.id}::${size ?? ""}::${color ?? ""}`;
+      setCart((prev) => {
+        const existing = prev.find(
+          (i) => `${i.productId}::${i.size ?? ""}::${i.color ?? ""}` === key
         );
-      }
-      return [
-        ...prev,
-        {
-          productId: product.id,
-          name:      product.name,
-          price:     product.price,
-          quantity:  1,
-          size,
-          mainImage: product.mainImage,
-          category:  product.category,
-          maxStock:  stock,
-        },
-      ];
-    });
-  }, []);
+        const stock = maxStock ?? product.stock;
+        if (existing) {
+          return prev.map((i) =>
+            `${i.productId}::${i.size ?? ""}::${i.color ?? ""}` === key
+              ? { ...i, quantity: Math.min(i.quantity + 1, stock) }
+              : i
+          );
+        }
+        return [
+          ...prev,
+          {
+            productId: product.id,
+            name:      product.name,
+            price:     product.price,
+            quantity:  1,
+            size,
+            color,
+            mainImage: product.mainImage,
+            category:  product.category,
+            maxStock:  stock,
+          },
+        ];
+      });
+    },
+    []
+  );
 
   // Show nothing while auth resolves or user is not allowed (after all hooks)
   if (!isAuthorized) return null;
@@ -308,18 +394,27 @@ export default function PosPage() {
   });
 
   const handleProductClick = (product: Product) => {
-    if (product.sizes.length > 0) {
-      setSizePicker(product);
+    const hasVariants = (product.variants?.length ?? 0) > 0;
+    if (hasVariants || product.sizes.length > 0) {
+      setVariantPicker(product);
     } else {
       addToCart(product);
     }
   };
 
-  const handleQtyChange = (productId: string, size: string | undefined, delta: number) => {
+  const sameRow = (i: PosCartItem, productId: string, size?: string, color?: string) =>
+    i.productId === productId && i.size === size && i.color === color;
+
+  const handleQtyChange = (
+    productId: string,
+    size: string | undefined,
+    color: string | undefined,
+    delta: number
+  ) => {
     setCart((prev) =>
       prev
         .map((i) =>
-          i.productId === productId && i.size === size
+          sameRow(i, productId, size, color)
             ? { ...i, quantity: Math.max(0, Math.min(i.quantity + delta, i.maxStock)) }
             : i
         )
@@ -327,8 +422,8 @@ export default function PosPage() {
     );
   };
 
-  const removeFromCart = (productId: string, size: string | undefined) => {
-    setCart((prev) => prev.filter((i) => !(i.productId === productId && i.size === size)));
+  const removeFromCart = (productId: string, size: string | undefined, color: string | undefined) => {
+    setCart((prev) => prev.filter((i) => !sameRow(i, productId, size, color)));
   };
 
   const cartTotal = cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
@@ -383,7 +478,7 @@ export default function PosPage() {
 
     setConfirming(true);
     try {
-      const { id } = await createOfflineSale(token, {
+      const { id } = await createOfflineSale({
         customer: {
           name:    selectedCustomer.name,
           phone:   selectedCustomer.phone ?? "",
@@ -657,10 +752,10 @@ export default function PosPage() {
               <div className="max-h-64 overflow-y-auto pr-1 -mr-1">
                 {cart.map((item) => (
                   <CartRow
-                    key={`${item.productId}::${item.size ?? ""}`}
+                    key={`${item.productId}::${item.size ?? ""}::${item.color ?? ""}`}
                     item={item}
-                    onQtyChange={(delta) => handleQtyChange(item.productId, item.size, delta)}
-                    onRemove={() => removeFromCart(item.productId, item.size)}
+                    onQtyChange={(delta) => handleQtyChange(item.productId, item.size, item.color, delta)}
+                    onRemove={() => removeFromCart(item.productId, item.size, item.color)}
                   />
                 ))}
               </div>
@@ -739,14 +834,14 @@ export default function PosPage() {
       </div>
 
       <AnimatePresence>
-        {sizePicker && (
-          <SizePickerModal
-            product={sizePicker}
-            onConfirm={(size, maxStock) => {
-              addToCart(sizePicker, size, maxStock);
-              setSizePicker(null);
+        {variantPicker && (
+          <VariantPickerModal
+            product={variantPicker}
+            onConfirm={({ size, color, maxStock }) => {
+              addToCart(variantPicker, size, color, maxStock);
+              setVariantPicker(null);
             }}
-            onClose={() => setSizePicker(null)}
+            onClose={() => setVariantPicker(null)}
           />
         )}
       </AnimatePresence>

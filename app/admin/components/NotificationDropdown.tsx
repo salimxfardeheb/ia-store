@@ -3,7 +3,6 @@
 import { Bell, ShoppingBag, Package, X } from "lucide-react";
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/app/context/AuthContext";
 
 interface Notif {
   id:       string;
@@ -53,15 +52,12 @@ export default function NotificationDropdown() {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const router       = useRouter();
-  const { getToken } = useAuth();
 
   const fetchNotifs = useCallback(async () => {
-    const token = getToken();
-    if (!token) return;
     try {
       const res = await fetch("/api/admin/dashboard", {
-        headers: { Authorization: `Bearer ${token}` },
-        cache:   "no-store",
+        credentials: "include",
+        cache:       "no-store",
       });
       if (!res.ok) return;
       const data: DashboardData = await res.json();
@@ -71,7 +67,7 @@ export default function NotificationDropdown() {
     } catch {
       // ignore network errors silently
     }
-  }, [getToken]);
+  }, []);
 
   // Initial fetch + poll every 60s
   useEffect(() => {

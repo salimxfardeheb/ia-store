@@ -76,24 +76,26 @@ export const orderFormSchema = z.object({
 // Only productId + quantity are trusted from the client;
 // name, price, mainImage, category are fetched from the database.
 export const orderItemSchema = z.object({
-  id:           z.string().min(1, "ID produit requis"),
-  quantity:     z.number().int().positive("Quantité invalide"),
-  selectedSize: z.string().optional(),
+  id:            z.string().min(1, "ID produit requis"),
+  quantity:      z.number().int().positive("Quantité invalide"),
+  selectedSize:  z.string().optional(),
+  selectedColor: z.string().optional(),
 });
 
 export const createOrderSchema = z.object({
   form:  orderFormSchema,
-  items: z.array(orderItemSchema).min(1, "Le panier est vide"),
+  items: z.array(orderItemSchema).min(1, "Le panier est vide").max(100, "Trop d'articles"),
 });
 
 // ─── POS ──────────────────────────────────────────────────────────────────────
 
-// productId + quantity + size are the only fields trusted from the client.
+// productId + quantity + size + color are the only fields trusted from the client.
 // name, price, mainImage, category are fetched from the database.
 export const posItemSchema = z.object({
   productId: z.string().min(1, "ID produit requis"),
   quantity:  z.number().int().positive("Quantité invalide"),
   size:      z.string().nullable().optional(),
+  color:     z.string().nullable().optional(),
 });
 
 export const posBodySchema = z.object({
@@ -110,9 +112,10 @@ export const posBodySchema = z.object({
 // ─── Cart ─────────────────────────────────────────────────────────────────────
 
 export const cartItemSchema = z.object({
-  id:           z.string().min(1, "ID produit requis"),
-  quantity:     z.number().int().positive("Quantité invalide"),
-  selectedSize: z.string().optional(),
+  id:            z.string().min(1, "ID produit requis"),
+  quantity:      z.number().int().positive("Quantité invalide"),
+  selectedSize:  z.string().optional(),
+  selectedColor: z.string().optional(),
 });
 
 export const cartBodySchema = z.array(cartItemSchema).max(100, "Panier trop grand");
@@ -121,6 +124,12 @@ export const cartBodySchema = z.array(cartItemSchema).max(100, "Panier trop gran
 
 export const favoriteBodySchema = z.object({
   productId: z.string().min(1, "ID produit requis"),
+});
+
+// ─── Order status update ──────────────────────────────────────────────────────
+
+export const orderStatusUpdateSchema = z.object({
+  status: z.enum(["pending", "confirmed", "shipped", "delivered", "cancelled", "returned"]),
 });
 
 // ─── User management (admin) ──────────────────────────────────────────────────

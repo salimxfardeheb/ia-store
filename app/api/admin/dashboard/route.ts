@@ -9,6 +9,12 @@ function monthRange(monthsAgo: number) {
   return { start, end };
 }
 
+// CA et panier moyen ne doivent pas compter les commandes non honorées.
+const REVENUE_STATUSES = { notIn: ["CANCELLED", "RETURNED"] as const };
+
+const LOW_STOCK_THRESHOLD = 5;
+const LOW_STOCK_LIMIT     = 5;
+
 const STATUS_MAP: Record<string, string> = {
   PENDING:   "En attente",
   CONFIRMED: "Confirmé",
@@ -38,18 +44,26 @@ export async function GET(req: NextRequest) {
     kpiThis,
     kpiLast,
     recentOrdersRaw,
-    lowStockRaw,
+    lowVariantSizes,
+    lowProductSizes,
+    lowSimpleProducts,
     yearOrders,
     categoryItems,
   ] = await Promise.all([
     prisma.order.aggregate({
-      where: { createdAt: { gte: thisMonth.start, lte: thisMonth.end } },
+      where: {
+        createdAt: { gte: thisMonth.start, lte: thisMonth.end },
+        status:    REVENUE_STATUSES,
+      },
       _sum:   { total: true },
       _count: true,
       _avg:   { total: true },
     }),
     prisma.order.aggregate({
-      where: { createdAt: { gte: lastMonth.start, lte: lastMonth.end } },
+      where: {
+        createdAt: { gte: lastMonth.start, lte: lastMonth.end },
+        status:    REVENUE_STATUSES,
+      },
       _sum:   { total: true },
       _count: true,
       _avg:   { total: true },
@@ -59,20 +73,63 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
       select:  { id: true, name: true, status: true, total: true, createdAt: true },
     }),
-    prisma.product.findMany({
-      where:   { stock: { lte: 5 }, deletedAt: null },
-      include: { sizes: true },
+    // Variantes (couleur × taille) en rupture/seuil — la vraie source pour les produits à variantes
+    prisma.variantSize.findMany({
+      where: {
+        stock:   { lte: LOW_STOCK_THRESHOLD },
+        variant: { product: { deletedAt: null } },
+      },
       orderBy: { stock: "asc" },
-      take:    5,
+      take:    LOW_STOCK_LIMIT,
+      select: {
+        stock:   true,
+        name:    true,
+        variant: {
+          select: {
+            color:   true,
+            product: { select: { name: true } },
+          },
+        },
+      },
     }),
-    // Aggregate monthly revenue in SQL to avoid loading all orders into memory
-    prisma.order.groupBy({
-      by:      ["createdAt"],
-      where:   { createdAt: { gte: yearStart } },
-      _sum:    { total: true },
+    // Tailles de produits sans variantes
+    prisma.productSize.findMany({
+      where: {
+        quantity: { lte: LOW_STOCK_THRESHOLD },
+        product:  { deletedAt: null, variants: { none: {} } },
+      },
+      orderBy: { quantity: "asc" },
+      take:    LOW_STOCK_LIMIT,
+      select: {
+        size:     true,
+        quantity: true,
+        product:  { select: { name: true } },
+      },
+    }),
+    // Produits simples (ni variantes, ni tailles) — Product.stock fait encore foi
+    prisma.product.findMany({
+      where: {
+        stock:     { lte: LOW_STOCK_THRESHOLD },
+        deletedAt: null,
+        variants:  { none: {} },
+        sizes:     { none: {} },
+      },
+      orderBy: { stock: "asc" },
+      take:    LOW_STOCK_LIMIT,
+      select:  { name: true, stock: true },
+    }),
+    // Revenu par mois — groupBy(createdAt) ne groupait rien (timestamp unique
+    // par commande). On lit createdAt + total et on agrège côté JS.
+    prisma.order.findMany({
+      where: {
+        createdAt: { gte: yearStart },
+        status:    REVENUE_STATUSES,
+      },
+      select: { createdAt: true, total: true },
     }),
     prisma.orderItem.groupBy({
       by:     ["category"],
+      where:  { order: { status: REVENUE_STATUSES } },
       _count: { category: true },
     }),
   ]);
@@ -95,9 +152,7 @@ export async function GET(req: NextRequest) {
   const MONTHS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
   const byMonth = Array(12).fill(0);
   for (const o of yearOrders) {
-    if (o._sum.total) {
-      byMonth[new Date(o.createdAt).getMonth()] += o._sum.total;
-    }
+    byMonth[new Date(o.createdAt).getMonth()] += o.total;
   }
   const currentMonth  = new Date().getMonth();
   const revenueChart  = MONTHS.slice(0, currentMonth + 1).map((name, i) => ({
@@ -122,18 +177,30 @@ export async function GET(req: NextRequest) {
     date:        new Date(o.createdAt).toLocaleDateString("fr-FR"),
   }));
 
-  // ── Low stock ───────────────────────────────────────────────────���─────────
-  const lowStock = lowStockRaw.map((p) => {
-    const lowestSize = p.sizes.length
-      ? p.sizes.reduce((a, b) => (a.quantity < b.quantity ? a : b))
-      : null;
-    return {
+  // ── Low stock ─────────────────────────────────────────────────────────────
+  // Fusion des trois sources (variantes / tailles / produits simples), tri global, top N.
+  const lowStock = [
+    ...lowVariantSizes.map((vs) => ({
+      name:      vs.variant.product.name,
+      size:      `${vs.variant.color} · ${vs.name}`,
+      stock:     vs.stock,
+      threshold: 10,
+    })),
+    ...lowProductSizes.map((ps) => ({
+      name:      ps.product.name,
+      size:      ps.size,
+      stock:     ps.quantity,
+      threshold: 10,
+    })),
+    ...lowSimpleProducts.map((p) => ({
       name:      p.name,
-      size:      lowestSize?.size ?? "Unique",
+      size:      "Unique",
       stock:     p.stock,
       threshold: 10,
-    };
-  });
+    })),
+  ]
+    .sort((a, b) => a.stock - b.stock)
+    .slice(0, LOW_STOCK_LIMIT);
 
   return NextResponse.json({
     kpis: {

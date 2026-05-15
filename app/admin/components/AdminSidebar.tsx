@@ -43,8 +43,8 @@ export default function AdminSidebar() {
   // Fall back to the most restrictive role (SELLER) to be safe if somehow called without a user.
   const role = (user?.role ?? "SELLER") as AdminRole;
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 

@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { signToken } from "@/lib/auth";
-import { checkRateLimit, resetRateLimit } from "@/lib/rateLimit";
+import { signToken, AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth";
+import { checkRateLimit, resetRateLimit, getClientIp } from "@/lib/rateLimit";
 import { apiError } from "@/lib/validation";
 
-function getClientIp(req: NextRequest): string {
-  return (
-    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
-    req.headers.get("x-real-ip") ??
-    "unknown"
-  );
-}
+// Pré-calculé une seule fois au démarrage : bcrypt.compare doit faire
+// le travail complet même si l'email n'existe pas, sinon timing leak.
+const DUMMY_HASH = bcrypt.hashSync("dummy-password-for-timing-balance", 12);
 
 export async function POST(req: NextRequest) {
   const ip  = getClientIp(req);
@@ -38,11 +34,14 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({ where: { email } });
 
-  // Use constant-time comparison regardless of whether the user exists
-  const hash  = user?.password ?? "$2a$12$invalidhashtopreventtimingattacks000000000000000000";
-  const valid = user ? await bcrypt.compare(password, hash) : (await bcrypt.compare(password, hash), false);
+  // Hash valide (forme correcte + même coût 12) → bcrypt.compare prend le même
+  // temps que sur un vrai utilisateur, contrairement à un hash malformé qui
+  // serait rejeté immédiatement.
+  const hash  = user?.password ?? DUMMY_HASH;
+  const ok    = await bcrypt.compare(password, hash);
+  const valid = !!user && ok;
 
-  if (!user || !valid) {
+  if (!valid || !user) {
     // Generic message — never reveal whether the email exists
     return NextResponse.json({ error: "Identifiants incorrects" }, { status: 401 });
   }
@@ -57,8 +56,9 @@ export async function POST(req: NextRequest) {
     role:  user.role as "ADMIN" | "SELLER" | "CLIENT",
   });
 
-  return NextResponse.json({
-    token,
+  const res = NextResponse.json({
     user: { id: user.id, email: user.email, name: user.name, role: user.role },
   });
+  res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions());
+  return res;
 }

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getTokenFromHeader, verifyToken } from "@/lib/auth";
+import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { profileUpdateSchema, safeParse, handleDbError } from "@/lib/validation";
 
 function getUser(req: NextRequest) {
-  const token = getTokenFromHeader(req.headers.get("Authorization"));
+  const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
 }

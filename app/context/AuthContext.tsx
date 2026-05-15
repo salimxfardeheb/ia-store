@@ -23,73 +23,86 @@ interface AuthContextType {
   isAuthenticated: boolean;
   login:           (email: string, password: string) => Promise<void>;
   register:        (email: string, name: string, password: string) => Promise<void>;
-  logout:          () => void;
-  getToken:        () => string | null;
+  logout:          () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const TOKEN_KEY = "ia_token";
-const USER_KEY  = "ia_user";
+// localStorage cache used only for instant first paint of user-dependent UI;
+// the source of truth is the HttpOnly session cookie verified by /api/auth/me.
+const USER_CACHE_KEY = "ia_user";
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,      setUser]      = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Restore session from localStorage on first render (client-only)
+  // Hydrate from cache for instant UI, then verify against the server cookie.
   useEffect(() => {
-    const stored = localStorage.getItem(USER_KEY);
-    const token  = localStorage.getItem(TOKEN_KEY);
-    if (stored && token) {
-      setUser(JSON.parse(stored));
+    const cached = typeof window !== "undefined" ? localStorage.getItem(USER_CACHE_KEY) : null;
+    if (cached) {
+      try { setUser(JSON.parse(cached)); } catch { /* ignore */ }
     }
-    setIsLoading(false);
+
+    let cancelled = false;
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : { user: null }))
+      .then(({ user: serverUser }) => {
+        if (cancelled) return;
+        if (serverUser) {
+          setUser(serverUser);
+          localStorage.setItem(USER_CACHE_KEY, JSON.stringify(serverUser));
+        } else {
+          setUser(null);
+          localStorage.removeItem(USER_CACHE_KEY);
+        }
+      })
+      .catch(() => { /* network error — keep cached state */ })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+
+    return () => { cancelled = true; };
   }, []);
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/login", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ email, password }),
+      method:      "POST",
+      headers:     { "Content-Type": "application/json" },
+      credentials: "include",
+      body:        JSON.stringify({ email, password }),
     });
 
     if (!res.ok) {
-      const { message, error } = await res.json();
+      const { message, error } = await res.json().catch(() => ({}));
       throw new Error(message ?? error ?? "Erreur de connexion");
     }
 
-    const { token, user: authUser } = await res.json();
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+    const { user: authUser } = await res.json();
+    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(authUser));
     setUser(authUser);
   };
 
   const register = async (email: string, name: string, password: string) => {
     const res = await fetch("/api/auth/register", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body:    JSON.stringify({ email, name, password }),
+      method:      "POST",
+      headers:     { "Content-Type": "application/json" },
+      credentials: "include",
+      body:        JSON.stringify({ email, name, password }),
     });
 
     if (!res.ok) {
-      const { message, error } = await res.json();
+      const { message, error } = await res.json().catch(() => ({}));
       throw new Error(message ?? error ?? "Erreur d'inscription");
     }
 
-    const { token, user: authUser } = await res.json();
-    localStorage.setItem(TOKEN_KEY, token);
-    localStorage.setItem(USER_KEY, JSON.stringify(authUser));
+    const { user: authUser } = await res.json();
+    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(authUser));
     setUser(authUser);
   };
 
-  const logout = () => {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  const logout = async () => {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    localStorage.removeItem(USER_CACHE_KEY);
     setUser(null);
   };
-
-  const getToken = () =>
-    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
 
   const profile: UserProfile | null = user
     ? { uid: user.id, email: user.email, name: user.name }
@@ -105,7 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register,
         logout,
         isAuthenticated: !!user,
-        getToken,
       }}
     >
       {children}

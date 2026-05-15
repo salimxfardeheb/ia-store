@@ -72,7 +72,8 @@ export function QuickAddModal({
       setSizeError(true);
       return;
     }
-    addToCart(product, selectedSize || undefined);
+    const colorToSend = hasVariants ? selectedColor || undefined : undefined;
+    addToCart(product, selectedSize || undefined, colorToSend);
     setAdded(true);
     setTimeout(() => onClose(), 700);
   };

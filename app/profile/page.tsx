@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp, KeyRound } from "lucide-react";
 
 export default function ProfilePage() {
-  const { user, profile, logout, getToken } = useAuth();
+  const { user, profile, logout } = useAuth();
   const router = useRouter();
 
   const [form, setForm] = useState<Omit<Profile, "uid">>({
@@ -31,27 +31,21 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
-    const token = getToken();
-    if (!token) return;
-    getProfile(token).then((data) => {
+    getProfile().then((data) => {
       if (data) setForm({ name: data.name, email: data.email, phone: data.phone, city: data.city, address: data.address, postalCode: data.postalCode });
       setLoading(false);
     });
   }, [user]);
 
   const handleSave = async () => {
-    const token = getToken();
-    if (!token) return;
     setSaving(true);
-    await saveProfile(token, { phone: form.phone, city: form.city, address: form.address, postalCode: form.postalCode });
+    await saveProfile({ phone: form.phone, city: form.city, address: form.address, postalCode: form.postalCode });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
   };
 
   const handleChangePassword = async () => {
-    const token = getToken();
-    if (!token) return;
     if (pwForm.next.length < 8) {
       setPwError("Le nouveau mot de passe doit contenir au moins 8 caractères");
       return;
@@ -62,7 +56,7 @@ export default function ProfilePage() {
     }
     setPwState("saving");
     setPwError("");
-    const result = await changePassword(token, pwForm.current, pwForm.next);
+    const result = await changePassword(pwForm.current, pwForm.next);
     if ("error" in result) {
       setPwError(result.error);
       setPwState("error");
@@ -73,8 +67,8 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/");
   };
 

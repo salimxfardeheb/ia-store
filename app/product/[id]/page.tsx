@@ -119,8 +119,9 @@ export default function ProductDetail() {
       return;
     }
     setSizeError(false);
+    const colorToSend = hasVariants ? selectedColor || undefined : undefined;
     for (let i = 0; i < quantity; i++)
-      addToCart(product, selectedSize || undefined);
+      addToCart(product, selectedSize || undefined, colorToSend);
   };
 
   return (

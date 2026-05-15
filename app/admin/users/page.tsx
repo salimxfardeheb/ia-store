@@ -34,47 +34,45 @@ const ROLE_STYLES: Record<Role, string> = {
 };
 
 // ─── API helpers ──────────────────────────────────────────────────────────────
+// Auth porté par le cookie HttpOnly — credentials:'include' suffit.
 
-function authHeader(token: string) {
-  return { Authorization: `Bearer ${token}` };
-}
-
-async function fetchUsers(token: string, q = ""): Promise<AppUser[]> {
+async function fetchUsers(q = ""): Promise<AppUser[]> {
   const url = `/api/admin/users${q ? `?q=${encodeURIComponent(q)}` : ""}`;
-  const res = await fetch(url, { headers: authHeader(token) });
+  const res = await fetch(url, { credentials: "include" });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function createUser(
-  token: string,
   data: { name: string; email: string; password: string; role: Role }
 ): Promise<AppUser> {
   const res = await fetch("/api/admin/users", {
-    method:  "POST",
-    headers: { "Content-Type": "application/json", ...authHeader(token) },
-    body:    JSON.stringify(data),
+    method:      "POST",
+    credentials: "include",
+    headers:     { "Content-Type": "application/json" },
+    body:        JSON.stringify(data),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message ?? json.error ?? "Erreur");
   return json;
 }
 
-async function updateRole(token: string, id: string, role: Role): Promise<AppUser> {
+async function updateRole(id: string, role: Role): Promise<AppUser> {
   const res = await fetch(`/api/admin/users/${id}`, {
-    method:  "PATCH",
-    headers: { "Content-Type": "application/json", ...authHeader(token) },
-    body:    JSON.stringify({ role }),
+    method:      "PATCH",
+    credentials: "include",
+    headers:     { "Content-Type": "application/json" },
+    body:        JSON.stringify({ role }),
   });
   const json = await res.json();
   if (!res.ok) throw new Error(json.message ?? json.error ?? "Erreur");
   return json;
 }
 
-async function deleteUser(token: string, id: string): Promise<void> {
+async function deleteUser(id: string): Promise<void> {
   const res = await fetch(`/api/admin/users/${id}`, {
-    method:  "DELETE",
-    headers: authHeader(token),
+    method:      "DELETE",
+    credentials: "include",
   });
   if (!res.ok) {
     const json = await res.json().catch(() => ({}));
@@ -85,12 +83,11 @@ async function deleteUser(token: string, id: string): Promise<void> {
 // ─── Create User Modal ────────────────────────────────────────────────────────
 
 interface CreateModalProps {
-  token:     string;
   onClose:   () => void;
   onCreated: (u: AppUser) => void;
 }
 
-function CreateUserModal({ token, onClose, onCreated }: CreateModalProps) {
+function CreateUserModal({ onClose, onCreated }: CreateModalProps) {
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "SELLER" as Role });
   const [error, setError]   = useState("");
   const [saving, setSaving] = useState(false);
@@ -111,7 +108,7 @@ function CreateUserModal({ token, onClose, onCreated }: CreateModalProps) {
 
     setSaving(true);
     try {
-      const user = await createUser(token, {
+      const user = await createUser({
         name:     form.name.trim(),
         email:    form.email.trim(),
         password: form.password,
@@ -246,11 +243,10 @@ function CreateUserModal({ token, onClose, onCreated }: CreateModalProps) {
 // ─── Role Selector ────────────────────────────────────────────────────────────
 
 function RoleSelector({
-  user, currentUserId, token, onUpdated,
+  user, currentUserId, onUpdated,
 }: {
   user: AppUser;
   currentUserId: string;
-  token: string;
   onUpdated: (u: AppUser) => void;
 }) {
   const [open, setOpen]   = useState(false);
@@ -262,7 +258,7 @@ function RoleSelector({
     setOpen(false);
     setBusy(true);
     try {
-      const updated = await updateRole(token, user.id, role);
+      const updated = await updateRole(user.id, role);
       onUpdated(updated);
     } catch {
       // silently ignore; could add toast here
@@ -315,10 +311,9 @@ function RoleSelector({
 // ─── Delete Confirm ───────────────────────────────────────────────────────────
 
 function DeleteButton({
-  user, token, onDeleted,
+  user, onDeleted,
 }: {
   user: AppUser;
-  token: string;
   onDeleted: (id: string) => void;
 }) {
   const [confirm, setConfirm] = useState(false);
@@ -327,7 +322,7 @@ function DeleteButton({
   const handleDelete = async () => {
     setBusy(true);
     try {
-      await deleteUser(token, user.id);
+      await deleteUser(user.id);
       onDeleted(user.id);
     } catch {
       setConfirm(false);
@@ -370,11 +365,10 @@ function DeleteButton({
 // ─── User Row ─────────────────────────────────────────────────────────────────
 
 function UserRow({
-  user, currentUserId, token, onUpdated, onDeleted,
+  user, currentUserId, onUpdated, onDeleted,
 }: {
   user:          AppUser;
   currentUserId: string;
-  token:         string;
   onUpdated:     (u: AppUser) => void;
   onDeleted:     (id: string) => void;
 }) {
@@ -417,7 +411,6 @@ function UserRow({
         <RoleSelector
           user={user}
           currentUserId={currentUserId}
-          token={token}
           onUpdated={onUpdated}
         />
       </div>
@@ -430,7 +423,7 @@ function UserRow({
       {/* Actions */}
       <div className="col-span-1 flex justify-end">
         {!isSelf && (
-          <DeleteButton user={user} token={token} onDeleted={onDeleted} />
+          <DeleteButton user={user} onDeleted={onDeleted} />
         )}
       </div>
     </motion.div>
@@ -440,17 +433,15 @@ function UserRow({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
-  const { user: me, getToken } = useAuth();
+  const { user: me } = useAuth();
   const [users, setUsers]     = useState<AppUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState("");
   const [showModal, setShowModal] = useState(false);
 
-  const token = getToken() ?? "";
-
   const load = async () => {
     setLoading(true);
-    const data = await fetchUsers(token);
+    const data = await fetchUsers();
     setUsers(data);
     setLoading(false);
   };
@@ -545,7 +536,6 @@ export default function UsersPage() {
                 key={u.id}
                 user={u}
                 currentUserId={me?.id ?? ""}
-                token={token}
                 onUpdated={handleUpdated}
                 onDeleted={handleDeleted}
               />
@@ -558,7 +548,6 @@ export default function UsersPage() {
       <AnimatePresence>
         {showModal && (
           <CreateUserModal
-            token={token}
             onClose={() => setShowModal(false)}
             onCreated={handleCreated}
           />

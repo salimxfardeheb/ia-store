@@ -20,7 +20,10 @@ export async function POST(req: NextRequest) {
       const productIds = items.map((i) => i.productId);
       const dbProducts = await tx.product.findMany({
         where:   { id: { in: productIds } },
-        include: { sizes: true },
+        include: {
+          sizes:    true,
+          variants: { select: { id: true, color: true, sizes: { select: { name: true, stock: true } } } },
+        },
       });
 
       const productMap = new Map(dbProducts.map((p) => [p.id, p]));
@@ -35,8 +38,34 @@ export async function POST(req: NextRequest) {
           throw new Error(`Produit indisponible : ${product.name}`);
         }
 
-        // 2. Atomic conditional stock decrement — eliminates TOCTOU race condition
-        if (item.size) {
+        // 2. Atomic conditional stock decrement — eliminates TOCTOU race condition.
+        //    Variantes : on cible la VariantSize exacte (couleur + taille).
+        //    Produit simple avec tailles : on cible le ProductSize correspondant.
+        //    Produit simple sans tailles : on décrémente Product.stock.
+        const hasVariants = product.variants.length > 0;
+
+        if (hasVariants) {
+          if (!item.color || !item.size) {
+            throw new Error(
+              `Couleur et taille requises pour ${product.name}`
+            );
+          }
+          const variantSizeUpdated = await tx.variantSize.updateMany({
+            where: {
+              name:    item.size,
+              stock:   { gte: item.quantity },
+              variant: { productId: item.productId, color: item.color },
+            },
+            data: { stock: { decrement: item.quantity } },
+          });
+          if (variantSizeUpdated.count === 0) {
+            const variant   = product.variants.find((v) => v.color === item.color);
+            const available = variant?.sizes.find((s) => s.name === item.size)?.stock ?? 0;
+            throw new Error(
+              `Stock insuffisant pour ${product.name} (${item.color} · ${item.size}) — disponible : ${available}`
+            );
+          }
+        } else if (item.size) {
           const sizeUpdated = await tx.productSize.updateMany({
             where: { productId: item.productId, size: item.size, quantity: { gte: item.quantity } },
             data:  { quantity: { decrement: item.quantity } },
@@ -47,16 +76,16 @@ export async function POST(req: NextRequest) {
               `Stock insuffisant pour ${product.name} (${item.size}) — disponible : ${sizeRow?.quantity ?? 0}`
             );
           }
-        }
-
-        const stockUpdated = await tx.product.updateMany({
-          where: { id: item.productId, stock: { gte: item.quantity } },
-          data:  { stock: { decrement: item.quantity } },
-        });
-        if (stockUpdated.count === 0) {
-          throw new Error(
-            `Stock insuffisant pour ${product.name} — disponible : ${product.stock}`
-          );
+        } else {
+          const stockUpdated = await tx.product.updateMany({
+            where: { id: item.productId, stock: { gte: item.quantity } },
+            data:  { stock: { decrement: item.quantity } },
+          });
+          if (stockUpdated.count === 0) {
+            throw new Error(
+              `Stock insuffisant pour ${product.name} — disponible : ${product.stock}`
+            );
+          }
         }
       }
 
@@ -88,7 +117,8 @@ export async function POST(req: NextRequest) {
                 name:      p.name,
                 price:     p.price,
                 quantity:  item.quantity,
-                size:      item.size ?? null,
+                size:      item.size  ?? null,
+                color:     item.color ?? null,
                 mainImage: p.mainImage,
                 category:  p.category,
               };

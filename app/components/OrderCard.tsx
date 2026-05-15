@@ -203,7 +203,11 @@ export function OrderCard({
                     {order.form.address}, {order.form.city}
                   </p>
                   <p className="text-[9px] text-black/30 uppercase tracking-[0.15em]">
-                    {order.form.deliveryType === "home" ? "Domicile" : "Bureau de poste"}
+                    {order.form.deliveryType === "home"
+                      ? "Domicile"
+                      : order.form.deliveryType === "store"
+                      ? "Magasin"
+                      : "Bureau de poste"}
                     {" · "}
                     {order.form.paymentMethod === "cash" ? "Paiement à la livraison" : "Carte"}
                   </p>

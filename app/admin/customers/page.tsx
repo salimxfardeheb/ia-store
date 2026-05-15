@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, Users, Phone, Mail, ShoppingBag, Globe, Store } from "lucide-react";
+import { Search, Users, Phone, Mail, ShoppingBag, Globe, Store, ChevronLeft, ChevronRight } from "lucide-react";
 import AdminHeader from "../components/AdminHeader";
-import { useAuth } from "@/app/context/AuthContext";
 import { getCustomers } from "@/services/admin";
 import { type UnifiedCustomer } from "@/app/variables";
 import { formatDate } from "@/app/variables";
+
+const PAGE_SIZE = 50;
 
 // ─── Channel badge ────────────────────────────────────────────────────────────
 
@@ -95,36 +96,39 @@ function CustomerRow({ customer }: { customer: UnifiedCustomer }) {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function CustomersPage() {
-  const { getToken } = useAuth();
   const [customers, setCustomers] = useState<UnifiedCustomer[]>([]);
+  const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState("");
   const [filter, setFilter]       = useState<"all" | "online" | "offline">("all");
+  const [page, setPage]           = useState(1);
 
-  const token = getToken() ?? "";
-
+  // Debounce search to avoid hammering the server while typing
   useEffect(() => {
-    (async () => {
-      setLoading(true);
-      const data = await getCustomers(token);
-      setCustomers(data);
-      setLoading(false);
-    })();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    const t = setTimeout(() => {
+      let cancelled = false;
+      (async () => {
+        setLoading(true);
+        const data = await getCustomers({
+          q:       search,
+          channel: filter,
+          page,
+          limit:   PAGE_SIZE,
+        });
+        if (cancelled) return;
+        setCustomers(data.items);
+        setTotal(data.total);
+        setLoading(false);
+      })();
+      return () => { cancelled = true; };
+    }, 250);
+    return () => clearTimeout(t);
+  }, [search, filter, page]);
 
-  const filtered = customers.filter((c) => {
-    if (filter !== "all" && c.channel !== filter) return false;
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      c.name.toLowerCase().includes(q)      ||
-      (c.phone ?? "").includes(q)           ||
-      (c.email ?? "").toLowerCase().includes(q)
-    );
-  });
+  // Reset to page 1 when search/filter changes
+  useEffect(() => { setPage(1); }, [search, filter]);
 
-  const onlineCount  = customers.filter((c) => c.channel === "online").length;
-  const offlineCount = customers.filter((c) => c.channel === "offline").length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
@@ -133,13 +137,13 @@ export default function CustomersPage() {
       {/* Stats bar */}
       <div className="flex items-center gap-6 mb-8">
         {[
-          { label: "Total",      value: customers.length,  key: "all"     },
-          { label: "En ligne",   value: onlineCount,       key: "online"  },
-          { label: "Magasin",    value: offlineCount,      key: "offline" },
-        ].map(({ label, value, key }) => (
+          { label: "Tous",      key: "all"     as const },
+          { label: "En ligne",  key: "online"  as const },
+          { label: "Magasin",   key: "offline" as const },
+        ].map(({ label, key }) => (
           <button
             key={key}
-            onClick={() => setFilter(key as typeof filter)}
+            onClick={() => setFilter(key)}
             className={`flex items-center gap-2 pb-2 border-b-2 transition-colors ${
               filter === key
                 ? "border-black text-black"
@@ -147,11 +151,11 @@ export default function CustomersPage() {
             }`}
           >
             <span className="text-[9px] uppercase tracking-[0.3em] font-serif">{label}</span>
-            <span className={`text-[11px] font-serif italic ${filter === key ? "text-black" : "text-black/30"}`}>
-              {value}
-            </span>
           </button>
         ))}
+        <span className="ml-auto text-[10px] uppercase tracking-widest text-black/30 font-serif">
+          {total} {total > 1 ? "résultats" : "résultat"}
+        </span>
       </div>
 
       {/* Search */}
@@ -189,7 +193,7 @@ export default function CustomersPage() {
         <div className="text-center py-24">
           <p className="font-serif italic text-black/20">Chargement...</p>
         </div>
-      ) : filtered.length === 0 ? (
+      ) : customers.length === 0 ? (
         <div className="text-center py-24 border border-dashed border-black/10">
           <Users size={32} strokeWidth={0.75} className="text-black/10 mx-auto mb-4" />
           <p className="font-serif italic text-black/20">
@@ -197,13 +201,40 @@ export default function CustomersPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-1.5">
-          <AnimatePresence>
-            {filtered.map((c) => (
-              <CustomerRow key={c.id} customer={c} />
-            ))}
-          </AnimatePresence>
-        </div>
+        <>
+          <div className="space-y-1.5">
+            <AnimatePresence>
+              {customers.map((c) => (
+                <CustomerRow key={c.id} customer={c} />
+              ))}
+            </AnimatePresence>
+          </div>
+
+          {/* Pager */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-8">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-serif text-black/60 disabled:opacity-20 disabled:cursor-not-allowed hover:text-black transition-colors"
+              >
+                <ChevronLeft size={13} strokeWidth={1.5} />
+                Précédent
+              </button>
+              <span className="text-[10px] uppercase tracking-widest font-serif text-black/40">
+                Page {page} / {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-serif text-black/60 disabled:opacity-20 disabled:cursor-not-allowed hover:text-black transition-colors"
+              >
+                Suivant
+                <ChevronRight size={13} strokeWidth={1.5} />
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

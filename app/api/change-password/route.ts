@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { getTokenFromHeader, verifyToken } from "@/lib/auth";
+import { getTokenFromRequest, verifyToken } from "@/lib/auth";
+import { checkRateLimit } from "@/lib/rateLimit";
 import { changePasswordSchema, safeParse, apiError, handleDbError } from "@/lib/validation";
 
 export async function POST(req: NextRequest) {
-  const token = getTokenFromHeader(req.headers.get("Authorization"));
+  const token = getTokenFromRequest(req);
   if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const user = verifyToken(token);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  // 5 tentatives / minute / utilisateur — empêche un bruteforce du
+  // currentPassword si une session est volée.
+  const rl = checkRateLimit(`pwchange:${user.id}`, { max: 5, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez dans quelques instants." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter ?? 60) } }
+    );
+  }
 
   const body = await req.json().catch(() => null);
   const [data, err] = safeParse(changePasswordSchema, body);

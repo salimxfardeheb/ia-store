@@ -10,9 +10,9 @@ import { ShoppingBag, X } from "lucide-react";
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product, size?: string) => void;
-  removeFromCart: (productId: string, size?: string) => void;
-  updateQuantity: (productId: string, delta: number, size?: string) => void;
+  addToCart: (product: Product, size?: string, color?: string) => void;
+  removeFromCart: (productId: string, size?: string, color?: string) => void;
+  updateQuantity: (productId: string, delta: number, size?: string, color?: string) => void;
   clearCart: () => void;
   cartCount: number;
   cartTotal: number;
@@ -20,16 +20,28 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-/** Retourne le stock max disponible pour un item + taille.
- *  Priorité : taille flat (ProductSize) → taille variante (VariantSize) → stock global */
-function getMaxStock(item: { sizes?: { size: string; quantity: number }[]; variants?: { sizes?: { name: string; stock: number }[] }[]; stock: number }, size?: string): number {
+/** Retourne le stock max disponible pour un item + taille + couleur.
+ *  Priorité : (couleur+taille) variante → taille flat → stock global.
+ *  Note : si une couleur est sélectionnée, on cherche dans la variante correspondante uniquement,
+ *  jamais en sommant sur toutes les couleurs. */
+function getMaxStock(
+  item: {
+    sizes?: { size: string; quantity: number }[];
+    variants?: { color: string; sizes?: { name: string; stock: number }[] }[];
+    stock: number;
+  },
+  size?: string,
+  color?: string
+): number {
+  if (color) {
+    const variant = item.variants?.find((v) => v.color === color);
+    if (!variant) return 0;
+    if (!size) return (variant.sizes ?? []).reduce((s, vs) => s + vs.stock, 0);
+    return variant.sizes?.find((s) => s.name === size)?.stock ?? 0;
+  }
   if (!size) return item.stock;
   const flat = item.sizes?.find((s) => s.size === size);
   if (flat) return flat.quantity;
-  for (const v of item.variants ?? []) {
-    const vs = v.sizes?.find((s) => s.name === size);
-    if (vs) return vs.stock;
-  }
   return item.stock;
 }
 
@@ -38,27 +50,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [isCartLoaded, setIsCartLoaded] = useState(false);
   const [showBanner, setShowBanner] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const { isAuthenticated, getToken } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   // Charger le panier quand l'user se connecte
   useEffect(() => {
     if (isAuthenticated) {
       setIsCartLoaded(false);
-      const token = getToken();
-      if (token) {
-        loadCart(token).then((items) => {
-          if (items.length > 0) {
-            const clamped = items.map((item) => {
-              const max = getMaxStock(item, item.selectedSize);
-              return { ...item, quantity: Math.min(item.quantity, Math.max(1, max)) };
-            });
-            setCart(clamped);
-          }
-          setIsCartLoaded(true);
-        });
-      } else {
+      loadCart().then((items) => {
+        if (items.length > 0) {
+          const clamped = items.map((item) => {
+            const max = getMaxStock(item, item.selectedSize, item.selectedColor);
+            return { ...item, quantity: Math.min(item.quantity, Math.max(1, max)) };
+          });
+          setCart(clamped);
+        }
         setIsCartLoaded(true);
-      }
+      });
       setShowBanner(false);
       setBannerDismissed(false);
     } else {
@@ -67,55 +74,58 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated]);
 
-  // Sauvegarder le panier à chaque changement (uniquement après le chargement initial)
+  // Sauvegarder le panier à chaque changement (uniquement après le chargement initial et si authentifié)
   useEffect(() => {
     if (!isCartLoaded) return;
-    const token = getToken();
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     if (cart.length === 0) {
-      clearCart(token);
+      clearCart();
       return;
     }
-    saveCart(token, cart);
-  }, [cart, isCartLoaded]);
+    saveCart(cart);
+  }, [cart, isCartLoaded, isAuthenticated]);
 
-  const addToCart = (product: Product, size?: string) => {
+  const sameLine = (
+    item: CartItem,
+    productId: string,
+    size?: string,
+    color?: string,
+  ) =>
+    item.id === productId &&
+    item.selectedSize === size &&
+    item.selectedColor === color;
+
+  const addToCart = (product: Product, size?: string, color?: string) => {
     if (!isAuthenticated && !bannerDismissed) setShowBanner(true);
 
     setCart((prev) => {
-      // Clé composite : même produit + même taille = même ligne
-      const existing = prev.find(
-        (item) => item.id === product.id && item.selectedSize === size
-      );
-      const maxQty = getMaxStock(product, size);
+      // Clé composite : même produit + même taille + même couleur = même ligne
+      const existing = prev.find((item) => sameLine(item, product.id, size, color));
+      const maxQty = getMaxStock(product, size, color);
       const currentQty = existing?.quantity ?? 0;
       if (currentQty >= maxQty) return prev;
 
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id && item.selectedSize === size
+          sameLine(item, product.id, size, color)
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prev, { ...product, quantity: 1, selectedSize: size }];
+      return [...prev, { ...product, quantity: 1, selectedSize: size, selectedColor: color }];
     });
   };
 
-  const removeFromCart = (productId: string, size?: string) => {
-    setCart((prev) =>
-      prev.filter(
-        (item) => !(item.id === productId && item.selectedSize === size)
-      )
-    );
+  const removeFromCart = (productId: string, size?: string, color?: string) => {
+    setCart((prev) => prev.filter((item) => !sameLine(item, productId, size, color)));
   };
 
-  const updateQuantity = (productId: string, delta: number, size?: string) => {
+  const updateQuantity = (productId: string, delta: number, size?: string, color?: string) => {
     setCart((prev) =>
       prev.map((item) => {
-        if (item.id !== productId || item.selectedSize !== size) return item;
-        const maxQty = getMaxStock(item, size);
+        if (!sameLine(item, productId, size, color)) return item;
+        const maxQty = getMaxStock(item, size, color);
         return { ...item, quantity: Math.max(1, Math.min(maxQty, item.quantity + delta)) };
       })
     );
@@ -123,8 +133,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const handleClearCart = () => {
     setCart([]);
-    const token = getToken();
-    if (token) clearCart(token);
+    if (isAuthenticated) clearCart();
   };
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);

@@ -94,7 +94,11 @@ export function OrderRow({
           <div className="col-span-2">
             <p className="text-[10px] font-serif text-black/70">{order.form.city}</p>
             <p className="text-[10px] text-black/30 font-serif capitalize">
-              {order.form.deliveryType === "home" ? "À domicile" : "Bureau"}
+              {order.form.deliveryType === "home"
+                ? "À domicile"
+                : order.form.deliveryType === "store"
+                ? "Magasin"
+                : "Bureau"}
             </p>
           </div>
 
@@ -116,7 +120,8 @@ export function OrderRow({
               {order.items.slice(0, 2).map((item, i) => (
                 <p key={i} className="text-[9px] text-black/50 font-serif leading-tight truncate max-w-32">
                   {item.quantity}× {item.name}
-                  {item.selectedSize && <span className="text-black/30"> · {item.selectedSize}</span>}
+                  {item.selectedColor && <span className="text-black/30"> · {item.selectedColor}</span>}
+                  {item.selectedSize  && <span className="text-black/30"> · {item.selectedSize}</span>}
                 </p>
               ))}
               {order.items.length > 2 && (
@@ -181,6 +186,11 @@ export function OrderRow({
                             {item.category}
                           </p>
                           <div className="flex items-center gap-2 mt-1.5">
+                            {item.selectedColor && (
+                              <span className="text-[9px] uppercase tracking-widest border border-black/15 px-1.5 py-0.5 font-serif text-black/60">
+                                {item.selectedColor}
+                              </span>
+                            )}
                             {item.selectedSize && (
                               <span className="text-[9px] uppercase tracking-widest border border-black/15 px-1.5 py-0.5 font-serif text-black/60">
                                 Taille {item.selectedSize}

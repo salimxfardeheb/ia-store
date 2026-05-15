@@ -1,21 +1,14 @@
 import { Product, Order, OrderStatus, PosCartItem, UnifiedCustomer } from "@/app/variables";
 
 // ─── Auth-aware fetch ─────────────────────────────────────────────────────────
-// Reads the JWT from localStorage and attaches it to every request automatically.
-// Call this instead of raw `fetch` for any admin endpoint.
-
-const TOKEN_KEY = "ia_token";
+// The session is carried by the HttpOnly cookie set on /api/auth/login.
+// All admin requests just need `credentials: 'include'`.
 
 function authFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
-
   return fetch(url, {
     ...options,
-    headers: {
-      ...(options.headers ?? {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
+    credentials: "include",
+    headers:     { ...(options.headers ?? {}) },
   });
 }
 
@@ -116,15 +109,34 @@ export async function updateOrder(id: string, status: OrderStatus): Promise<void
 
 // ─── Customers (unified: online Users + offline order contacts) ───────────────
 
-export async function getCustomers(token: string, q = ""): Promise<UnifiedCustomer[]> {
-  const url = q
-    ? `/api/admin/customers?q=${encodeURIComponent(q)}`
-    : "/api/admin/customers";
-  const res = await authFetch(url, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!res.ok) return [];
-  return res.json();
+export interface CustomersQuery {
+  q?:       string;
+  channel?: "all" | "online" | "offline";
+  page?:    number;
+  limit?:   number;
+}
+
+export interface CustomersResult {
+  items: UnifiedCustomer[];
+  total: number;
+  page:  number;
+  limit: number;
+}
+
+export async function getCustomers(query: CustomersQuery = {}): Promise<CustomersResult> {
+  const params = new URLSearchParams();
+  if (query.q)       params.set("q",       query.q);
+  if (query.channel) params.set("channel", query.channel);
+  if (query.page)    params.set("page",    String(query.page));
+  if (query.limit)   params.set("limit",   String(query.limit));
+  const qs  = params.size ? `?${params.toString()}` : "";
+  const res = await authFetch(`/api/admin/customers${qs}`);
+  if (!res.ok) return { items: [], total: 0, page: 1, limit: 50 };
+  const items = (await res.json()) as UnifiedCustomer[];
+  const total = parseInt(res.headers.get("X-Total-Count") ?? "0", 10) || items.length;
+  const page  = parseInt(res.headers.get("X-Page")        ?? "1", 10) || 1;
+  const limit = parseInt(res.headers.get("X-Limit")       ?? "50", 10) || 50;
+  return { items, total, page, limit };
 }
 
 // ─── POS ──────────────────────────────────────────────────────────────────────
@@ -141,17 +153,11 @@ export interface PosPayload {
   total:         number;
 }
 
-export async function createOfflineSale(
-  token: string,
-  payload: PosPayload
-): Promise<{ id: string }> {
+export async function createOfflineSale(payload: PosPayload): Promise<{ id: string }> {
   const res = await authFetch("/api/admin/pos", {
     method:  "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization:  `Bearer ${token}`,
-    },
-    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(payload),
   });
   if (!res.ok) {
     const { message, error } = await res.json().catch(() => ({ error: "Erreur inconnue" }));

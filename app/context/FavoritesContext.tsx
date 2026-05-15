@@ -33,7 +33,7 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, getToken } = useAuth();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
   const [favorites, setFavorites] = useState<FavoriteProduct[]>([]);
@@ -45,11 +45,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       setFavorites([]);
       return;
     }
-    const token = getToken();
-    if (!token) return;
-
     setIsLoading(true);
-    loadFavorites(token)
+    loadFavorites()
       .then(setFavorites)
       .finally(() => setIsLoading(false));
   }, [isAuthenticated]);
@@ -76,8 +73,6 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const toggleFavorite = useCallback(
     async (product: Product) => {
       if (!requireAuth()) return;
-      const token = getToken();
-      if (!token) return;
 
       const alreadyFav = favoriteIds.has(product.id);
 
@@ -93,8 +88,8 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       }
 
       const ok = alreadyFav
-        ? await apiRemoveFavorite(token, product.id)
-        : await apiAddFavorite(token, product.id);
+        ? await apiRemoveFavorite(product.id)
+        : await apiAddFavorite(product.id);
 
       // Rollback on failure
       if (!ok) {
@@ -108,22 +103,20 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [favoriteIds, getToken, requireAuth]
+    [favoriteIds, requireAuth]
   );
 
   const removeFavorite = useCallback(
     async (productId: string) => {
       if (!requireAuth()) return;
-      const token = getToken();
-      if (!token) return;
 
       const previous = favorites;
       setFavorites((prev) => prev.filter((f) => f.id !== productId));
 
-      const ok = await apiRemoveFavorite(token, productId);
+      const ok = await apiRemoveFavorite(productId);
       if (!ok) setFavorites(previous);
     },
-    [favorites, getToken, requireAuth]
+    [favorites, requireAuth]
   );
 
   return (

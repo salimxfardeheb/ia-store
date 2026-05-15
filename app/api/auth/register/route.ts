@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { signToken } from "@/lib/auth";
+import { signToken, AUTH_COOKIE_NAME, authCookieOptions } from "@/lib/auth";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { apiError, handleDbError } from "@/lib/validation";
 
 const registerSchema = z.object({
@@ -12,6 +13,15 @@ const registerSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  // 5 inscriptions par minute / IP — empêche le flood de comptes
+  const rl = checkRateLimit(`register:${getClientIp(req)}`, { max: 5, windowMs: 60_000 });
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: "Trop de tentatives. Réessayez dans quelques instants." },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter ?? 60) } }
+    );
+  }
+
   const body = await req.json().catch(() => null);
 
   const parsed = registerSchema.safeParse(body);
@@ -44,7 +54,9 @@ export async function POST(req: NextRequest) {
       role:  user.role as "ADMIN" | "SELLER" | "CLIENT",
     });
 
-    return NextResponse.json({ token, user }, { status: 201 });
+    const res = NextResponse.json({ user }, { status: 201 });
+    res.cookies.set(AUTH_COOKIE_NAME, token, authCookieOptions());
+    return res;
   } catch (err) {
     return handleDbError(err);
   }
