@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import Link from "next/link";
 
-const WORDS = ["Timeless.", "Refined.", "Effortless."];
+const WORDS = ["Intemporel.", "Raffiné.", "Naturel."];
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -20,9 +20,9 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative h-screen min-h-175 overflow-hidden bg-white "
+      className="relative h-screen min-h-175 overflow-hidden bg-white"
     >
-      {/* Grain texture overlay */}
+      {/* Superposition texture grain */}
       <div
         className="pointer-events-none absolute inset-0 z-10 opacity-[0.06]"
         style={{
@@ -32,13 +32,13 @@ export default function HeroSection() {
         }}
       />
 
-      {/* Decorative vertical lines */}
+      {/* Lignes verticales décoratives */}
       <div className="pointer-events-none absolute inset-0 z-10">
         <div className="absolute left-[8%] top-0 h-full w-px bg-white/8" />
         <div className="absolute right-[8%] top-0 h-full w-px bg-white/8" />
       </div>
 
-      {/* Background image with parallax */}
+      {/* Image de fond avec parallaxe */}
       <motion.div
         style={{ y: imageY }}
         className="absolute inset-0 z-0 scale-110"
@@ -50,7 +50,7 @@ export default function HeroSection() {
           }}
         />
 
-        {/* Atmospheric overlay */}
+        {/* Superposition atmosphérique */}
         <div
           className="absolute inset-0"
           style={{
@@ -62,12 +62,12 @@ export default function HeroSection() {
         />
       </motion.div>
 
-      {/* Content */}
+      {/* Contenu */}
       <motion.div
         style={{ y: textY, opacity }}
         className="relative z-20 flex h-full flex-col justify-center px-[8%]"
       >
-        {/* Season tag */}
+        {/* Étiquette saison */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -83,7 +83,7 @@ export default function HeroSection() {
           </span>
         </motion.div>
 
-        {/* Main headline */}
+        {/* Titre principal */}
         <div className="overflow-hidden">
           <motion.h1
             initial={{ y: 80, opacity: 0 }}
@@ -104,7 +104,7 @@ export default function HeroSection() {
           </motion.h1>
         </div>
 
-        {/* Animated words */}
+        {/* Mots animés */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -143,7 +143,7 @@ export default function HeroSection() {
           dans la discrétion et la permanence du style.
         </motion.p>
 
-        {/* CTAs */}
+        {/* Boutons d'action */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -151,14 +151,14 @@ export default function HeroSection() {
           className="mt-12 flex items-center space-x-8"
         >
           <Link
-            href="/shop"
+            href="/boutique"
             className="group relative overflow-hidden bg-black px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-white/85"
           >
             <span className="relative z-10">Découvrir la Collection</span>
           </Link>
 
           <Link
-            href="/about"
+            href="/notre-histoire"
             className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.3em] text-black/40 transition-colors hover:text-black"
           >
             <span>Notre Histoire</span>
@@ -172,14 +172,14 @@ export default function HeroSection() {
         </motion.div>
       </motion.div>
 
-      {/* Bottom bar */}
+      {/* Barre inférieure */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 1, delay: 1.8 }}
         className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between px-[8%] py-8"
       >
-        {/* Scroll indicator */}
+        {/* Indicateur de défilement */}
         <div className="flex flex-col items-center space-y-3">
           <motion.div
             animate={{ y: [0, 8, 0] }}
@@ -197,7 +197,7 @@ export default function HeroSection() {
           </span>
         </div>
 
-        {/* Stats */}
+        {/* Statistiques */}
         <div className="hidden sm:flex items-center space-x-10">
           {[
             { value: "MMXXV", label: "Fondé" },
@@ -222,7 +222,7 @@ export default function HeroSection() {
         </div>
       </motion.div>
 
-      {/* Decorative roman numeral */}
+      {/* Chiffre romain décoratif */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
