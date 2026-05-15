@@ -154,9 +154,13 @@ export interface Order {
   createdAt: Date;
 }
 
-export interface OrderForm extends Profile {
+export interface OrderForm extends Omit<Profile, "city" | "address" | "postalCode"> {
+  // Nullable : les commandes OFFLINE (POS) n'ont pas d'adresse de livraison.
+  city:          string | null;
+  address:       string | null;
+  postalCode:    string | null;
   paymentMethod: "cash" | "card";
-  deliveryType: "home" | "bureau" | "store";
+  deliveryType:  "home" | "bureau" | "store";
 }
 
 export interface CartItem extends Product {

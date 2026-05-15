@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, isNextResponse } from "@/lib/rbac";
+import { OrderStatus } from "@/app/generated/prisma/enums";
 
 function monthRange(monthsAgo: number) {
   const now   = new Date();
@@ -10,7 +11,9 @@ function monthRange(monthsAgo: number) {
 }
 
 // CA et panier moyen ne doivent pas compter les commandes non honorées.
-const REVENUE_STATUSES = { notIn: ["CANCELLED", "RETURNED"] as const };
+const REVENUE_STATUSES = {
+  notIn: [OrderStatus.CANCELLED, OrderStatus.RETURNED] as OrderStatus[],
+};
 
 const LOW_STOCK_THRESHOLD = 5;
 const LOW_STOCK_LIMIT     = 5;
@@ -56,7 +59,7 @@ export async function GET(req: NextRequest) {
         status:    REVENUE_STATUSES,
       },
       _sum:   { total: true },
-      _count: true,
+      _count: { _all: true },
       _avg:   { total: true },
     }),
     prisma.order.aggregate({
@@ -65,7 +68,7 @@ export async function GET(req: NextRequest) {
         status:    REVENUE_STATUSES,
       },
       _sum:   { total: true },
-      _count: true,
+      _count: { _all: true },
       _avg:   { total: true },
     }),
     prisma.order.findMany({
@@ -141,12 +144,12 @@ export async function GET(req: NextRequest) {
     return { trend: `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`, isUp: pct >= 0 };
   }
 
-  const revenue      = kpiThis._sum.total  ?? 0;
-  const lastRevenue  = kpiLast._sum.total  ?? 0;
-  const orders       = kpiThis._count;
-  const lastOrders   = kpiLast._count;
-  const avg          = kpiThis._avg.total  ?? 0;
-  const lastAvg      = kpiLast._avg.total  ?? 0;
+  const revenue      = kpiThis._sum?.total  ?? 0;
+  const lastRevenue  = kpiLast._sum?.total  ?? 0;
+  const orders       = kpiThis._count?._all ?? 0;
+  const lastOrders   = kpiLast._count?._all ?? 0;
+  const avg          = kpiThis._avg?.total  ?? 0;
+  const lastAvg      = kpiLast._avg?.total  ?? 0;
 
   // ── Revenue chart (monthly, current year) ─────────────────────────────────
   const MONTHS = ["Jan","Fév","Mar","Avr","Mai","Jun","Jul","Aoû","Sep","Oct","Nov","Déc"];
@@ -161,10 +164,10 @@ export async function GET(req: NextRequest) {
   }));
 
   // ── Category distribution ──────────────���──────────────────────────────────
-  const totalItems   = categoryItems.reduce((s, c) => s + c._count.category, 0) || 1;
+  const totalItems   = categoryItems.reduce((s, c) => s + (c._count?.category ?? 0), 0) || 1;
   const categoryData = categoryItems.map((c) => ({
     name:  c.category,
-    value: Math.round((c._count.category / totalItems) * 100),
+    value: Math.round(((c._count?.category ?? 0) / totalItems) * 100),
   }));
 
   // ── Recent orders ─────────────────────────────────────────────────────────

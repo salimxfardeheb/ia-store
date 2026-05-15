@@ -14,9 +14,9 @@ export async function getOrders(): Promise<Order[]> {
     name: string;
     phone: string;
     email: string;
-    city: string;
-    address: string;
-    postalCode: string;
+    city: string | null;
+    address: string | null;
+    postalCode: string | null;
     paymentMethod: string;
     deliveryType: string;
     total: number;
@@ -42,8 +42,8 @@ export async function getOrders(): Promise<Order[]> {
       city: o.city,
       address: o.address,
       postalCode: o.postalCode,
-      paymentMethod: o.paymentMethod,
-      deliveryType: o.deliveryType,
+      paymentMethod: o.paymentMethod as "cash" | "card",
+      deliveryType: o.deliveryType as "home" | "bureau" | "store",
     },
     items: o.items.map((i) => ({
       // OrderItem snapshot → CartItem-shaped row used in UI

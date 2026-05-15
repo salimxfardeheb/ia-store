@@ -105,10 +105,10 @@ export async function POST(req: NextRequest) {
           deliveryType:  "store",
           name:          customer.name.trim(),
           phone:         customer.phone.trim(),
-          email:         customer.email?.trim()   ?? "",
-          city:          "",
-          address:       customer.address?.trim() ?? "",
-          postalCode:    "",
+          email:         customer.email?.trim() ?? "",
+          city:          null,
+          address:       customer.address?.trim() || null,
+          postalCode:    null,
           items: {
             create: items.map((item) => {
               const p = productMap.get(item.productId)!;

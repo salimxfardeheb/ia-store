@@ -111,13 +111,16 @@ model Order {
   paymentMethod String       @default("cash")
   deliveryType  String       @default("home")
 
-  // Snapshot adresse au moment de la commande
+  // Snapshot adresse au moment de la commande.
+  // city/address/postalCode sont nullable : les ventes OFFLINE (POS) ne
+  // collectent pas d'adresse de livraison. Les commandes ONLINE les exigent
+  // au niveau de la validation Zod (orderFormSchema).
   name       String
   phone      String
   email      String
-  city       String
-  address    String
-  postalCode String
+  city       String?
+  address    String?
+  postalCode String?
 
   createdAt DateTime    @default(now())
   items     OrderItem[]

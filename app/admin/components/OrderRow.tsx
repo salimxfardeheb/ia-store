@@ -92,7 +92,9 @@ export function OrderRow({
 
           {/* Wilaya */}
           <div className="col-span-2">
-            <p className="text-[10px] font-serif text-black/70">{order.form.city}</p>
+            <p className="text-[10px] font-serif text-black/70">
+              {order.form.city ?? (order.channel === "offline" ? "Vente magasin" : "—")}
+            </p>
             <p className="text-[10px] text-black/30 font-serif capitalize">
               {order.form.deliveryType === "home"
                 ? "À domicile"
@@ -224,13 +226,17 @@ export function OrderRow({
                 <div className="space-y-6">
                   <div>
                     <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 font-serif mb-3">
-                      Adresse de livraison
+                      {order.channel === "offline" ? "Contact (vente magasin)" : "Adresse de livraison"}
                     </p>
                     <p className="font-serif text-[11px] text-black">{order.form.name}</p>
-                    <p className="font-serif text-[11px] text-black/50">{order.form.address}</p>
-                    <p className="font-serif text-[11px] text-black/50">
-                      {order.form.postalCode} — {order.form.city}
-                    </p>
+                    {order.form.address && (
+                      <p className="font-serif text-[11px] text-black/50">{order.form.address}</p>
+                    )}
+                    {(order.form.postalCode || order.form.city) && (
+                      <p className="font-serif text-[11px] text-black/50">
+                        {[order.form.postalCode, order.form.city].filter(Boolean).join(" — ")}
+                      </p>
+                    )}
                     <p className="font-serif text-[11px] text-black/50 mt-1">{order.form.phone}</p>
                   </div>
 

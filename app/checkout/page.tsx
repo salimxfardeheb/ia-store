@@ -28,7 +28,16 @@ export default function Checkout() {
   const { user, profile } = useAuth();
   const router = useRouter();
 
-  const [form, setForm] = useState<OrderForm>({
+  // State local : pendant la saisie checkout les champs sont toujours des strings
+  // (initialises a ""). OrderForm autorise null pour englober les commandes
+  // OFFLINE (POS) — on resserre ici avec un type local non-nullable.
+  type CheckoutForm = Omit<OrderForm, "city" | "address" | "postalCode"> & {
+    city:       string;
+    address:    string;
+    postalCode: string;
+  };
+
+  const [form, setForm] = useState<CheckoutForm>({
     uid: user?.id ?? "",
     email: user?.email ?? "",
     name: profile?.name ?? "",
@@ -62,7 +71,7 @@ export default function Checkout() {
   const [orderId, setOrderId] = useState("");
   const [stockErrors, setStockErrors] = useState<string[]>([]);
 
-  const set = (key: keyof OrderForm, value: string) =>
+  const set = (key: keyof CheckoutForm, value: string) =>
     setForm((f) => ({ ...f, [key]: value }));
 
   const isValid =

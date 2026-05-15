@@ -199,9 +199,11 @@ export function OrderCard({
                 <div className="space-y-0.5">
                   <p className="text-[8px] uppercase tracking-[0.2em] text-black/30">Livraison</p>
                   <p className="text-[11px] text-black/60">{order.form.name}</p>
-                  <p className="text-[10px] text-black/40">
-                    {order.form.address}, {order.form.city}
-                  </p>
+                  {(order.form.address || order.form.city) && (
+                    <p className="text-[10px] text-black/40">
+                      {[order.form.address, order.form.city].filter(Boolean).join(", ")}
+                    </p>
+                  )}
                   <p className="text-[9px] text-black/30 uppercase tracking-[0.15em]">
                     {order.form.deliveryType === "home"
                       ? "Domicile"
