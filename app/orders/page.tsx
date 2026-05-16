@@ -12,10 +12,6 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [claimTarget, setClaimTarget] = useState<{
-    orderId: string;
-    productName: string;
-  } | null>(null);
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
@@ -23,20 +19,10 @@ export default function OrdersPage() {
   }, [user]);
 
   const openClaim = async (order: Order, productName: string) => {
-    setClaimTarget({ orderId: order.id, productName });
     const res = await fetch("/api/flowmerce-url", {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        orderId:       order.id,
-        customerEmail: order.form.email,
-        productName,
-        customerName:  order.form.name,
-        customerPhone: order.form.phone ?? "",
-        orderDate:     order.createdAt instanceof Date
-          ? order.createdAt.toISOString().split("T")[0]
-          : "",
-      }),
+      body: JSON.stringify({ orderId: order.id, productName }),
     });
     const { url } = await res.json();
     if (url) window.open(url, "_blank", "noopener,noreferrer");

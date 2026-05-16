@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { orderId, productName } = body;
+
   if (typeof orderId !== "string" || !orderId) {
     return NextResponse.json({ error: "orderId requis" }, { status: 400 });
   }
@@ -35,14 +36,17 @@ export async function POST(req: NextRequest) {
   const order = await prisma.order.findUnique({
     where:  { id: orderId },
     select: {
-      id:        true,
-      userId:    true,
-      status:    true,
-      email:     true,
-      name:      true,
-      phone:     true,
-      createdAt: true,
-      items:     { select: { name: true } },
+      id:            true,
+      userId:        true,
+      status:        true,
+      email:         true,
+      name:          true,
+      phone:         true,
+      city:          true,
+      total:         true,
+      paymentMethod: true,
+      createdAt:     true,
+      items:         { select: { name: true, price: true, quantity: true } },
     },
   });
 
@@ -58,7 +62,8 @@ export async function POST(req: NextRequest) {
   }
 
   // 4. Le produit signalé doit appartenir à la commande
-  if (!order.items.some((it) => it.name === productName)) {
+  const matchedItem = order.items.find((it) => it.name === productName);
+  if (!matchedItem) {
     return NextResponse.json({ error: "Produit absent de la commande" }, { status: 422 });
   }
 
@@ -79,24 +84,37 @@ export async function POST(req: NextRequest) {
 
   let sessionRes: Response;
   try {
-    sessionRes = await fetch(`${baseUrl}/api/checkout-session`, {
+    sessionRes = await fetch(`${baseUrl}/api/return-sessions`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey,
+        "Content-Type":  "application/json",
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        orderId:       order.id,
-        customerEmail: order.email,
-        productName,
-        customerName:  order.name,
-        customerPhone: order.phone,
-        orderDate:     order.createdAt.toISOString().split("T")[0],
-        shopName:      "IA Store",
+        order_id:       order.id,
+        customer_email: order.email ?? "",
+        customer_name:  order.name,
+        product_name:   productName,
+
+        // Champs optionnels disponibles en DB
+        customer_phone:   order.phone,
+        customer_wilaya:  order.city ?? undefined,
+        payment_method:   order.paymentMethod,
+        order_date:       order.createdAt.toISOString().split("T")[0],
+        order_total:      order.total,
+        product_price:    matchedItem.price,
+        product_quantity: matchedItem.quantity,
       }),
     });
   } catch {
     return NextResponse.json({ error: "Impossible de joindre Flowmerce" }, { status: 502 });
+  }
+
+  if (sessionRes.status === 429) {
+    return NextResponse.json(
+      { error: "Trop de demandes. Veuillez réessayer dans quelques instants." },
+      { status: 429 }
+    );
   }
 
   if (!sessionRes.ok) {

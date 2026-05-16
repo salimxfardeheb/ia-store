@@ -29,7 +29,8 @@ export default function ProductDetailClient({ product }: Props) {
 
   // ── Derived data ──────────────────────────────────────────────────────────
 
-  const hasVariants   = (product.variants?.length ?? 0) > 0;
+  const isShoe      = product.category.toLowerCase().includes("chaussure");
+  const hasVariants = (product.variants?.length ?? 0) > 0;
   const activeVariant = hasVariants
     ? (product.variants!.find((v) => v.color === selectedColor) ?? product.variants![0])
     : null;
@@ -211,15 +212,15 @@ export default function ProductDetailClient({ product }: Props) {
                 </div>
               )}
 
-              {/* ── Size selection ──────────────────────────────────────── */}
+              {/* ── Size / Pointure selection ────────────────────────────── */}
               {(hasVariants ? variantSizes.length > 0 : flatSizes.length > 0) && (
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-[10px] uppercase tracking-[0.3em] font-medium text-black/60">
-                      Taille
+                      {isShoe ? "Pointure" : "Taille"}
                     </span>
                     <button className="text-[9px] uppercase tracking-widest text-black/30 border-b border-black/15 pb-0.5 hover:text-black/60 hover:border-black/40 transition-colors">
-                      Guide des tailles
+                      {isShoe ? "Guide des pointures" : "Guide des tailles"}
                     </button>
                   </div>
 
@@ -234,7 +235,7 @@ export default function ProductDetailClient({ product }: Props) {
                               setSizeError(false);
                               setQuantity((q) => Math.min(q, stock));
                             }}
-                            className={`w-11 h-11 flex items-center justify-center text-[11px] font-medium tracking-wider transition-all duration-200 border ${
+                            className={`${isShoe ? "min-w-13 px-2 h-11" : "w-11 h-11"} flex items-center justify-center text-[11px] font-medium tracking-wider transition-all duration-200 border ${
                               stock === 0
                                 ? "opacity-20 cursor-not-allowed border-black/10 line-through"
                                 : selectedSize === name
@@ -262,7 +263,7 @@ export default function ProductDetailClient({ product }: Props) {
                               setSizeError(false);
                               setQuantity((q) => Math.min(q, qty));
                             }}
-                            className={`w-11 h-11 flex items-center justify-center text-[11px] font-medium tracking-wider transition-all duration-200 border ${
+                            className={`${isShoe ? "min-w-13 px-2 h-11" : "w-11 h-11"} flex items-center justify-center text-[11px] font-medium tracking-wider transition-all duration-200 border ${
                               qty === 0
                                 ? "opacity-20 cursor-not-allowed border-black/10 line-through"
                                 : selectedSize === size
@@ -279,7 +280,7 @@ export default function ProductDetailClient({ product }: Props) {
 
                   {sizeError && (
                     <p className="text-[9px] uppercase tracking-[0.3em] text-red-400 mt-3">
-                      Veuillez sélectionner une taille
+                      {isShoe ? "Veuillez sélectionner une pointure" : "Veuillez sélectionner une taille"}
                     </p>
                   )}
                 </div>

@@ -28,14 +28,38 @@ export function ReclamationModal({
   });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!form.type || !form.description.trim()) return;
+    if (form.description.trim().length < 10) {
+      setError("La description doit faire au moins 10 caractères.");
+      return;
+    }
+    setError(null);
     setSending(true);
-    // TODO: replace with real Firestore / email submit
-    await new Promise((r) => setTimeout(r, 1200));
-    setSending(false);
-    setSubmitted(true);
+    try {
+      const res = await fetch("/api/flowmerce-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId:     form.orderId,
+          productName: form.productName,
+          reason:      form.type,
+          description: form.description.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Une erreur est survenue. Veuillez réessayer.");
+        return;
+      }
+      setSubmitted(true);
+    } catch {
+      setError("Impossible d'envoyer la réclamation. Vérifiez votre connexion.");
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -169,6 +193,13 @@ export function ReclamationModal({
                 {form.description.length}/500
               </p>
             </div>
+
+            {/* Erreur API */}
+            {error && (
+              <p className="text-[11px] text-red-500 border border-red-200 bg-red-50 px-3 py-2">
+                {error}
+              </p>
+            )}
 
             {/* Submit */}
             <motion.button
