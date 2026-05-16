@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import type { Product } from "@/app/variables";
@@ -89,15 +90,17 @@ export default async function ShopPage({ searchParams }: PageProps) {
 
   return (
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
-      <ShopClient
-        products={products}
-        categories={categories}
-        total={total}
-        page={page}
-        limit={LIMIT}
-        activeCategory={category || "Tous"}
-        sort={sort}
-      />
+      <Suspense fallback={null}>
+        <ShopClient
+          products={products}
+          categories={categories}
+          total={total}
+          page={page}
+          limit={LIMIT}
+          activeCategory={category || "Tous"}
+          sort={sort}
+        />
+      </Suspense>
     </div>
   );
 }
