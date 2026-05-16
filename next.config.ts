@@ -35,8 +35,6 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Prevent Turbopack from bundling native Node.js packages
-  serverExternalPackages: ["@prisma/adapter-libsql", "@libsql/client"],
   images: {
     remotePatterns: [
       {

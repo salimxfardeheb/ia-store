@@ -4,7 +4,7 @@ import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { profileUpdateSchema, safeParse, handleDbError } from "@/lib/validation";
 import { requireSameOrigin } from "@/lib/csrf";
 
-function getUser(req: NextRequest) {
+async function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
@@ -17,7 +17,7 @@ const PROFILE_SELECT = {
 
 // GET /api/profile
 export async function GET(req: NextRequest) {
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   try {
@@ -36,7 +36,7 @@ export async function PATCH(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
   const body = await req.json().catch(() => null);

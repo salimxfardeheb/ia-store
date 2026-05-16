@@ -10,7 +10,7 @@ export default function About() {
           <motion.span 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-black/40 text-[11px] uppercase tracking-[0.4em] font-medium mb-6 block"
+            className="text-black/60 text-[11px] uppercase tracking-[0.4em] font-medium mb-6 block"
           >
             Since 2024
           </motion.span>

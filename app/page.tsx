@@ -1,27 +1,15 @@
-"use client";
-
 import Hero from "@/app/components/Hero";
 import ProductGrid from "@/app/components/ProductGrid";
-import { motion } from "framer-motion";
 
 export default function HomePage() {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <div className="animate-fade-in">
       <Hero />
 
       {/* Featured Section */}
       <section className="py-24 px-6 bg-white">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
+          <div className="relative">
             <div className="aspect-4/5 overflow-hidden rounded-2xl luxury-shadow">
               <img
                 src="https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&q=80&w=1000"
@@ -29,10 +17,10 @@ export default function HomePage() {
                 className="w-full h-full object-cover"
               />
             </div>
-          </motion.div>
+          </div>
 
           <div className="space-y-8">
-            <span className="text-black/40 text-[11px] uppercase tracking-[0.4em] font-medium block">
+            <span className="text-black/60 text-[11px] uppercase tracking-[0.4em] font-medium block">
               The Heritage
             </span>
 
@@ -57,6 +45,6 @@ export default function HomePage() {
           <h2 className="font-serif text-5xl italic">Join the Circle</h2>
         </div>
       </section>
-    </motion.div>
+    </div>
   );
 }

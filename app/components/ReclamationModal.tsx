@@ -62,7 +62,7 @@ export function ReclamationModal({
                 strokeWidth={1.5}
                 className="text-red-400"
               />
-              <span className="text-[9px] uppercase tracking-[0.3em] text-black/40">
+              <span className="text-[9px] uppercase tracking-[0.3em] text-black/60">
                 Réclamation produit
               </span>
             </div>
@@ -94,13 +94,13 @@ export function ReclamationModal({
               <h3 className="font-serif italic text-lg text-black/70 mb-2">
                 Réclamation envoyée
               </h3>
-              <p className="text-[11px] text-black/40 leading-relaxed max-w-xs mx-auto">
+              <p className="text-[11px] text-black/60 leading-relaxed max-w-xs mx-auto">
                 Votre signalement a bien été enregistré. Notre équipe vous
                 contactera dans les 48h.
               </p>
               <button
                 onClick={onClose}
-                className="mt-8 text-[10px] uppercase tracking-[0.25em] text-black/40 hover:text-black border border-black/10 hover:border-black/30 px-6 py-2.5 transition-colors"
+                className="mt-8 text-[10px] uppercase tracking-[0.25em] text-black/60 hover:text-black border border-black/10 hover:border-black/30 px-6 py-2.5 transition-colors"
               >
                 Fermer
               </button>
@@ -131,7 +131,7 @@ export function ReclamationModal({
 
             {/* Type de problème */}
             <div>
-              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-2 font-serif">
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-2 font-serif">
                 Type de problème <span className="text-red-400">*</span>
               </label>
               <div className="grid grid-cols-1 gap-1.5">
@@ -153,7 +153,7 @@ export function ReclamationModal({
 
             {/* Description */}
             <div>
-              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-2 font-serif">
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-2 font-serif">
                 Description <span className="text-red-400">*</span>
               </label>
               <textarea

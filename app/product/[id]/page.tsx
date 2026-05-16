@@ -1,12 +1,51 @@
+import type { Metadata } from "next";
 import ProductDetailClient from "./ProductDetailClient";
 import { prisma } from "@/lib/prisma";
-import type { Product, ProductImage } from "@/app/variables";
+import type { Product } from "@/app/variables";
 
 const STATUS_FR: Record<"ACTIVE" | "DRAFT" | "ARCHIVED", Product["status"]> = {
   ACTIVE: "Actif",
   DRAFT: "Brouillon",
   ARCHIVED: "Archivé",
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+
+  const p = await prisma.product.findUnique({
+    where: { id, deletedAt: null, status: "ACTIVE" },
+    select: { name: true, category: true, price: true, mainImage: true },
+  });
+
+  if (!p) return { title: "Produit introuvable" };
+
+  const title       = p.name;
+  const description = `${p.name} — ${p.category} · ${p.price.toLocaleString("fr-FR")} DA. Découvrez notre sélection de vêtements et accessoires premium.`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      type:   "website",
+      locale: "fr_FR",
+      ...(p.mainImage && {
+        images: [{ url: p.mainImage, width: 800, height: 800, alt: p.name }],
+      }),
+    },
+    twitter: {
+      card:        "summary_large_image",
+      title,
+      description,
+      ...(p.mainImage && { images: [p.mainImage] }),
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
@@ -18,37 +57,39 @@ export default async function ProductPage({
   const dbProduct = await prisma.product.findUnique({
     where: { id },
     include: {
-      sizes: true,
-      variants: { include: { sizes: true } },
+      extraImages: { orderBy: { sortOrder: "asc" } },
+      sizes:       true,
+      variants:    { include: { sizes: true } },
     },
   });
 
-  let product = null;
+  let product: Product | null = null;
   if (dbProduct && !dbProduct.deletedAt) {
-    let extraImages: ProductImage[] = [];
-    try {
-      const parsed = JSON.parse(dbProduct.extraImages || "[]");
-      extraImages = Array.isArray(parsed) ? (parsed as ProductImage[]) : [];
-    } catch {
-      extraImages = [];
-    }
-
     product = {
-      ...dbProduct,
-      status: STATUS_FR[dbProduct.status],
-      createdAt: dbProduct.createdAt.toISOString(),
-      extraImages,
+      id:          dbProduct.id,
+      name:        dbProduct.name,
+      category:    dbProduct.category,
+      price:       dbProduct.price,
+      stock:       dbProduct.stock,
+      status:      STATUS_FR[dbProduct.status],
+      mainImage:   dbProduct.mainImage,
+      createdAt:   dbProduct.createdAt.toISOString(),
+      sizes:       dbProduct.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
+      extraImages: dbProduct.extraImages.map((img) => ({
+        url:   img.url,
+        ...(img.color ? { color: img.color } : {}),
+      })),
       variants: dbProduct.variants.map((v) => ({
-        id: v.id,
+        id:    v.id,
         color: v.color,
-        sku: v.sku ?? undefined,
+        sku:   v.sku ?? undefined,
         sizes: v.sizes.map((s) => ({
-          name: s.name,
+          name:  s.name,
           stock: s.stock,
           price: s.price ?? undefined,
         })),
       })),
-    } satisfies Product;
+    };
   }
 
   if (!product) {

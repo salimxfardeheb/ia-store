@@ -32,6 +32,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // the source of truth is the HttpOnly session cookie verified by /api/auth/me.
 const USER_CACHE_KEY = "ia_user";
 
+async function silentRefresh() {
+  try {
+    await fetch("/api/auth/refresh", { method: "POST", credentials: "include" });
+  } catch { /* network error — ignore, token still valid until it expires */ }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user,      setUser]      = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,6 +57,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (serverUser) {
           setUser(serverUser);
           localStorage.setItem(USER_CACHE_KEY, JSON.stringify(serverUser));
+          // Attempt a refresh right away in case the token is already close to expiry
+          silentRefresh();
         } else {
           setUser(null);
           localStorage.removeItem(USER_CACHE_KEY);
@@ -61,6 +69,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => { cancelled = true; };
   }, []);
+
+  // Refresh on window focus so a user returning to the tab never hits a stale token
+  useEffect(() => {
+    const onFocus = () => { if (user) silentRefresh(); };
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, [user]);
 
   const login = async (email: string, password: string) => {
     const res = await fetch("/api/auth/login", {

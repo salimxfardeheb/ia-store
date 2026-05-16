@@ -168,7 +168,7 @@ export default function Checkout() {
           <Check size={24} className="text-white" strokeWidth={1.5} />
         </div>
         <h1 className="font-serif text-4xl italic mb-4">Commande confirmée</h1>
-        <p className="text-black/40 text-sm font-light mb-2">
+        <p className="text-black/60 text-sm font-light mb-2">
           Merci pour votre commande.
         </p>
         <p className="text-[11px] uppercase tracking-[0.3em] text-black/25 font-serif mb-12">
@@ -204,7 +204,7 @@ export default function Checkout() {
           {/* Bannière non connecté */}
           {!user && (
             <div className="border border-black/8 px-6 py-4 flex items-center justify-between">
-              <p className="text-[10px] uppercase tracking-widest text-black/40 font-serif">
+              <p className="text-[10px] uppercase tracking-widest text-black/60 font-serif">
                 Connectez-vous pour suivre vos commandes
               </p>
               <Link
@@ -218,12 +218,12 @@ export default function Checkout() {
 
           {/* Coordonnées */}
           <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/60 font-serif mb-6 pb-4 border-b border-black/8">
               Coordonnées
             </p>
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   Nom & Prénom
                 </label>
                 <input
@@ -234,7 +234,7 @@ export default function Checkout() {
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   Numéro de téléphone
                 </label>
                 <input
@@ -250,13 +250,13 @@ export default function Checkout() {
 
           {/* Adresse */}
           <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/60 font-serif mb-6 pb-4 border-b border-black/8">
               Adresse de livraison
             </p>
             <div className="space-y-4">
               {/* Wilaya */}
               <div>
-                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   Wilaya
                 </label>
                 <div className="relative">
@@ -277,7 +277,7 @@ export default function Checkout() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   Adresse
                 </label>
                 <input
@@ -289,7 +289,7 @@ export default function Checkout() {
               </div>
 
               <div>
-                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[10px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   Code Postal
                 </label>
                 <input
@@ -304,7 +304,7 @@ export default function Checkout() {
 
           {/* Type de livraison */}
           <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/60 font-serif mb-6 pb-4 border-b border-black/8">
               Type de livraison
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -354,7 +354,7 @@ export default function Checkout() {
 
           {/* Paiement */}
           <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6 pb-4 border-b border-black/8">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-black/60 font-serif mb-6 pb-4 border-b border-black/8">
               Mode de paiement
             </p>
             <div className="grid grid-cols-2 gap-4">
@@ -416,7 +416,7 @@ export default function Checkout() {
         {/* Résumé commande */}
         <div className="lg:col-span-1">
           <div className="border border-black/8 p-8 sticky top-32">
-            <h2 className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6">
+            <h2 className="text-[11px] uppercase tracking-[0.3em] text-black/60 font-serif mb-6">
               Résumé
             </h2>
 
@@ -449,13 +449,13 @@ export default function Checkout() {
             {/* Total */}
             <div className="space-y-3 mb-8">
               <div className="flex justify-between text-sm">
-                <span className="text-black/40 font-light">Sous-total</span>
+                <span className="text-black/60 font-light">Sous-total</span>
                 <span className="font-serif italic">
                   {cartTotal.toLocaleString("fr-FR")} DA
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-black/40 font-light">Livraison</span>
+                <span className="text-black/60 font-light">Livraison</span>
                 <span className="text-[10px] uppercase tracking-widest text-black/30 font-serif">
                   À confirmer
                 </span>

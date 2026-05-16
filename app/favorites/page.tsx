@@ -39,7 +39,7 @@ export default function FavoritesPage() {
     <div className="pt-32 pb-24 px-6 max-w-7xl mx-auto">
       <header className="mb-16">
         <h1 className="font-serif text-6xl italic mb-6">Mes favoris</h1>
-        <p className="text-black/40 text-sm uppercase tracking-widest">
+        <p className="text-black/60 text-sm uppercase tracking-widest">
           {favorites.length} {favorites.length > 1 ? "pièces sélectionnées" : "pièce sélectionnée"}
         </p>
       </header>
@@ -53,10 +53,10 @@ export default function FavoritesPage() {
       ) : favorites.length === 0 ? (
         <div className="text-center py-32 flex flex-col items-center gap-6">
           <Heart size={36} strokeWidth={1} className="text-black/20" />
-          <p className="font-serif text-3xl italic text-black/40">
+          <p className="font-serif text-3xl italic text-black/60">
             Aucun favori pour le moment
           </p>
-          <p className="text-[11px] uppercase tracking-widest text-black/40 max-w-sm">
+          <p className="text-[11px] uppercase tracking-widest text-black/60 max-w-sm">
             Parcourez la boutique et appuyez sur le cœur pour sauvegarder
             les pièces qui vous inspirent.
           </p>
@@ -108,7 +108,7 @@ export default function FavoritesPage() {
                     <h3 className="font-serif text-xl mb-1 group-hover:italic transition-all">
                       {product.name}
                     </h3>
-                    <p className="text-black/40 text-xs uppercase tracking-widest">
+                    <p className="text-black/60 text-xs uppercase tracking-widest">
                       {product.category}
                     </p>
                   </Link>

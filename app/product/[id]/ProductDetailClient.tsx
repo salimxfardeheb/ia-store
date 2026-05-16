@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Plus, Minus, ShoppingBag, Truck, ShieldCheck, RefreshCw } from "lucide-react";
+import Image from "next/image";
 import { useCart } from "@/app/context/CartContext";
 import { useRouter } from "next/navigation";
 import { Product } from "@/app/variables";
@@ -105,28 +106,35 @@ export default function ProductDetailClient({ product }: Props) {
                   <button
                     key={i}
                     onClick={() => setSelectedImage(img)}
-                    className={`aspect-square overflow-hidden transition-all duration-300 ${
+                    className={`relative aspect-square overflow-hidden transition-all duration-300 ${
                       selectedImage === img
                         ? "ring-1 ring-black/70 opacity-100"
                         : "opacity-35 hover:opacity-70"
                     }`}
                   >
-                    <img src={img} alt={`${product.name} ${i + 1}`} className="w-full h-full object-cover" />
+                    <Image src={img} alt={`${product.name} ${i + 1}`} fill sizes="72px" className="object-cover" />
                   </button>
                 ))}
               </div>
             )}
 
-            <div className="flex-1 aspect-3/4 overflow-hidden bg-[#EDE9E3]">
-              <motion.img
+            <div className="relative flex-1 aspect-3/4 overflow-hidden bg-[#EDE9E3]">
+              <motion.div
                 key={selectedImage}
                 initial={{ opacity: 0, scale: 1.02 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.5 }}
-                src={selectedImage || product.mainImage}
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+                className="absolute inset-0"
+              >
+                <Image
+                  src={selectedImage || product.mainImage}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  priority
+                  className="object-cover"
+                />
+              </motion.div>
             </div>
           </motion.div>
 
@@ -152,7 +160,7 @@ export default function ProductDetailClient({ product }: Props) {
               <span className="font-serif text-3xl text-black/80">
                 {displayPrice.toLocaleString("fr-FR")}
               </span>
-              <span className="text-[11px] uppercase tracking-widest text-black/40 font-medium">DA</span>
+              <span className="text-[11px] uppercase tracking-widest text-black/60 font-medium">DA</span>
             </div>
 
             <p className="text-[13px] text-black/50 leading-7 mb-10 font-light max-w-sm">
@@ -170,7 +178,7 @@ export default function ProductDetailClient({ product }: Props) {
                       Couleur
                     </span>
                     {selectedColor && (
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-black/40">
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-black/60">
                         {selectedColor}
                       </span>
                     )}
@@ -335,7 +343,7 @@ export default function ProductDetailClient({ product }: Props) {
                 { icon: ShieldCheck,  label: "Paiement sécurisé" },
               ].map(({ icon: Icon, label }) => (
                 <div key={label} className="flex flex-col items-center text-center gap-3">
-                  <Icon size={17} strokeWidth={1} className="text-black/40" />
+                  <Icon size={17} strokeWidth={1} className="text-black/60" />
                   <span className="text-[9px] uppercase tracking-[0.25em] font-medium text-black/35 leading-4">
                     {label}
                   </span>

@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
   // 1. Authentification : JWT obligatoire (cookie httpOnly ou Bearer)
   const token = getTokenFromRequest(req);
-  const user  = token ? verifyToken(token) : null;
+  const user  = token ? await verifyToken(token) : null;
   if (!user) {
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   }

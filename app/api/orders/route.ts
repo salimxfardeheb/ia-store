@@ -5,8 +5,9 @@ import { createOrderSchema, safeParse, apiError } from "@/lib/validation";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { normalizePhoneDZ } from "@/lib/phone";
 import { requireSameOrigin } from "@/lib/csrf";
+import { getEffectiveStock } from "@/lib/stock";
 
-function getUser(req: NextRequest) {
+async function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
@@ -21,7 +22,7 @@ function tooManyRequests(retryAfter?: number) {
 
 // GET /api/orders — orders of the authenticated user
 export async function GET(req: NextRequest) {
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 
   const orders = await prisma.order.findMany({
@@ -38,7 +39,7 @@ export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const user = getUser(req);
+  const user = await getUser(req);
 
   // ─── Rate-limit IP : bloque tôt le flood (avant parsing/DB) ─────────────
   // 5 commandes / 10 min / IP — limite franche contre les bots invités.
@@ -82,9 +83,7 @@ export async function POST(req: NextRequest) {
   // TODO captcha : ajouter Cloudflare Turnstile sur les guests
   // (clé `TURNSTILE_SECRET_KEY` + vérif serveur de `cf-turnstile-response`).
 
-  // Email vide en DB pollue les analytics : normaliser, mais garder "" si
-  // pas fourni (colonne NOT NULL — migration séparée pour passer nullable).
-  const normalizedEmail = form.email.trim().toLowerCase();
+  const normalizedEmail = form.email ? form.email.trim().toLowerCase() : null;
 
   // Fetch all referenced products from DB to get authoritative prices
   const productIds  = [...new Set(items.map((i) => i.id))];
@@ -107,47 +106,32 @@ export async function POST(req: NextRequest) {
 
   const productMap = new Map(dbProducts.map((p) => [p.id, p]));
 
-  // Vérifier le stock disponible pour chaque article — scope par couleur si fournie
+  // Vérifier le stock disponible pour chaque article
   for (const item of items) {
     const product = productMap.get(item.id)!;
-    const hasVariants = product.variants.length > 0;
+    const isVariant = (product.variants?.length ?? 0) > 0;
 
-    // Produit à variantes : la couleur est obligatoire pour scoper le stock
-    if (hasVariants && !item.selectedColor) {
+    if (isVariant && !item.selectedColor) {
+      return apiError("VALIDATION_ERROR", `Couleur requise pour ${product.name}`, 422);
+    }
+
+    if (item.selectedColor && !product.variants.find((v) => v.color === item.selectedColor)) {
       return apiError(
         "VALIDATION_ERROR",
-        `Couleur requise pour ${product.name}`,
+        `Couleur inconnue pour ${product.name} : ${item.selectedColor}`,
         422
       );
     }
 
-    let available: number;
-    let label: string;
+    const available = getEffectiveStock(product, item.selectedColor, item.selectedSize);
 
-    if (item.selectedColor) {
-      const variant = product.variants.find((v) => v.color === item.selectedColor);
-      if (!variant) {
-        return apiError(
-          "VALIDATION_ERROR",
-          `Couleur inconnue pour ${product.name} : ${item.selectedColor}`,
-          422
-        );
-      }
-      if (item.selectedSize) {
-        available = variant.sizes.find((s) => s.name === item.selectedSize)?.stock ?? 0;
-        label = `${product.name} · ${item.selectedColor} · Taille ${item.selectedSize}`;
-      } else {
-        available = variant.sizes.reduce((sum, s) => sum + s.stock, 0);
-        label = `${product.name} · ${item.selectedColor}`;
-      }
-    } else if (item.selectedSize) {
-      const sizeEntry = product.sizes.find((s) => s.size === item.selectedSize);
-      available = sizeEntry?.quantity ?? 0;
-      label = `${product.name} · Taille ${item.selectedSize}`;
-    } else {
-      available = product.stock;
-      label = product.name;
-    }
+    const label = item.selectedColor
+      ? item.selectedSize
+        ? `${product.name} · ${item.selectedColor} · Taille ${item.selectedSize}`
+        : `${product.name} · ${item.selectedColor}`
+      : item.selectedSize
+        ? `${product.name} · Taille ${item.selectedSize}`
+        : product.name;
 
     if (item.quantity > available) {
       return apiError(

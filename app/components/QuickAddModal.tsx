@@ -106,7 +106,7 @@ export function QuickAddModal({
               ) : null}
             </div>
             <div>
-              <span className="text-[9px] uppercase tracking-[0.3em] text-black/40 block mb-1">
+              <span className="text-[9px] uppercase tracking-[0.3em] text-black/60 block mb-1">
                 {product.category}
               </span>
               <h2 className="font-serif text-lg italic text-black/80 leading-tight">
@@ -116,14 +116,14 @@ export function QuickAddModal({
                 <span className="font-medium">
                   {displayPrice.toLocaleString("fr-FR")}
                 </span>{" "}
-                <span className="uppercase tracking-widest text-black/40">
+                <span className="uppercase tracking-widest text-black/60">
                   DA
                 </span>
               </p>
             </div>
           </div>
           <div className="flex items-start gap-2 mt-1">
-            <FavoriteButton product={product} variant="bare" size={18} className="text-black/40 hover:text-black p-1" />
+            <FavoriteButton product={product} variant="bare" size={18} className="text-black/60 hover:text-black p-1" />
             <button
               onClick={onClose}
               className="text-black/20 hover:text-black/60 transition-colors p-1"
@@ -142,7 +142,7 @@ export function QuickAddModal({
                   Couleur
                 </span>
                 {selectedColor && (
-                  <span className="text-[10px] uppercase tracking-[0.2em] text-black/40">
+                  <span className="text-[10px] uppercase tracking-[0.2em] text-black/60">
                     {selectedColor}
                   </span>
                 )}

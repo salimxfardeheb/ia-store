@@ -107,10 +107,15 @@ export default function GlobalSearch() {
         }}
         placeholder="Rechercher…"
         aria-label="Rechercher"
+        aria-expanded={isOpen}
+        aria-autocomplete="list"
+        aria-controls="global-search-listbox"
+        role="combobox"
         className="border bg-white text-[11px] focus:outline-none focus:border-black/30 w-52 py-2.5 pl-9 pr-8 transition-colors border-[rgba(0,0,0,0.08)] font-serif text-[#0A0A0A] placeholder:text-black/25"
       />
       {query ? (
         <button
+        type="button"
           onClick={clear}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-black/25 hover:text-black/60 transition-colors"
           aria-label="Effacer"
@@ -125,7 +130,12 @@ export default function GlobalSearch() {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full mt-1 left-0 w-80 bg-white border border-[rgba(0,0,0,0.08)] shadow-sm z-50">
+        <div
+          id="global-search-listbox"
+          role="listbox"
+          aria-label="Résultats de recherche"
+          className="absolute top-full mt-1 left-0 w-80 bg-white border border-[rgba(0,0,0,0.08)] shadow-sm z-50"
+        >
 
           {isLoading && (
             <p className="px-4 py-3 text-[10px] text-black/30 font-serif">Recherche…</p>
@@ -148,6 +158,7 @@ export default function GlobalSearch() {
                   </header>
                   {results!.products.map((p) => (
                     <button
+                    type="button"
                       key={p.id}
                       onClick={() => navigate("/admin/catalog")}
                       className="w-full flex items-center space-x-3 px-4 py-2.5 hover:bg-black/5 transition-colors text-left"
@@ -179,7 +190,8 @@ export default function GlobalSearch() {
                     <span className="text-[9px] uppercase tracking-[0.3em] text-black/30 font-serif">Commandes</span>
                   </header>
                   {results!.orders.map((o) => (
-                    <button
+                    <button 
+                    type="button"
                       key={o.id}
                       onClick={() => navigate("/admin/orders")}
                       className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-black/5 transition-colors text-left"
@@ -188,7 +200,7 @@ export default function GlobalSearch() {
                         <p className="text-[11px] font-serif text-black truncate">{o.name}</p>
                         <p className="text-[9px] text-black/30 font-serif">{o.shortId} · {o.status}</p>
                       </div>
-                      <span className="text-[9px] font-serif text-black/40 shrink-0 ml-3">
+                      <span className="text-[9px] font-serif text-black/60 shrink-0 ml-3">
                         {o.total.toLocaleString("fr-FR")} DA
                       </span>
                     </button>
@@ -205,6 +217,7 @@ export default function GlobalSearch() {
                   </header>
                   {results!.customers.map((c) => (
                     <button
+                    type="button"
                       key={c.id}
                       onClick={() => navigate("/admin/customers")}
                       className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-black/5 transition-colors text-left"

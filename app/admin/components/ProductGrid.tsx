@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Edit2, Trash2, Package, Plus } from "lucide-react";
-import { Product, STATUS_STYLE } from "@/app/variables";
+import { Product } from "@/app/variables";
 
 interface ProductGridProps {
   filtered: Product[];
@@ -18,7 +18,7 @@ export default function ProductGrid({
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {filtered.map((product, i) => (
-        <motion.div
+        <motion.article
           key={product.id}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -43,7 +43,7 @@ export default function ProductGrid({
             )}
             <div className="absolute top-3 right-3">
               <span
-                className={`text-[8px] uppercase tracking-widest px-2 py-0.5 font-serif ${STATUS_STYLE[product.status]}`}
+                className={`text-[8px] uppercase tracking-widest px-2 py-0.5 font-serif `}
               >
                 {product.status}
               </span>
@@ -52,12 +52,14 @@ export default function ProductGrid({
             {!readOnly && (
               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/8 transition-colors flex items-center justify-center space-x-2 opacity-0 group-hover:opacity-100">
                 <button
+                type="button"
                   onClick={() => setEditProduct(product)}
                   className="p-2 bg-white hover:bg-black hover:text-white transition-colors"
                 >
                   <Edit2 size={13} strokeWidth={1.5} />
                 </button>
                 <button
+                type="button"
                   onClick={() => setDeleteId(product.id)}
                   className="p-2 bg-white hover:bg-black hover:text-white transition-colors"
                 >
@@ -82,32 +84,33 @@ export default function ProductGrid({
                 {product.category}
               </span>
             </div>
-            <div className="flex flex-wrap gap-1 mt-2.5">
+            <ul className="flex flex-wrap gap-1 mt-2.5 list-none">
               {product.sizes.slice(0, 4).map((s) => (
-                <span
+                <li
                   key={s.size}
-                  className="text-[8px] px-1.5 py-0.5 border border-black/10 text-black/40 uppercase tracking-widest font-serif"
+                  className="text-[8px] px-1.5 py-0.5 border border-black/10 text-black/60 uppercase tracking-widest font-serif"
                 >
                   {s.size}
-                </span>
+                </li>
               ))}
               {product.sizes.length > 4 && (
-                <span className="text-[7px] px-1.5 py-0.5 border border-black/10 text-black/30 uppercase tracking-widest font-serif">
+                <li className="text-[7px] px-1.5 py-0.5 border border-black/10 text-black/30 uppercase tracking-widest font-serif">
                   +{product.sizes.length - 4}
-                </span>
+                </li>
               )}
-            </div>
+            </ul>
           </div>
-        </motion.div>
+        </motion.article>
       ))}
 
       {/* Add new card — ADMIN only */}
       {!readOnly && (
         <motion.button
+        type="button"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           onClick={() => setEditProduct(null)}
-          className="border-2 border-dashed border-black/10 h-full min-h-70 flex flex-col items-center justify-center text-black/20 hover:border-black/30 hover:text-black/40 transition-all"
+          className="border-2 border-dashed border-black/10 h-full min-h-70 flex flex-col items-center justify-center text-black/20 hover:border-black/30 hover:text-black/60 transition-all"
         >
           <Plus size={24} strokeWidth={1} className="mb-2" />
           <span className="text-[8px] uppercase tracking-[0.3em] font-serif">

@@ -36,7 +36,7 @@ export async function POST(
     return NextResponse.json({ error: "Raison invalide" }, { status: 400 });
   }
 
-  let order: { id: string; status: string; email: string; phone: string } | null;
+  let order: { id: string; status: string; email: string | null; phone: string } | null;
   try {
     order = await prisma.order.findUnique({
       where: { id },

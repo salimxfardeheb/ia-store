@@ -4,6 +4,7 @@ import { requireAdmin, isNextResponse } from "@/lib/rbac";
 import { apiError, orderStatusUpdateSchema, safeParse } from "@/lib/validation";
 import { OrderStatus } from "@/app/variables";
 import { isValidTransition } from "@/lib/orderStatus";
+import { audit } from "@/lib/audit";
 
 function toPrismaOrderStatus(s: OrderStatus) {
   return s.toUpperCase() as
@@ -160,6 +161,11 @@ export async function PATCH(
         where: { id },
         data:  { status: toPrismaOrderStatus(status) },
       });
+    });
+
+    audit(auth.id, "order.status_changed", "Order", id, {
+      before: currentStatus,
+      after:  status,
     });
 
     return NextResponse.json({ id: updated.id, status: updated.status.toLowerCase() });

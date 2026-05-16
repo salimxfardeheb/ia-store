@@ -65,7 +65,7 @@ export const productWriteSchema = z
 export const orderFormSchema = z.object({
   name:          z.string().min(1, "Nom requis").max(200),
   phone:         z.string().min(8, "Téléphone invalide").max(20),
-  email:         z.string().email("Email invalide").or(z.literal("")).default(""),
+  email:         z.string().email("Email invalide").optional(),
   city:          z.string().min(1, "Ville requise").max(100),
   address:       z.string().min(1, "Adresse requise").max(500),
   postalCode:    z.string().min(1, "Code postal requis").max(20),
@@ -102,7 +102,7 @@ export const posBodySchema = z.object({
   customer: z.object({
     name:    z.string().min(1, "Nom client requis").max(200),
     phone:   z.string().min(8, "Téléphone invalide").max(20),
-    email:   z.string().email().or(z.literal("")).optional(),
+    email:   z.string().email().optional(),
     address: z.string().max(500).optional(),
   }),
   items:         z.array(posItemSchema).min(1, "Le panier est vide"),

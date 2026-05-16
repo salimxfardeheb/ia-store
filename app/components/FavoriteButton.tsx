@@ -1,17 +1,12 @@
 "use client";
 
 import { Heart } from "lucide-react";
-import { motion } from "framer-motion";
 import { MouseEvent } from "react";
 import { Product } from "../variables";
 import { useFavorites } from "@/app/context/FavoritesContext";
 
 interface Props {
   product: Product;
-  /** Visual preset:
-   *  - "card":    floating round button on a product card
-   *  - "detail":  inline pill button used on the product detail page
-   *  - "bare":    transparent icon-only (use inside other layouts) */
   variant?: "card" | "detail" | "bare";
   size?: number;
   className?: string;
@@ -33,7 +28,7 @@ export function FavoriteButton({
   };
 
   const base =
-    "flex items-center justify-center transition-all duration-300 select-none";
+    "flex items-center justify-center transition-all duration-300 select-none active:scale-90";
 
   const variantClasses: Record<NonNullable<Props["variant"]>, string> = {
     card:
@@ -44,9 +39,9 @@ export function FavoriteButton({
   };
 
   return (
-    <motion.button
+    <button
+      type="button"
       onClick={handleClick}
-      whileTap={{ scale: 0.9 }}
       aria-pressed={active}
       aria-label={active ? "Retirer des favoris" : "Ajouter aux favoris"}
       title={active ? "Retirer des favoris" : "Ajouter aux favoris"}
@@ -63,6 +58,6 @@ export function FavoriteButton({
       {variant === "detail" && (
         <span className="ml-3">{active ? "Favori" : "Ajouter aux favoris"}</span>
       )}
-    </motion.button>
+    </button>
   );
 }

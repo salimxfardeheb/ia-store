@@ -1,14 +1,21 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+"use client";
+
+import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
+import dynamic from "next/dynamic";
 import { useCart } from "@/app/context/CartContext";
-import { useEffect, useState } from "react";
 import { Product } from "../variables";
 import { getAllProducts } from "@/services/products";
-import { QuickAddModal } from "./QuickAddModal";
 import { FavoriteButton } from "./FavoriteButton";
+
+const QuickAddModal = dynamic(
+  () => import("./QuickAddModal").then((m) => ({ default: m.QuickAddModal })),
+  { ssr: false }
+);
 
 export default function ProductGrid() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -36,7 +43,7 @@ export default function ProductGrid() {
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 space-y-4 md:space-y-0">
         <div>
           <h2 className="font-serif text-5xl italic mb-4">L'Essentiel</h2>
-          <p className="text-black/40 text-sm uppercase tracking-widest">
+          <p className="text-black/60 text-sm uppercase tracking-widest">
             Pièces sélectionnées pour votre garde-robe
           </p>
         </div>
@@ -52,23 +59,22 @@ export default function ProductGrid() {
       {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
         {products.map((product, index) => (
-          <motion.div
+          <div
             key={product.id}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            className="group"
+            className="group animate-fade-up"
+            style={{ animationDelay: `${index * 80}ms` }}
           >
             <div className="relative aspect-3/4 overflow-hidden bg-[#f5f5f5] mb-6">
 
               {/* Image */}
               <Link href={`/product/${product.id}`}>
                 {product.mainImage ? (
-                  <img
+                  <Image
                     src={product.mainImage}
                     alt={product.name}
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-1000 group-hover:scale-105"
                   />
                 ) : (
                   <div className="w-full h-full bg-[#F2F0ED]" />
@@ -105,7 +111,7 @@ export default function ProductGrid() {
                   <h3 className="font-serif text-xl mb-1 group-hover:italic transition-all">
                     {product.name}
                   </h3>
-                  <p className="text-black/40 text-xs uppercase tracking-widest">
+                  <p className="text-black/60 text-xs uppercase tracking-widest">
                     {product.category}
                   </p>
                 </div>
@@ -114,7 +120,7 @@ export default function ProductGrid() {
                 {product.price.toLocaleString("fr-FR")} DA
               </span>
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
 
@@ -128,14 +134,12 @@ export default function ProductGrid() {
         </Link>
       </div>
 
-      <AnimatePresence>
-        {quickAdd && (
-          <QuickAddModal
-            product={quickAdd}
-            onClose={() => setQuickAdd(null)}
-          />
-        )}
-      </AnimatePresence>
+      {quickAdd && (
+        <QuickAddModal
+          product={quickAdd}
+          onClose={() => setQuickAdd(null)}
+        />
+      )}
     </section>
   );
 }

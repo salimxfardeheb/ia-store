@@ -44,7 +44,7 @@ export default function Login() {
       >
         <div className="text-center mb-10">
           <h1 className="font-serif text-4xl italic mb-2">Bon retour</h1>
-          <p className="text-black/40 text-sm uppercase tracking-widest">Connectez-vous à votre compte</p>
+          <p className="text-black/60 text-sm uppercase tracking-widest">Connectez-vous à votre compte</p>
         </div>
 
         {error && (
@@ -95,7 +95,7 @@ export default function Login() {
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-black/40">
+          <p className="text-sm text-black/60">
             Pas encore de compte ?{' '}
             <Link href="/signup" className="text-black font-bold border-b border-black/20 hover:border-black transition-colors">
               Créer un compte

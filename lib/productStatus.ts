@@ -9,8 +9,8 @@ export type ProductRow = {
   stock:       number;
   status:      string;
   mainImage:   string;
-  extraImages: string;
   createdAt:   Date;
+  extraImages: { url: string; color: string | null; sortOrder: number }[];
   sizes:       { size: string; quantity: number }[];
   variants:    {
     id:    string;
@@ -36,19 +36,13 @@ export function fromPrismaStatus(s: string): Product["status"] {
 
 /** Map a raw Prisma product row to the shared Product interface */
 export function toProduct(p: ProductRow): Product {
-  let extraImages: ProductImage[] = [];
-  try {
-    const parsed: unknown[] = JSON.parse(p.extraImages || "[]");
-    // Rétrocompatibilité : ancienne forme = tableau de strings
-    extraImages = parsed
-      .map((item): ProductImage | null => {
-        if (typeof item === "string") return { url: item };
-        if (item && typeof item === "object" && "url" in item)
-          return item as ProductImage;
-        return null;
-      })
-      .filter((x): x is ProductImage => x !== null);
-  } catch { /* ignore */ }
+  const extraImages: ProductImage[] = p.extraImages
+    .slice()
+    .sort((a, b) => a.sortOrder - b.sortOrder)
+    .map((img) => ({
+      url:   img.url,
+      ...(img.color ? { color: img.color } : {}),
+    }));
 
   return {
     id:          p.id,

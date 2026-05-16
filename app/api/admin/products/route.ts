@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
   const products = await prisma.product.findMany({
     where:   { deletedAt: null },
-    include: { sizes: true, variants: { include: { sizes: true } } },
+    include: { extraImages: { orderBy: { sortOrder: "asc" } }, sizes: true, variants: { include: { sizes: true } } },
     orderBy: { createdAt: "desc" },
   });
 
@@ -35,7 +35,13 @@ export async function POST(req: NextRequest) {
       stock:       data.stock,
       status:      toPrismaStatus(data.status),
       mainImage:   data.mainImage,
-      extraImages: JSON.stringify(data.extraImages),
+      extraImages: {
+        create: data.extraImages.map((img, i) => ({
+          url:       img.url,
+          color:     img.color ?? null,
+          sortOrder: i,
+        })),
+      },
       sizes: {
         create: data.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
       },
@@ -53,7 +59,7 @@ export async function POST(req: NextRequest) {
         })),
       },
     },
-    include: { sizes: true, variants: { include: { sizes: true } } },
+    include: { extraImages: { orderBy: { sortOrder: "asc" } }, sizes: true, variants: { include: { sizes: true } } },
   });
 
   return NextResponse.json(toProduct(product), { status: 201 });

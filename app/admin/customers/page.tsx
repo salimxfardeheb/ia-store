@@ -64,7 +64,7 @@ function CustomerRow({ customer }: { customer: UnifiedCustomer }) {
           </div>
         )}
         {customer.email && (
-          <div className="flex items-center gap-1.5 text-[11px] font-serif text-black/40 truncate">
+          <div className="flex items-center gap-1.5 text-[11px] font-serif text-black/60 truncate">
             <Mail size={10} strokeWidth={1.5} className="text-black/25 shrink-0" />
             <span className="truncate">{customer.email}</span>
           </div>
@@ -221,7 +221,7 @@ export default function CustomersPage() {
                 <ChevronLeft size={13} strokeWidth={1.5} />
                 Précédent
               </button>
-              <span className="text-[10px] uppercase tracking-widest font-serif text-black/40">
+              <span className="text-[10px] uppercase tracking-widest font-serif text-black/60">
                 Page {page} / {totalPages}
               </span>
               <button

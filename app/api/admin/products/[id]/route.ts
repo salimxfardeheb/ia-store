@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireOwner, isNextResponse } from "@/lib/rbac";
 import { productWriteSchema, safeParse, apiError } from "@/lib/validation";
 import { toPrismaStatus, toProduct } from "@/lib/productStatus";
+import { audit } from "@/lib/audit";
 
 // PUT /api/admin/products/:id — update a product (ADMIN only)
 export async function PUT(
@@ -23,9 +24,10 @@ export async function PUT(
   const [data, err] = safeParse(productWriteSchema, body);
   if (err) return err;
 
-  // Replace sizes + variants atomically: delete-then-recreate in a transaction
+  // Replace sizes, variants, and extra images atomically: delete-then-recreate
   await prisma.$transaction(async (tx) => {
     await tx.productSize.deleteMany({ where: { productId: id } });
+    await tx.productImage.deleteMany({ where: { productId: id } });
     // VariantSize rows are cascade-deleted when Variant rows are deleted
     await tx.variant.deleteMany({ where: { productId: id } });
   });
@@ -39,7 +41,13 @@ export async function PUT(
       stock:       data.stock,
       status:      toPrismaStatus(data.status),
       mainImage:   data.mainImage,
-      extraImages: JSON.stringify(data.extraImages),
+      extraImages: {
+        create: data.extraImages.map((img, i) => ({
+          url:       img.url,
+          color:     img.color ?? null,
+          sortOrder: i,
+        })),
+      },
       sizes: {
         create: data.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
       },
@@ -57,7 +65,12 @@ export async function PUT(
         })),
       },
     },
-    include: { sizes: true, variants: { include: { sizes: true } } },
+    include: { extraImages: { orderBy: { sortOrder: "asc" } }, sizes: true, variants: { include: { sizes: true } } },
+  });
+
+  audit(auth.id, "product.updated", "Product", id, {
+    before: { name: existing.name, status: existing.status, price: existing.price },
+    after:  { name: data.name,     status: data.status,     price: data.price },
   });
 
   return NextResponse.json(toProduct(updated));
@@ -81,6 +94,10 @@ export async function DELETE(
   await prisma.product.update({
     where: { id },
     data:  { deletedAt: new Date() },
+  });
+
+  audit(auth.id, "product.deleted", "Product", id, {
+    before: { name: existing.name, status: existing.status },
   });
 
   return NextResponse.json({ ok: true });

@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { ArrowUpDown, Edit2, Trash2, Package } from "lucide-react";
-import { Product, STATUS_STYLE } from "@/app/variables";
+import { Product } from "@/app/variables";
 
 interface ProductTableProps {
   filtered: Product[];
@@ -39,6 +39,7 @@ export default function ProductTable({
               <th key={label} className="px-5 py-3 font-normal font-serif">
                 {key ? (
                   <button
+                    type="button"
                     onClick={() => handleSort(key as keyof Product)}
                     className="flex items-center space-x-1.5 text-[9px] uppercase tracking-[0.25em] text-black/35 hover:text-black transition-colors font-serif"
                   >
@@ -98,7 +99,7 @@ export default function ProductTable({
                 </td>
                 <td className="px-5 py-3.5">
                   <span
-                    className={`px-2.5 py-0.5 text-[8px] uppercase tracking-widest font-serif ${STATUS_STYLE[product.status]}`}
+                    className={`px-2.5 py-0.5 text-[8px] uppercase tracking-widest font-serif`}
                   >
                     {product.status}
                   </span>
@@ -110,6 +111,7 @@ export default function ProductTable({
                   <td className="px-5 py-3.5">
                     <div className="flex items-center space-x-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
+                        type="button"
                         onClick={() => setEditProduct(product)}
                         className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors"
                         title="Modifier"
@@ -117,6 +119,7 @@ export default function ProductTable({
                         <Edit2 size={12} strokeWidth={1.5} />
                       </button>
                       <button
+                        type="button"
                         onClick={() => setDeleteId(product.id)}
                         className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors"
                         title="Supprimer"

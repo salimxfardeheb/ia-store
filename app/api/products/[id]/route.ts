@@ -12,8 +12,9 @@ export async function GET(
   const product = await prisma.product.findUnique({
     where: { id },
     include: {
-      sizes: true,
-      variants: { include: { sizes: true } },
+      extraImages: { orderBy: { sortOrder: "asc" } },
+      sizes:       true,
+      variants:    { include: { sizes: true } },
     },
   });
 
@@ -21,24 +22,18 @@ export async function GET(
     return apiError("NOT_FOUND", "Produit introuvable", 404);
   }
 
-  // extraImages is stored as a JSON string in the DB — parse it
-  let extraImages: unknown[] = [];
-  try {
-    const parsed = JSON.parse(product.extraImages || "[]");
-    extraImages = Array.isArray(parsed) ? parsed : [];
-  } catch {
-    extraImages = [];
-  }
-
   return NextResponse.json({
     ...product,
-    extraImages,
+    extraImages: product.extraImages.map((img) => ({
+      url:   img.url,
+      ...(img.color ? { color: img.color } : {}),
+    })),
     variants: product.variants.map((v) => ({
-      id: v.id,
+      id:    v.id,
       color: v.color,
-      sku: v.sku ?? undefined,
+      sku:   v.sku ?? undefined,
       sizes: v.sizes.map((s) => ({
-        name: s.name,
+        name:  s.name,
         stock: s.stock,
         price: s.price ?? undefined,
       })),

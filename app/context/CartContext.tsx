@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { Product } from "../variables";
 import { useAuth } from "./AuthContext";
 import { loadCart, saveCart, clearCart, CartItem } from "@/services/cart";
-import { AnimatePresence, motion } from "framer-motion";
+import { useDebounce } from "@/lib/useDebounce";
 import Link from "next/link";
 import { ShoppingBag, X } from "lucide-react";
 
@@ -51,6 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [showBanner, setShowBanner] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { isAuthenticated } = useAuth();
+  const debouncedCart = useDebounce(cart, 500);
 
   // Charger le panier quand l'user se connecte
   useEffect(() => {
@@ -74,17 +75,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated]);
 
-  // Sauvegarder le panier à chaque changement (uniquement après le chargement initial et si authentifié)
+  // Sauvegarder le panier après 500ms d'inactivité — évite un POST par clic sur "+"
   useEffect(() => {
     if (!isCartLoaded) return;
     if (!isAuthenticated) return;
 
-    if (cart.length === 0) {
+    if (debouncedCart.length === 0) {
       clearCart();
       return;
     }
-    saveCart(cart);
-  }, [cart, isCartLoaded, isAuthenticated]);
+    saveCart(debouncedCart);
+  }, [debouncedCart, isCartLoaded, isAuthenticated]);
 
   const sameLine = (
     item: CartItem,
@@ -154,44 +155,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
       {children}
 
       {/* Bannière connectez-vous */}
-      <AnimatePresence>
-        {showBanner && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 40 }}
-            transition={{ duration: 0.25 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-black/8 shadow-lg px-6 py-4 flex items-center gap-6 max-w-sm w-full mx-4"
-          >
-            <ShoppingBag size={18} strokeWidth={1.5} className="text-black/40 shrink-0" />
-            <div className="grow">
-              <p className="text-[11px] font-serif italic text-black mb-0.5">
-                Sauvegardez votre panier
-              </p>
-              <p className="text-[9px] uppercase tracking-widest text-black/30">
-                Connectez-vous pour ne rien perdre
-              </p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <Link
-                href="/login"
-                className="text-[9px] uppercase tracking-widest font-bold border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
-              >
-                Se connecter
-              </Link>
-              <button
-                onClick={() => {
-                  setShowBanner(false);
-                  setBannerDismissed(true);
-                }}
-                className="text-black/20 hover:text-black transition-colors"
-              >
-                <X size={14} strokeWidth={1.5} />
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {showBanner && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white border border-black/8 shadow-lg px-6 py-4 flex items-center gap-6 max-w-sm w-full mx-4 animate-slide-up">
+          <ShoppingBag size={18} strokeWidth={1.5} className="text-black/60 shrink-0" />
+          <div className="grow">
+            <p className="text-[11px] font-serif italic text-black mb-0.5">
+              Sauvegardez votre panier
+            </p>
+            <p className="text-[9px] uppercase tracking-widest text-black/30">
+              Connectez-vous pour ne rien perdre
+            </p>
+          </div>
+          <div className="flex items-center gap-3 shrink-0">
+            <Link
+              href="/login"
+              className="text-[9px] uppercase tracking-widest font-bold border-b border-black pb-0.5 hover:opacity-60 transition-opacity"
+            >
+              Se connecter
+            </Link>
+            <button
+              type="button"
+              onClick={() => { setShowBanner(false); setBannerDismissed(true); }}
+              className="text-black/20 hover:text-black transition-colors"
+            >
+              <X size={14} strokeWidth={1.5} />
+            </button>
+          </div>
+        </div>
+      )}
     </CartContext.Provider>
   );
 }

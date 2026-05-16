@@ -1,21 +1,28 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 
 const WORDS = ["Intemporel.", "Raffiné.", "Naturel."];
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
+  const prefersReduced = useReducedMotion();
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end start"],
   });
 
-  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
-  const textY = useTransform(scrollYProgress, [0, 1], ["0%", "40%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], [1, 0]);
+  // Sur mobile (< 1024 px) ou si l'utilisateur a activé "réduire les animations",
+  // on fige les valeurs de parallaxe à leur état initial.
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
+  const disableParallax = prefersReduced || isMobile;
+
+  const imageY = useTransform(scrollYProgress, [0, 1], disableParallax ? ["0%", "0%"] : ["0%", "20%"]);
+  const textY  = useTransform(scrollYProgress, [0, 1], disableParallax ? ["0%", "0%"] : ["0%", "40%"]);
+  const opacity = useTransform(scrollYProgress, [0, 0.6], disableParallax ? [1, 1] : [1, 0]);
 
   return (
     <section
@@ -117,7 +124,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 1 + i * 0.15 }}
-              className="text-[11px] uppercase tracking-[0.25em] text-black/40"
+              className="text-[11px] uppercase tracking-[0.25em] text-black/60"
               style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
               {word}
@@ -159,7 +166,7 @@ export default function HeroSection() {
 
           <Link
             href="/notre-histoire"
-            className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.3em] text-black/40 transition-colors hover:text-black"
+            className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.3em] text-black/60 transition-colors hover:text-black"
           >
             <span>Notre Histoire</span>
             <motion.span

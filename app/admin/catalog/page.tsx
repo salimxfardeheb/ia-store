@@ -202,6 +202,7 @@ export default function CatalogPage() {
           <div className="flex border border-[rgba(0,0,0,0.08)]">
             {(["table", "grid"] as const).map((v) => (
               <button
+                type="button"
                 key={v}
                 onClick={() => setView(v)}
                 className={`px-3 py-2.5 text-[8px] uppercase tracking-widest transition-colors font-serif ${
@@ -218,6 +219,7 @@ export default function CatalogPage() {
           {/* Add — ADMIN only */}
           {!readOnly && (
             <button
+            type="button"
               onClick={() => setEditProduct(null)}
               className="flex items-center space-x-2 bg-black text-white px-5 py-2.5 text-[9px] uppercase tracking-widest hover:bg-black/80 transition-colors ml-auto font-serif"
             >
@@ -307,19 +309,21 @@ export default function CatalogPage() {
                   Supprimer le produit ?
                 </h3>
               </div>
-              <p className="text-[11px] text-black/40 mb-7 leading-relaxed font-serif">
+              <p className="text-[11px] text-black/60 mb-7 leading-relaxed font-serif">
                 Cette action est irréversible. Le produit{" "}
                 <strong className="text-black">{deleteId}</strong> sera
                 définitivement supprimé du catalogue.
               </p>
               <div className="flex space-x-3">
                 <button
+                type="button"
                   onClick={() => setDeleteId(null)}
                   className="flex-1 py-2.5 border text-[9px] uppercase tracking-widest text-black/50 hover:text-black transition-colors border-[rgba(0,0,0,0.08)] font-serif"
                 >
                   Annuler
                 </button>
                 <button
+                type="button"
                   onClick={() => handleDelete(deleteId)}
                   className="flex-1 py-2.5 bg-black text-white text-[9px] uppercase tracking-widest hover:bg-black/80 transition-colors font-serif"
                 >
@@ -351,7 +355,7 @@ export default function CatalogPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 12 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-2.5 bg-black text-white px-5 py-3 text-[9px] uppercase tracking-widest font-serif shadow-xl"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-200 flex items-center gap-2.5 bg-black text-white px-5 py-3 text-[9px] uppercase tracking-widest font-serif shadow-xl"
           >
             <CheckCircle size={13} strokeWidth={1.5} />
             {toast}

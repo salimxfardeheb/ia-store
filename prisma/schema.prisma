@@ -35,24 +35,36 @@ model User {
 // ─── Product ─────────────────────────────────────────────────────────────────
 
 model Product {
-  id          String        @id @default(cuid())
-  name        String
-  category    String
-  price       Float
-  stock       Int           @default(0)
-  status      ProductStatus @default(DRAFT)
-  mainImage   String        @default("")
-  extraImages String        @default("[]") // JSON array as string
-  createdAt   DateTime      @default(now())
-  deletedAt   DateTime?     // null = active; non-null = soft-deleted
+  id        String        @id @default(cuid())
+  name      String
+  category  String
+  price     Float
+  stock     Int           @default(0)
+  status    ProductStatus @default(DRAFT)
+  mainImage String        @default("")
+  createdAt DateTime      @default(now())
+  deletedAt DateTime?     // null = active; non-null = soft-deleted
 
-  sizes      ProductSize[]
-  variants   Variant[]
-  orderItems OrderItem[]
-  cartItems  CartItem[]
-  favorites  Favorite[]
+  sizes       ProductSize[]
+  extraImages ProductImage[]
+  variants    Variant[]
+  orderItems  OrderItem[]
+  cartItems   CartItem[]
+  favorites   Favorite[]
 
   @@index([status, deletedAt])
+}
+
+model ProductImage {
+  id        Int     @id @default(autoincrement())
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  url       String
+  color     String?
+  sortOrder Int     @default(0)
+
+  @@index([productId])
+  @@index([productId, color])
 }
 
 model ProductSize {
@@ -117,7 +129,7 @@ model Order {
   // au niveau de la validation Zod (orderFormSchema).
   name       String
   phone      String
-  email      String
+  email      String?
   city       String?
   address    String?
   postalCode String?
@@ -169,17 +181,35 @@ model Favorite {
   @@index([userId])
 }
 
+// ─── Audit log ───────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  actorId  String                      // user who performed the action
+  action   String                      // e.g. "order.status_changed", "user.role_changed"
+  entity   String                      // e.g. "Order", "User", "Product"
+  entityId String                      // PK of the affected row
+  diff     Json?                       // { before, after } for key fields
+  at       DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([at])
+}
+
 // ─── Cart ────────────────────────────────────────────────────────────────────
 
 model CartItem {
-  id        Int     @id @default(autoincrement())
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  product   Product @relation(fields: [productId], references: [id])
+  product   Product  @relation(fields: [productId], references: [id])
   productId String
-  quantity  Int     @default(1)
-  size      String? // taille sélectionnée (null si pas de taille)
-  color     String? // couleur variante sélectionnée (null si produit sans variantes)
+  quantity  Int      @default(1)
+  size      String?  // taille sélectionnée (null si pas de taille)
+  color     String?  // couleur variante sélectionnée (null si produit sans variantes)
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, productId, size, color])
+  @@index([updatedAt])
 }

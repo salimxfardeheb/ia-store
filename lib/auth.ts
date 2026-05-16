@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import type { NextRequest } from "next/server";
+import { redis } from "./redis";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET || JWT_SECRET.length < 32) {
@@ -14,10 +16,17 @@ export interface JwtPayload {
   email: string;
   name:  string;
   role:  "ADMIN" | "SELLER" | "CLIENT";
+  jti:   string;
+  exp?:  number;
 }
 
-export const TOKEN_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
-export const AUTH_COOKIE_NAME = "ia_session";
+export const TOKEN_MAX_AGE_SECONDS  = 60 * 15;      // 15 minutes
+export const TOKEN_REFRESH_THRESHOLD = 60 * 5;       // refresh when < 5 min left
+export const AUTH_COOKIE_NAME        = "ia_session";
+
+function blockedKey(jti: string) {
+  return `blocked_token:${jti}`;
+}
 
 /** Options for the auth cookie. Secure only in production (HTTPS). */
 export function authCookieOptions() {
@@ -30,15 +39,39 @@ export function authCookieOptions() {
   };
 }
 
-export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET!, { expiresIn: `${TOKEN_MAX_AGE_SECONDS}s` });
+export function signToken(payload: Omit<JwtPayload, "jti">): string {
+  const jti = randomUUID();
+  return jwt.sign({ ...payload, jti }, JWT_SECRET!, { expiresIn: `${TOKEN_MAX_AGE_SECONDS}s` });
 }
 
-export function verifyToken(token: string): JwtPayload | null {
+export async function verifyToken(token: string): Promise<JwtPayload | null> {
+  let payload: JwtPayload;
   try {
-    return jwt.verify(token, JWT_SECRET!) as JwtPayload;
+    payload = jwt.verify(token, JWT_SECRET!) as JwtPayload;
   } catch {
     return null;
+  }
+
+  // Reject tokens that have been explicitly revoked on logout
+  const blocked = await redis.get(blockedKey(payload.jti));
+  if (blocked) return null;
+
+  return payload;
+}
+
+/** Call on logout — blocks this token in Redis until it would have expired. */
+export async function revokeToken(token: string): Promise<void> {
+  let payload: JwtPayload;
+  try {
+    payload = jwt.verify(token, JWT_SECRET!) as JwtPayload;
+  } catch {
+    return; // already invalid — nothing to revoke
+  }
+
+  const now = Math.floor(Date.now() / 1000);
+  const ttl = (payload.exp ?? now + TOKEN_MAX_AGE_SECONDS) - now;
+  if (ttl > 0) {
+    await redis.set(blockedKey(payload.jti), "1", { ex: ttl });
   }
 }
 
@@ -56,4 +89,11 @@ export function getTokenFromRequest(req: NextRequest): string | null {
 export function getTokenFromHeader(authHeader: string | null): string | null {
   if (!authHeader?.startsWith("Bearer ")) return null;
   return authHeader.replace("Bearer ", "");
+}
+
+/** True if the token expires within TOKEN_REFRESH_THRESHOLD seconds. */
+export function shouldRefresh(payload: JwtPayload): boolean {
+  if (!payload.exp) return false;
+  const secsLeft = payload.exp - Math.floor(Date.now() / 1000);
+  return secsLeft < TOKEN_REFRESH_THRESHOLD;
 }

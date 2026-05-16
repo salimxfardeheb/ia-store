@@ -2,18 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell,
-} from "recharts";
+import dynamic from "next/dynamic";
 import {
   AlertTriangle, Sun, Plus, TrendingUp, Download, Calendar, MoreVertical,
   ShoppingBag, Users, Package, ChevronRight,
 } from "lucide-react";
 import AdminHeader from "./components/AdminHeader";
 import { KPICard } from "./components/KpiCard";
-import { PIE_COLORS } from "@/app/variables";
 import { getDashboard, DashboardData } from "@/services/admin";
+
+const RevenueCharts = dynamic(() => import("./components/RevenueCharts"), {
+  ssr: false,
+  loading: () => (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="lg:col-span-2 bg-white border p-7 border-[rgba(0,0,0,0.08)] h-85 flex items-center justify-center">
+        <p className="font-serif italic text-black/20">Chargement…</p>
+      </div>
+      <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)] h-85 flex items-center justify-center">
+        <p className="font-serif italic text-black/20">Chargement…</p>
+      </div>
+    </div>
+  ),
+});
 import { useAuth } from "@/app/context/AuthContext";
 
 // ─── Shared sub-components ───────────────────────────────────────────────────
@@ -21,6 +31,7 @@ import { useAuth } from "@/app/context/AuthContext";
 function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: string; dark?: boolean }) {
   return (
     <button
+    type="button"
       className={`flex flex-col items-center justify-center p-5 border transition-all hover:scale-[1.015] duration-200 ${
         dark ? "bg-black text-white border-black" : "bg-white text-black border-black/8 hover:border-black/25"
       }`}
@@ -57,7 +68,7 @@ function StockPanel({ loading, lowStock }: { loading: boolean; lowStock: Dashboa
                     {item.stock}
                   </p>
                 </div>
-                <button className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
+                <button type="button" className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
                   Restock
                 </button>
               </div>
@@ -68,7 +79,7 @@ function StockPanel({ loading, lowStock }: { loading: boolean; lowStock: Dashboa
           ))}
         </div>
       )}
-      <button className="w-full mt-4 py-3 border border-black/10 text-[9px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
+      <button type="button" className="w-full mt-4 py-3 border border-black/10 text-[9px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
         Rapport complet
       </button>
     </div>
@@ -110,7 +121,7 @@ function OrdersTable({ loading, recentOrders }: { loading: boolean; recentOrders
                 transition={{ delay: i * 0.04 }}
                 className="border-b hover:bg-black/2 transition-colors border-[rgba(0,0,0,0.08)]"
               >
-                <td className="px-6 py-3.5 text-[10px] text-black/40 font-serif">{order.id}</td>
+                <td className="px-6 py-3.5 text-[10px] text-black/60 font-serif">{order.id}</td>
                 <td className="px-6 py-3.5 text-[10px] text-black font-serif">{order.customer}</td>
                 <td className="px-6 py-3.5">
                   <span className={`px-2.5 py-0.5 text-[8px] uppercase tracking-widest font-serif ${order.statusStyle}`}>
@@ -119,7 +130,7 @@ function OrdersTable({ loading, recentOrders }: { loading: boolean; recentOrders
                 </td>
                 <td className="px-6 py-3.5 text-[10px] text-black font-serif italic">{order.amount}</td>
                 <td className="px-6 py-3.5">
-                  <button className="p-1 text-black/20 hover:text-black hover:bg-black/5 transition-colors">
+                  <button type="button" className="p-1 text-black/20 hover:text-black hover:bg-black/5 transition-colors">
                     <MoreVertical size={12} strokeWidth={1.5} />
                   </button>
                 </td>
@@ -196,7 +207,7 @@ function SellerDashboard({
               </p>
             </div>
             <a href="/admin/pos" className="self-start mt-6">
-              <button className="px-6 py-3 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/85 transition-all font-serif flex items-center space-x-2.5">
+              <button type="button" className="px-6 py-3 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/85 transition-all font-serif flex items-center space-x-2.5">
                 <ShoppingBag size={12} strokeWidth={1.5} />
                 <span>Nouvelle vente</span>
               </button>
@@ -285,81 +296,18 @@ function AdminDashboard({ data, loading }: { data: DashboardData | null; loading
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {/* Area chart */}
-          <div className="lg:col-span-2 bg-white border p-7 border-[rgba(0,0,0,0.08)]">
-            <div className="flex justify-between items-center mb-7">
-              <h3 className="text-lg text-black italic font-light font-serif">Aperçu des revenus</h3>
+        {loading ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div className="lg:col-span-2 bg-white border p-7 border-[rgba(0,0,0,0.08)] h-85 flex items-center justify-center">
+              <p className="font-serif italic text-black/20">Chargement…</p>
             </div>
-            <div style={{ height: 260 }}>
-              {loading ? (
-                <div className="h-full flex items-center justify-center">
-                  <p className="font-serif italic text-black/20">Chargement…</p>
-                </div>
-              ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueChart}>
-                    <defs>
-                      <linearGradient id="gDark" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor="#0A0A0A" stopOpacity={0.1} />
-                        <stop offset="95%" stopColor="#0A0A0A" stopOpacity={0}   />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgba(0,0,0,0.35)", fontFamily: "'Cormorant Garamond',Georgia,serif" }} dy={8} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: "rgba(0,0,0,0.35)", fontFamily: "'Cormorant Garamond',Georgia,serif" }} />
-                    <Tooltip contentStyle={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 0, backgroundColor: "#fff", fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 11 }} />
-                    <Area type="monotone" dataKey="revenue" stroke="#0A0A0A" strokeWidth={1.5} fillOpacity={1} fill="url(#gDark)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-            <div className="flex items-center space-x-5 mt-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-px bg-[#0A0A0A]" />
-                <span className="text-[9px] uppercase tracking-widest text-black/40 font-serif">Revenus</span>
-              </div>
+            <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)] h-85 flex items-center justify-center">
+              <p className="font-serif italic text-black/20">Chargement…</p>
             </div>
           </div>
-
-          {/* Pie */}
-          <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)]">
-            <h3 className="text-lg text-black mb-7 font-serif italic font-light">Par catégorie</h3>
-            {loading ? (
-              <div className="h-45 flex items-center justify-center">
-                <p className="font-serif italic text-black/20">Chargement…</p>
-              </div>
-            ) : categoryData.length === 0 ? (
-              <div className="h-45 flex items-center justify-center">
-                <p className="font-serif italic text-black/20">Aucune donnée</p>
-              </div>
-            ) : (
-              <>
-                <div style={{ height: 180 }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie data={categoryData} cx="50%" cy="50%" innerRadius={50} outerRadius={68} paddingAngle={3} dataKey="value">
-                        {categoryData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip contentStyle={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 0, backgroundColor: "#fff", fontFamily: "'Cormorant Garamond',Georgia,serif", fontSize: 11 }} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="space-y-2 mt-4">
-                  {categoryData.map((cat, i) => (
-                    <div key={cat.name} className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2.5">
-                        <div className="w-2 h-2" style={{ backgroundColor: PIE_COLORS[i % PIE_COLORS.length] }} />
-                        <span className="text-[10px] uppercase tracking-widest text-black/50 font-serif">{cat.name}</span>
-                      </div>
-                      <span className="text-[9px] text-black italic font-serif">{cat.value}%</span>
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        ) : (
+          <RevenueCharts revenueChart={revenueChart} categoryData={categoryData} />
+        )}
 
         {/* Orders + Stock */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -385,7 +333,7 @@ function AdminDashboard({ data, loading }: { data: DashboardData | null; loading
                 La demande en lin et soie légère devrait augmenter de 40% la semaine prochaine.
               </p>
             </div>
-            <button className="self-start px-6 py-2.5 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all font-serif">
+            <button type="button" className="self-start px-6 py-2.5 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all font-serif">
               Mettre à jour la vitrine
             </button>
             <div className="absolute -right-6 -bottom-6 pointer-events-none opacity-[0.04]">

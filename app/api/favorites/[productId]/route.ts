@@ -4,7 +4,7 @@ import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { apiError, handleDbError } from "@/lib/validation";
 import { requireSameOrigin } from "@/lib/csrf";
 
-function getUser(req: NextRequest) {
+async function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
@@ -18,7 +18,7 @@ export async function DELETE(
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 
   const { productId } = await params;

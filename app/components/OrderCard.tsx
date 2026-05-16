@@ -200,7 +200,7 @@ export function OrderCard({
                   <p className="text-[8px] uppercase tracking-[0.2em] text-black/30">Livraison</p>
                   <p className="text-[11px] text-black/60">{order.form.name}</p>
                   {(order.form.address || order.form.city) && (
-                    <p className="text-[10px] text-black/40">
+                    <p className="text-[10px] text-black/60">
                       {[order.form.address, order.form.city].filter(Boolean).join(", ")}
                     </p>
                   )}

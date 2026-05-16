@@ -146,8 +146,10 @@ function CreateUserModal({ onClose, onCreated }: CreateModalProps) {
             <h2 className="text-xl font-serif italic">Créer un utilisateur</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
             className="p-2 text-black/30 hover:text-black hover:bg-black/5 transition-colors"
+            aria-label="Fermer"
           >
             <X size={16} strokeWidth={1.5} />
           </button>
@@ -163,7 +165,7 @@ function CreateUserModal({ onClose, onCreated }: CreateModalProps) {
           )}
 
           <div>
-            <label className="block text-[9px] uppercase tracking-widest text-black/40 font-serif mb-1.5">
+            <label className="block text-[9px] uppercase tracking-widest text-black/60 font-serif mb-1.5">
               Nom complet <span className="text-red-400">*</span>
             </label>
             <input
@@ -176,7 +178,7 @@ function CreateUserModal({ onClose, onCreated }: CreateModalProps) {
           </div>
 
           <div>
-            <label className="block text-[9px] uppercase tracking-widest text-black/40 font-serif mb-1.5">
+            <label className="block text-[9px] uppercase tracking-widest text-black/60 font-serif mb-1.5">
               Email <span className="text-red-400">*</span>
             </label>
             <input
@@ -189,7 +191,7 @@ function CreateUserModal({ onClose, onCreated }: CreateModalProps) {
           </div>
 
           <div>
-            <label className="block text-[9px] uppercase tracking-widest text-black/40 font-serif mb-1.5">
+            <label className="block text-[9px] uppercase tracking-widest text-black/60 font-serif mb-1.5">
               Mot de passe <span className="text-red-400">*</span>
             </label>
             <input
@@ -202,7 +204,7 @@ function CreateUserModal({ onClose, onCreated }: CreateModalProps) {
           </div>
 
           <div>
-            <label className="block text-[9px] uppercase tracking-widest text-black/40 font-serif mb-1.5">
+            <label className="block text-[9px] uppercase tracking-widest text-black/60 font-serif mb-1.5">
               Rôle <span className="text-red-400">*</span>
             </label>
             <div className="relative">
@@ -270,8 +272,11 @@ function RoleSelector({
   return (
     <div className="relative">
       <button
+        type="button"
         disabled={isSelf || busy}
         onClick={() => setOpen((o) => !o)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
         className={`flex items-center gap-1.5 px-2.5 py-1 text-[9px] uppercase tracking-widest font-serif transition-colors ${ROLE_STYLES[user.role]} ${
           isSelf ? "cursor-default" : "cursor-pointer hover:opacity-75"
         } ${busy ? "opacity-50" : ""}`}
@@ -284,23 +289,27 @@ function RoleSelector({
         {open && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-            <motion.div
+            <motion.ul
+              role="listbox"
+              aria-label="Choisir un rôle"
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 4 }}
-              className="absolute left-0 top-full mt-1 z-20 bg-white border border-[rgba(0,0,0,0.1)] shadow-lg min-w-[140px]"
+              className="absolute left-0 top-full mt-1 z-20 bg-white border border-[rgba(0,0,0,0.1)] shadow-lg min-w-35 list-none"
             >
               {(["SELLER", "ADMIN"] as Role[]).map((role) => (
-                <button
-                  key={role}
-                  onClick={() => handleSelect(role)}
-                  className="flex items-center justify-between w-full px-3 py-2 text-[10px] uppercase tracking-widest font-serif hover:bg-black/4 transition-colors"
-                >
-                  {ROLE_LABELS[role]}
-                  {role === user.role && <Check size={10} className="text-black/40" />}
-                </button>
+                <li key={role} role="option" aria-selected={role === user.role}>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(role)}
+                    className="flex items-center justify-between w-full px-3 py-2 text-[10px] uppercase tracking-widest font-serif hover:bg-black/4 transition-colors"
+                  >
+                    {ROLE_LABELS[role]}
+                    {role === user.role && <Check size={10} className="text-black/60" />}
+                  </button>
+                </li>
               ))}
-            </motion.div>
+            </motion.ul>
           </>
         )}
       </AnimatePresence>
@@ -335,6 +344,7 @@ function DeleteButton({
     return (
       <div className="flex items-center gap-1">
         <button
+          type="button"
           onClick={handleDelete}
           disabled={busy}
           className="px-2 py-1 bg-black text-white text-[9px] uppercase tracking-widest font-serif hover:bg-red-600 transition-colors disabled:opacity-50"
@@ -342,6 +352,7 @@ function DeleteButton({
           {busy ? "..." : "Confirmer"}
         </button>
         <button
+          type="button"
           onClick={() => setConfirm(false)}
           className="px-2 py-1 border border-[rgba(0,0,0,0.1)] text-[9px] uppercase tracking-widest font-serif hover:bg-black/5 transition-colors"
         >
@@ -353,6 +364,7 @@ function DeleteButton({
 
   return (
     <button
+      type="button"
       onClick={() => setConfirm(true)}
       className="p-1.5 text-black/20 hover:text-red-500 hover:bg-red-50 transition-colors"
       title="Supprimer"
@@ -402,7 +414,7 @@ function UserRow({
               </span>
             )}
           </p>
-          <p className="text-[10px] text-black/40 font-serif truncate">{user.email}</p>
+          <p className="text-[10px] text-black/60 font-serif truncate">{user.email}</p>
         </div>
       </div>
 
@@ -490,6 +502,7 @@ export default function UsersPage() {
             {users.length} compte{users.length !== 1 ? "s" : ""}
           </span>
           <button
+            type="button"
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-black text-white text-[10px] uppercase tracking-widest px-4 py-2.5 font-serif hover:bg-black/80 transition-colors"
           >
@@ -529,19 +542,20 @@ export default function UsersPage() {
           </p>
         </div>
       ) : (
-        <div className="space-y-1.5">
+        <ul className="space-y-1.5 list-none">
           <AnimatePresence>
             {filtered.map((u) => (
-              <UserRow
-                key={u.id}
-                user={u}
-                currentUserId={me?.id ?? ""}
-                onUpdated={handleUpdated}
-                onDeleted={handleDeleted}
-              />
+              <li key={u.id}>
+                <UserRow
+                  user={u}
+                  currentUserId={me?.id ?? ""}
+                  onUpdated={handleUpdated}
+                  onDeleted={handleDeleted}
+                />
+              </li>
             ))}
           </AnimatePresence>
-        </div>
+        </ul>
       )}
 
       {/* Modal */}

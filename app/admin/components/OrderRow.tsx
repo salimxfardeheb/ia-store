@@ -114,7 +114,7 @@ export function OrderRow({
               ))}
               {order.items.length > 3 && (
                 <div className="w-9 h-11 border border-white bg-black/5 flex items-center justify-center">
-                  <span className="text-[8px] font-serif text-black/40">+{order.items.length - 3}</span>
+                  <span className="text-[8px] font-serif text-black/60">+{order.items.length - 3}</span>
                 </div>
               )}
             </div>
@@ -198,7 +198,7 @@ export function OrderRow({
                                 Taille {item.selectedSize}
                               </span>
                             )}
-                            <span className="text-[9px] text-black/40 font-serif">
+                            <span className="text-[9px] text-black/60 font-serif">
                               × {item.quantity}
                             </span>
                             <span className="text-[9px] text-black/30 font-serif">
@@ -256,10 +256,11 @@ export function OrderRow({
                           const c = STATUS_CONFIG[s];
                           return (
                             <button
+                            type="button"
                               key={s}
                               disabled={changingStatus}
                               onClick={(e) => { e.stopPropagation(); handleStatus(s); }}
-                              className="px-3 py-1.5 text-[9px] uppercase tracking-widest font-serif transition-all border border-black/8 text-black/40 hover:border-black/30 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                              className="px-3 py-1.5 text-[9px] uppercase tracking-widest font-serif transition-all border border-black/8 text-black/60 hover:border-black/30 hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
                             >
                               → {c.label}
                             </button>
@@ -290,6 +291,7 @@ export function OrderRow({
                         </p>
                       ) : (
                         <button
+                        type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setRefusalReason(REFUSAL_REASONS[0]);
@@ -320,12 +322,12 @@ export function OrderRow({
             className="bg-white p-8 w-full max-w-sm mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-[10px] uppercase tracking-[0.3em] text-black/40 font-serif mb-6">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-black/60 font-serif mb-6">
               Signaler un refus de livraison
             </p>
 
             <div className="mb-4">
-              <label className="text-[9px] uppercase tracking-widest text-black/40 font-serif block mb-2">
+              <label className="text-[9px] uppercase tracking-widest text-black/60 font-serif block mb-2">
                 Raison
               </label>
               <select
@@ -339,7 +341,7 @@ export function OrderRow({
               </select>
             </div>
 
-            <p className="text-[10px] font-serif text-black/40 mb-6">
+            <p className="text-[10px] font-serif text-black/60 mb-6">
               Cette action signalera le client à Flowmerce et mettra à jour son score de confiance.
             </p>
 
@@ -349,13 +351,15 @@ export function OrderRow({
 
             <div className="flex gap-3">
               <button
+              type="button"
                 onClick={() => setShowRefusalModal(false)}
                 disabled={reportingRefusal}
-                className="flex-1 text-[9px] uppercase tracking-widest font-serif border border-black/10 text-black/40 hover:border-black/30 py-2.5 transition-all disabled:opacity-50"
+                className="flex-1 text-[9px] uppercase tracking-widest font-serif border border-black/10 text-black/60 hover:border-black/30 py-2.5 transition-all disabled:opacity-50"
               >
                 Annuler
               </button>
               <button
+              type="button"
                 onClick={handleReportRefusal}
                 disabled={reportingRefusal}
                 className="flex-1 text-[9px] uppercase tracking-widest font-serif bg-black text-white hover:bg-black/80 py-2.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"

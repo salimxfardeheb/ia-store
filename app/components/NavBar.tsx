@@ -266,35 +266,27 @@ const Navbar = () => {
                 className={`relative ${hoverOpacity}`}
               >
                 <Heart size={18} strokeWidth={1.5} />
-                <AnimatePresence>
-                  {favoritesCount > 0 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1.5 -right-1.5 bg-[#2C2416] text-[#F5F0E8] text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold"
-                    >
-                      {favoritesCount}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                {favoritesCount > 0 && (
+                  <span
+                    key={favoritesCount}
+                    className="absolute -top-1.5 -right-1.5 bg-[#2C2416] text-[#F5F0E8] text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold animate-pop-in"
+                  >
+                    {favoritesCount}
+                  </span>
+                )}
               </Link>
 
               {/* Cart */}
               <Link href="/cart" className={`relative ${hoverOpacity}`}>
                 <ShoppingBag size={18} strokeWidth={1.5} />
-                <AnimatePresence>
-                  {cartCount > 0 && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      exit={{ scale: 0 }}
-                      className="absolute -top-1.5 -right-1.5 bg-[#2C2416] text-[#F5F0E8] text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold"
-                    >
-                      {cartCount}
-                    </motion.span>
-                  )}
-                </AnimatePresence>
+                {cartCount > 0 && (
+                  <span
+                    key={cartCount}
+                    className="absolute -top-1.5 -right-1.5 bg-[#2C2416] text-[#F5F0E8] text-[7px] w-3.5 h-3.5 rounded-full flex items-center justify-center font-bold animate-pop-in"
+                  >
+                    {cartCount}
+                  </span>
+                )}
               </Link>
             </div>
           </div>

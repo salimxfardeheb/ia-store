@@ -41,7 +41,7 @@ export function invalidateRoleCache(userId: string): void {
 async function extractUser(req: NextRequest): Promise<JwtPayload | null> {
   const token = getTokenFromRequest(req);
   if (!token) return null;
-  const payload = verifyToken(token);
+  const payload = await verifyToken(token);
   if (!payload) return null;
 
   const currentRole = await getCurrentRole(payload.id);

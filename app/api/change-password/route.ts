@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
-import { checkRateLimit } from "@/lib/rateLimit";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { changePasswordSchema, safeParse, apiError, handleDbError } from "@/lib/validation";
 import { requireSameOrigin } from "@/lib/csrf";
 
@@ -13,12 +13,16 @@ export async function POST(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  const user = verifyToken(token);
+  const user = await verifyToken(token);
   if (!user) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
 
-  // 5 tentatives / minute / utilisateur — empêche un bruteforce du
-  // currentPassword si une session est volée.
-  const rl = await checkRateLimit(`pwchange:${user.id}`, { max: 5, windowMs: 60_000 });
+  // Double bucket : par userId ET par IP — un attaquant avec plusieurs
+  // sessions volées du même compte ne contourne pas la limite par IP,
+  // et plusieurs IPs ne contournent pas la limite par compte.
+  const ip   = getClientIp(req);
+  const rlUser = await checkRateLimit(`pwchange:user:${user.id}`, { max: 5,  windowMs: 60_000 });
+  const rlIp   = await checkRateLimit(`pwchange:ip:${ip}`,        { max: 10, windowMs: 60_000 });
+  const rl = rlUser.allowed ? rlIp : rlUser;
   if (!rl.allowed) {
     return NextResponse.json(
       { error: "Trop de tentatives. Réessayez dans quelques instants." },

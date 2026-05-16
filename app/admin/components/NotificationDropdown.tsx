@@ -100,9 +100,12 @@ export default function NotificationDropdown() {
   return (
     <div ref={containerRef} className="relative">
       <button
+        type="button"
         onClick={handleToggle}
-        className="relative p-2.5 border bg-white hover:bg-black/5 transition-colors border-[rgba(0,0,0,0.08)]"
+        aria-haspopup="true"
+        aria-expanded={isOpen}
         aria-label={hasBadge ? `${notifs.length} alertes` : "Notifications"}
+        className="relative p-2.5 border bg-white hover:bg-black/5 transition-colors border-[rgba(0,0,0,0.08)]"
       >
         <Bell size={15} strokeWidth={1.5} className="text-black" />
         {hasBadge && (
@@ -114,13 +117,14 @@ export default function NotificationDropdown() {
         <div className="absolute top-full mt-1 right-0 w-80 bg-white border border-[rgba(0,0,0,0.08)] shadow-sm z-50">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[rgba(0,0,0,0.05)]">
-            <span className="text-[10px] uppercase tracking-[0.35em] font-serif text-black/40">
+            <span className="text-[10px] uppercase tracking-[0.35em] font-serif text-black/60">
               Alertes
               {notifs.length > 0 && (
                 <span className="ml-2 text-black/60">{notifs.length}</span>
               )}
             </span>
             <button
+            type="button"
               onClick={() => setIsOpen(false)}
               className="text-black/20 hover:text-black/50 transition-colors"
               aria-label="Fermer"
@@ -135,29 +139,31 @@ export default function NotificationDropdown() {
               Aucune alerte active
             </p>
           ) : (
-            <div className="divide-y divide-[rgba(0,0,0,0.04)] max-h-80 overflow-y-auto">
+            <ul role="list" className="divide-y divide-[rgba(0,0,0,0.04)] max-h-80 overflow-y-auto">
               {notifs.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => navigate(n.href)}
-                  className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-black/5 transition-colors text-left"
-                >
-                  <div className="mt-0.5 shrink-0">
-                    {n.type === "pending_order" ? (
-                      <ShoppingBag size={12} strokeWidth={1.5} className="text-black/35" />
-                    ) : (
-                      <Package size={12} strokeWidth={1.5} className="text-black/35" />
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-serif text-black truncate">{n.title}</p>
-                    <p className="text-[9px] text-black/35 font-serif mt-0.5 leading-relaxed">
-                      {n.subtitle}
-                    </p>
-                  </div>
-                </button>
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    onClick={() => navigate(n.href)}
+                    className="w-full flex items-start space-x-3 px-4 py-3 hover:bg-black/5 transition-colors text-left"
+                  >
+                    <div className="mt-0.5 shrink-0">
+                      {n.type === "pending_order" ? (
+                        <ShoppingBag size={12} strokeWidth={1.5} className="text-black/35" />
+                      ) : (
+                        <Package size={12} strokeWidth={1.5} className="text-black/35" />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-serif text-black truncate">{n.title}</p>
+                      <p className="text-[9px] text-black/35 font-serif mt-0.5 leading-relaxed">
+                        {n.subtitle}
+                      </p>
+                    </div>
+                  </button>
+                </li>
               ))}
-            </div>
+            </ul>
           )}
 
           {/* Footer groupé par type */}
@@ -165,16 +171,18 @@ export default function NotificationDropdown() {
             <div className="flex border-t border-[rgba(0,0,0,0.05)]">
               {notifs.some((n) => n.type === "pending_order") && (
                 <button
+                type="button"
                   onClick={() => navigate("/admin/orders")}
-                  className="flex-1 py-2.5 text-[9px] uppercase tracking-[0.25em] font-serif text-black/40 hover:text-black hover:bg-black/5 transition-colors border-r border-[rgba(0,0,0,0.05)] last:border-r-0"
+                  className="flex-1 py-2.5 text-[9px] uppercase tracking-[0.25em] font-serif text-black/60 hover:text-black hover:bg-black/5 transition-colors border-r border-[rgba(0,0,0,0.05)] last:border-r-0"
                 >
                   Voir commandes
                 </button>
               )}
               {notifs.some((n) => n.type === "low_stock") && (
                 <button
+                type="button"
                   onClick={() => navigate("/admin/catalog")}
-                  className="flex-1 py-2.5 text-[9px] uppercase tracking-[0.25em] font-serif text-black/40 hover:text-black hover:bg-black/5 transition-colors"
+                  className="flex-1 py-2.5 text-[9px] uppercase tracking-[0.25em] font-serif text-black/60 hover:text-black hover:bg-black/5 transition-colors"
                 >
                   Voir catalogue
                 </button>

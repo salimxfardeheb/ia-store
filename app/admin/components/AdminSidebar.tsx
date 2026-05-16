@@ -110,6 +110,7 @@ export default function AdminSidebar() {
               </p>
             </div>
             <button
+            type="button"
               onClick={handleLogout}
               title="Se déconnecter"
               className="p-1.5 text-black/25 hover:text-black hover:bg-black/6 transition-colors shrink-0"

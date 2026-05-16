@@ -196,7 +196,7 @@ export default function VariantBuilder({ variants, sizeOptions, onChange }: Prop
                       className={`px-2.5 py-1 text-[9px] uppercase tracking-widest border transition-all font-serif ${
                         isSelected
                           ? "bg-black text-white border-black"
-                          : "bg-white text-black/40 border-black/10 hover:border-black/30"
+                          : "bg-white text-black/60 border-black/10 hover:border-black/30"
                       }`}
                     >
                       {s}
@@ -227,7 +227,7 @@ export default function VariantBuilder({ variants, sizeOptions, onChange }: Prop
                         className="w-5 h-5 flex items-center justify-center text-black/30 hover:text-black transition-colors text-xs">+</button>
                     </div>
                     <button type="button" onClick={applyBulkToAll}
-                      className="text-[7px] uppercase tracking-widest text-black/40 hover:text-black font-serif transition-colors border-b border-transparent hover:border-black/40">
+                      className="text-[7px] uppercase tracking-widest text-black/60 hover:text-black font-serif transition-colors border-b border-transparent hover:border-black/40">
                       ↵ ok
                     </button>
                   </div>
@@ -305,7 +305,7 @@ export default function VariantBuilder({ variants, sizeOptions, onChange }: Prop
             {/* ── Color header ────────────────────────────────────────────── */}
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   Couleur <span className="text-black/50">*</span>
                 </label>
                 <input
@@ -352,7 +352,7 @@ export default function VariantBuilder({ variants, sizeOptions, onChange }: Prop
 
               {/* SKU */}
               <div className="w-36 shrink-0">
-                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+                <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                   SKU <span className="text-black/25 italic normal-case">(opt.)</span>
                 </label>
                 <input
@@ -386,7 +386,7 @@ export default function VariantBuilder({ variants, sizeOptions, onChange }: Prop
 
             {/* ── Size selector ────────────────────────────────────────────── */}
             <div>
-              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-2 font-serif">
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-2 font-serif">
                 Tailles disponibles
               </label>
 
@@ -401,7 +401,7 @@ export default function VariantBuilder({ variants, sizeOptions, onChange }: Prop
                       className={`px-2.5 py-1 text-[9px] uppercase tracking-widest border transition-all font-serif ${
                         isSelected
                           ? "bg-black text-white border-black"
-                          : "bg-white text-black/40 border-black/10 hover:border-black/30"
+                          : "bg-white text-black/60 border-black/10 hover:border-black/30"
                       }`}
                     >
                       {s}

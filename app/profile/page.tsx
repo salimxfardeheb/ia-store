@@ -109,7 +109,7 @@ export default function ProfilePage() {
       >
         <div className="flex items-center gap-4">
           <div className="w-9 h-9 border border-black/10 flex items-center justify-center group-hover:border-black/30 transition-colors">
-            <ClockArrowUp size={15} strokeWidth={1.5} className="text-black/40 group-hover:text-black/70 transition-colors" />
+            <ClockArrowUp size={15} strokeWidth={1.5} className="text-black/60 group-hover:text-black/70 transition-colors" />
           </div>
           <div className="text-left">
             <p className="font-serif text-sm text-black/80">Historique des commandes</p>
@@ -123,25 +123,25 @@ export default function ProfilePage() {
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-6 border-b border-black/8 pb-4">
           <User size={14} strokeWidth={1.5} className="text-black/30" />
-          <span className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif">
+          <span className="text-[9px] uppercase tracking-[0.3em] text-black/60 font-serif">
             Informations du compte
           </span>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
               Nom
             </label>
-            <div className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F2F0ED] text-black/40 font-serif italic select-none">
+            <div className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F2F0ED] text-black/60 font-serif italic select-none">
               {profile?.name ?? "—"}
             </div>
           </div>
           <div>
-            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
               Email
             </label>
-            <div className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F2F0ED] text-black/40 font-serif italic select-none">
+            <div className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F2F0ED] text-black/60 font-serif italic select-none">
               {user?.email ?? "—"}
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function ProfilePage() {
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-6 border-b border-black/8 pb-4">
           <MapPin size={14} strokeWidth={1.5} className="text-black/30" />
-          <span className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif">
+          <span className="text-[9px] uppercase tracking-[0.3em] text-black/60 font-serif">
             Coordonnées
           </span>
         </div>
@@ -160,7 +160,7 @@ export default function ProfilePage() {
         <div className="space-y-4">
           {/* Phone */}
           <div>
-            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
               Téléphone
             </label>
             <div className="relative">
@@ -177,7 +177,7 @@ export default function ProfilePage() {
 
           {/* Address */}
           <div>
-            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
               Adresse
             </label>
             <input
@@ -192,7 +192,7 @@ export default function ProfilePage() {
           {/* City + Postal */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                 Wilaya
               </label>
               <div className="relative">
@@ -210,7 +210,7 @@ export default function ProfilePage() {
               </div>
             </div>
             <div>
-              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
                 Code Postal
               </label>
               <div className="relative">
@@ -232,14 +232,14 @@ export default function ProfilePage() {
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-6 border-b border-black/8 pb-4">
           <KeyRound size={14} strokeWidth={1.5} className="text-black/30" />
-          <span className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif">
+          <span className="text-[9px] uppercase tracking-[0.3em] text-black/60 font-serif">
             Changer le mot de passe
           </span>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
               Mot de passe actuel
             </label>
             <input
@@ -251,7 +251,7 @@ export default function ProfilePage() {
             />
           </div>
           <div>
-            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/40 mb-1.5 font-serif">
+            <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
               Nouveau mot de passe
             </label>
             <input

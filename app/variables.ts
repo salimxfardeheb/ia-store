@@ -154,8 +154,8 @@ export interface Order {
   createdAt: Date;
 }
 
-export interface OrderForm extends Omit<Profile, "city" | "address" | "postalCode"> {
-  // Nullable : les commandes OFFLINE (POS) n'ont pas d'adresse de livraison.
+export interface OrderForm extends Omit<Profile, "city" | "address" | "postalCode" | "email"> {
+  email:         string | null;
   city:          string | null;
   address:       string | null;
   postalCode:    string | null;

@@ -9,7 +9,7 @@ import {
 } from "@/lib/validation";
 import { requireSameOrigin } from "@/lib/csrf";
 
-function getUser(req: NextRequest) {
+async function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
   if (!token) return null;
   return verifyToken(token);
@@ -17,7 +17,7 @@ function getUser(req: NextRequest) {
 
 // GET /api/favorites — list favorites (requires auth)
 export async function GET(req: NextRequest) {
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 
   try {
@@ -27,8 +27,9 @@ export async function GET(req: NextRequest) {
       include: {
         product: {
           include: {
-            sizes:    true,
-            variants: { include: { sizes: true } },
+            extraImages: { orderBy: { sortOrder: "asc" } },
+            sizes:       true,
+            variants:    { include: { sizes: true } },
           },
         },
       },
@@ -36,30 +37,24 @@ export async function GET(req: NextRequest) {
 
     const shaped = favorites
       .filter((f) => f.product && !f.product.deletedAt)
-      .map((f) => {
-        let extraImages: unknown[] = [];
-        try {
-          const parsed = JSON.parse(f.product.extraImages || "[]");
-          extraImages = Array.isArray(parsed) ? parsed : [];
-        } catch {
-          extraImages = [];
-        }
-        return {
-          ...f.product,
-          extraImages,
-          variants: f.product.variants.map((v) => ({
-            id: v.id,
-            color: v.color,
-            sku: v.sku ?? undefined,
-            sizes: v.sizes.map((s) => ({
-              name: s.name,
-              stock: s.stock,
-              price: s.price ?? undefined,
-            })),
+      .map((f) => ({
+        ...f.product,
+        extraImages: f.product.extraImages.map((img) => ({
+          url:   img.url,
+          ...(img.color ? { color: img.color } : {}),
+        })),
+        variants: f.product.variants.map((v) => ({
+          id:    v.id,
+          color: v.color,
+          sku:   v.sku ?? undefined,
+          sizes: v.sizes.map((s) => ({
+            name:  s.name,
+            stock: s.stock,
+            price: s.price ?? undefined,
           })),
-          favoritedAt: f.createdAt,
-        };
-      });
+        })),
+        favoritedAt: f.createdAt,
+      }));
 
     return NextResponse.json(shaped);
   } catch (err) {
@@ -72,7 +67,7 @@ export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
   if (csrf) return csrf;
 
-  const user = getUser(req);
+  const user = await getUser(req);
   if (!user) return apiError("UNAUTHORIZED", "Non autorisé", 401);
 
   const body = await req.json().catch(() => null);

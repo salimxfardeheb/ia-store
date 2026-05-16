@@ -15,7 +15,7 @@ export default function Cart() {
           <ShoppingBag size={40} strokeWidth={0.75} className="opacity-15" />
         </div>
         <h1 className="font-serif text-4xl italic mb-6">Votre panier est vide</h1>
-        <p className="text-black/40 mb-12 max-w-md mx-auto text-sm font-light">
+        <p className="text-black/60 mb-12 max-w-md mx-auto text-sm font-light">
           Vous n'avez encore rien ajouté. Explorez nos collections pour trouver votre prochaine pièce essentielle.
         </p>
         <Link
@@ -132,20 +132,20 @@ export default function Cart() {
         {/* Summary */}
         <div className="lg:col-span-1">
           <div className="border border-black/8 p-8 sticky top-32">
-            <h2 className="text-[11px] uppercase tracking-[0.3em] text-black/40 font-serif mb-8">
+            <h2 className="text-[11px] uppercase tracking-[0.3em] text-black/60 font-serif mb-8">
               Résumé
             </h2>
 
             <div className="space-y-4 mb-8">
               <div className="flex justify-between text-sm">
-                <span className="text-black/40 font-light">Sous-total</span>
+                <span className="text-black/60 font-light">Sous-total</span>
                 <span className="font-serif italic">
                   {cartTotal.toLocaleString("fr-FR")} DA
                 </span>
               </div>
               <div className="flex justify-between text-sm items-center">
-                <span className="text-black/40 font-light">Livraison</span>
-                <span className="text-black/40 uppercase text-[10px] tracking-widest font-serif">
+                <span className="text-black/60 font-light">Livraison</span>
+                <span className="text-black/60 uppercase text-[10px] tracking-widest font-serif">
                   À confirmer
                 </span>
               </div>

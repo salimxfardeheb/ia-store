@@ -9,6 +9,7 @@ import {
 import AdminHeader from "../components/AdminHeader";
 import { Product, PosCartItem, UnifiedCustomer } from "@/app/variables";
 import { getAllProducts as getShopProducts, getCustomers, createOfflineSale } from "@/services/admin";
+import { getEffectiveStock } from "@/lib/stock";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -88,7 +89,7 @@ function VariantPickerModal({
 
         {hasVariants && (
           <div className="mb-4">
-            <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-2">
+            <p className="text-[9px] uppercase tracking-[0.3em] text-black/60 font-serif mb-2">
               Couleur
             </p>
             <div className="flex flex-wrap gap-2">
@@ -122,7 +123,7 @@ function VariantPickerModal({
           </div>
         )}
 
-        <p className="text-[9px] uppercase tracking-[0.3em] text-black/40 font-serif mb-2">
+        <p className="text-[9px] uppercase tracking-[0.3em] text-black/60 font-serif mb-2">
           Taille
         </p>
         <div className="flex flex-wrap gap-2 mb-5">
@@ -144,7 +145,7 @@ function VariantPickerModal({
             </button>
           ))}
           {availableSizes.length === 0 && (
-            <p className="text-[11px] text-black/40 font-serif italic">
+            <p className="text-[11px] text-black/60 font-serif italic">
               Aucune taille disponible
             </p>
           )}
@@ -164,13 +165,6 @@ function VariantPickerModal({
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 
-function totalVariantStock(product: Product): number {
-  return (product.variants ?? []).reduce(
-    (sum, v) => sum + (v.sizes ?? []).reduce((s, vs) => s + vs.stock, 0),
-    0
-  );
-}
-
 function ProductCard({
   product,
   onAdd,
@@ -178,8 +172,7 @@ function ProductCard({
   product: Product;
   onAdd: (product: Product) => void;
 }) {
-  const hasVariants  = (product.variants?.length ?? 0) > 0;
-  const displayStock = hasVariants ? totalVariantStock(product) : product.stock;
+  const displayStock = getEffectiveStock(product);
   const outOfStock   = displayStock === 0;
 
   return (
@@ -216,7 +209,7 @@ function ProductCard({
 
       {outOfStock && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-[9px] uppercase tracking-widest font-serif text-black/40 bg-white/80 px-2 py-1">
+          <span className="text-[9px] uppercase tracking-widest font-serif text-black/60 bg-white/80 px-2 py-1">
             Épuisé
           </span>
         </div>
@@ -247,7 +240,7 @@ function CartRow({
       <div className="flex-1 min-w-0">
         <p className="text-[11px] font-serif font-medium truncate">{item.name}</p>
         {(item.color || item.size) && (
-          <p className="text-[9px] text-black/40 font-serif uppercase tracking-widest">
+          <p className="text-[9px] text-black/60 font-serif uppercase tracking-widest">
             {[item.color, item.size].filter(Boolean).join(" · ")}
           </p>
         )}
@@ -520,7 +513,7 @@ export default function PosPage() {
             <Check size={28} strokeWidth={1.5} className="text-white" />
           </div>
           <h2 className="font-serif italic text-3xl mb-3">Vente enregistrée</h2>
-          <p className="text-[11px] uppercase tracking-widest text-black/40 font-serif mb-1">
+          <p className="text-[11px] uppercase tracking-widest text-black/60 font-serif mb-1">
             Référence commande
           </p>
           <p className="font-mono text-sm text-black/60 mb-8">{confirmedOrderId}</p>
@@ -565,7 +558,7 @@ export default function PosPage() {
                   </div>
                   <div>
                     <p className="text-[12px] font-serif font-medium">{selectedCustomer.name}</p>
-                    <p className="text-[10px] text-black/40 font-serif">{selectedCustomer.phone}</p>
+                    <p className="text-[10px] text-black/60 font-serif">{selectedCustomer.phone}</p>
                   </div>
                 </div>
                 <button
@@ -653,7 +646,7 @@ export default function PosPage() {
                         >
                           <div>
                             <p className="text-[12px] font-serif">{c.name}</p>
-                            <p className="text-[10px] text-black/40 font-serif">{c.phone}</p>
+                            <p className="text-[10px] text-black/60 font-serif">{c.phone}</p>
                           </div>
                           <ChevronRight size={13} className="text-black/20" />
                         </button>
@@ -664,7 +657,7 @@ export default function PosPage() {
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="flex items-center justify-between px-4 py-3 border border-dashed border-[rgba(0,0,0,0.1)] text-[11px] text-black/40 font-serif"
+                      className="flex items-center justify-between px-4 py-3 border border-dashed border-[rgba(0,0,0,0.1)] text-[11px] text-black/60 font-serif"
                     >
                       <span>Aucun client trouvé</span>
                       <button
@@ -681,7 +674,7 @@ export default function PosPage() {
                 {!customerSearch && (
                   <button
                     onClick={() => setShowNewCustomer(true)}
-                    className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-black/40 hover:text-black font-serif transition-colors"
+                    className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-black/60 hover:text-black font-serif transition-colors"
                   >
                     <Plus size={12} strokeWidth={2} />
                     Nouveau client
@@ -764,7 +757,7 @@ export default function PosPage() {
             {cart.length > 0 && (
               <>
                 <div className="mt-4 pt-4 border-t border-[rgba(0,0,0,0.06)] flex justify-between items-center">
-                  <span className="text-[10px] uppercase tracking-widest text-black/40 font-serif">Total</span>
+                  <span className="text-[10px] uppercase tracking-widest text-black/60 font-serif">Total</span>
                   <span className="text-xl font-serif italic">
                     {cartTotal.toLocaleString("fr-DZ")} DA
                   </span>
@@ -826,7 +819,7 @@ export default function PosPage() {
               </div>
               <div className="min-w-0">
                 <p className="text-[11px] font-serif font-medium truncate">{selectedCustomer.name}</p>
-                <p className="text-[10px] text-black/40 font-serif">{selectedCustomer.phone}</p>
+                <p className="text-[10px] text-black/60 font-serif">{selectedCustomer.phone}</p>
               </div>
             </div>
           )}

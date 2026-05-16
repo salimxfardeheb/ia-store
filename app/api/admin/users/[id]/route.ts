@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireOwner, isNextResponse, invalidateRoleCache } from "@/lib/rbac";
 import { userRoleSchema, safeParse, apiError, handleDbError } from "@/lib/validation";
+import { audit } from "@/lib/audit";
 
 const USER_SELECT = {
   id: true, name: true, email: true, role: true, createdAt: true,
@@ -26,12 +27,17 @@ export async function PATCH(
   }
 
   try {
+    const before = await prisma.user.findUnique({ where: { id }, select: { role: true } });
     const user = await prisma.user.update({
       where:  { id },
       data:   { role: data.role },
       select: USER_SELECT,
     });
     invalidateRoleCache(id);
+    audit(auth.id, "user.role_changed", "User", id, {
+      before: before?.role,
+      after:  data.role,
+    });
     return NextResponse.json(user);
   } catch (e) {
     return handleDbError(e);
@@ -53,8 +59,12 @@ export async function DELETE(
   }
 
   try {
+    const target = await prisma.user.findUnique({ where: { id }, select: { email: true, role: true } });
     await prisma.user.delete({ where: { id } });
     invalidateRoleCache(id);
+    audit(auth.id, "user.deleted", "User", id, {
+      before: { email: target?.email, role: target?.role },
+    });
     return new NextResponse(null, { status: 204 });
   } catch (e) {
     return handleDbError(e);

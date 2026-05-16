@@ -40,7 +40,7 @@ export default function Signup() {
       >
         <div className="text-center mb-10">
           <h1 className="font-serif text-4xl italic mb-2">Rejoindre I.A</h1>
-          <p className="text-black/40 text-sm uppercase tracking-widest">Créer votre compte</p>
+          <p className="text-black/60 text-sm uppercase tracking-widest">Créer votre compte</p>
         </div>
 
         {error && (
@@ -106,7 +106,7 @@ export default function Signup() {
         </form>
 
         <div className="mt-8 text-center">
-          <p className="text-sm text-black/40">
+          <p className="text-sm text-black/60">
             Déjà un compte ?{' '}
             <Link href="/login" className="text-black font-bold border-b border-black/20 hover:border-black transition-colors">
               Se connecter
