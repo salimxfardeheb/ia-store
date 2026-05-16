@@ -32,13 +32,18 @@ export async function PATCH(
   const order = await prisma.order.findUnique({
     where:  { id },
     select: {
-      status: true,
-      items:  { select: { productId: true, quantity: true, size: true, color: true, name: true } },
+      status:  true,
+      channel: true,
+      items:   { select: { productId: true, quantity: true, size: true, color: true, name: true } },
     },
   });
 
   if (!order) {
     return apiError("NOT_FOUND", "Commande introuvable", 404);
+  }
+
+  if (auth.role === "SELLER" && order.channel !== "OFFLINE") {
+    return apiError("FORBIDDEN", "Les vendeurs ne peuvent gérer que les commandes OFFLINE", 403);
   }
 
   const currentStatus = order.status.toLowerCase() as OrderStatus;

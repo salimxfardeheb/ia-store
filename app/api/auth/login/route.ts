@@ -46,6 +46,16 @@ export async function POST(req: NextRequest) {
   const valid = !!user && ok;
 
   if (!valid || !user) {
+    const masked = typeof email === "string"
+      ? email.replace(/^(.{3})[^@]*(@.*)$/, "$1***$2")
+      : "(invalid)";
+    console.warn(JSON.stringify({
+      event: "auth.login.failure",
+      reason: !user ? "unknown_email" : "wrong_password",
+      email: masked,
+      ip,
+      ts: new Date().toISOString(),
+    }));
     // Generic message — never reveal whether the email exists
     return NextResponse.json({ error: "Identifiants incorrects" }, { status: 401 });
   }

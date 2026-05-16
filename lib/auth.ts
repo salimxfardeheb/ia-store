@@ -33,7 +33,7 @@ export function authCookieOptions() {
   return {
     httpOnly: true,
     secure:   process.env.NODE_ENV === "production",
-    sameSite: "lax" as const,
+    sameSite: "strict" as const,
     path:     "/",
     maxAge:   TOKEN_MAX_AGE_SECONDS,
   };

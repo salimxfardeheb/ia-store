@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 import { AUTH_COOKIE_NAME, authCookieOptions, getTokenFromRequest, revokeToken } from "@/lib/auth";
 import { requireSameOrigin } from "@/lib/csrf";
 
@@ -8,9 +9,20 @@ export async function POST(req: NextRequest) {
   if (csrf) return csrf;
 
   const token = getTokenFromRequest(req);
-  if (token) await revokeToken(token);
+  let revoked = false;
 
-  const res = NextResponse.json({ ok: true });
+  if (token) {
+    try {
+      await revokeToken(token);
+      revoked = true;
+    } catch (err) {
+      const jti = (jwt.decode(token) as Record<string, unknown> | null)?.jti ?? "unknown";
+      console.error("logout: Redis revocation failed", { jti, err });
+      // Cookie is cleared below regardless — user is logged out of the UI.
+    }
+  }
+
+  const res = NextResponse.json({ ok: true, revoked });
   res.cookies.set(AUTH_COOKIE_NAME, "", {
     ...authCookieOptions(),
     maxAge: 0,

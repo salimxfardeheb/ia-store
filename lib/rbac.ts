@@ -1,41 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getTokenFromRequest, verifyToken, JwtPayload } from "./auth";
 import { prisma } from "./prisma";
+import { redis } from "./redis";
 import { requireSameOrigin } from "./csrf";
 
 type AuthResult = JwtPayload | NextResponse;
 type Role = JwtPayload["role"];
 
-const ROLE_CACHE_TTL_MS = 30_000;
-const roleCache = new Map<string, { role: Role | null; expiresAt: number }>();
-
 /**
- * Lit le rôle courant en base, avec un cache mémoire de 30 s par userId.
+ * Lit le rôle courant depuis Redis (cache partagé entre instances serverless),
+ * avec fallback DB sur cache miss ou panne Redis.
  *
  * Why: le JWT est signé 7 jours sans table de session — un admin démoté ou
  * supprimé garderait sinon ses droits jusqu'à expiration. La DB reste la
  * source de vérité, le cache absorbe les rafales.
- *
- * Limite connue: en serverless multi-instances, la révocation est globalement
- * bornée par TTL × N instances chaudes. Pour un effet immédiat, appeler
- * `invalidateRoleCache(userId)` au moment du PATCH/DELETE.
+ * Redis partagé élimine la fenêtre TTL × N instances du cache mémoire local.
  */
 async function getCurrentRole(userId: string): Promise<Role | null> {
-  const now = Date.now();
-  const cached = roleCache.get(userId);
-  if (cached && cached.expiresAt > now) return cached.role;
+  try {
+    const cached = await redis.get<string>(`role_cache:${userId}`);
+    if (cached !== null) {
+      return cached === "null" ? null : (cached as Role);
+    }
+  } catch {
+    // Redis KO : fail open sur la lecture — on interroge la DB directement.
+  }
 
   const user = await prisma.user.findUnique({
     where:  { id: userId },
     select: { role: true },
   });
-  const role = user?.role ?? null;
-  roleCache.set(userId, { role, expiresAt: now + ROLE_CACHE_TTL_MS });
-  return role;
+
+  try {
+    if (!user) {
+      // TTL court pour les users inexistants : évite le marteau-piqûre DB sur
+      // des tokens orphelins tout en limitant la fenêtre d'inconsistance.
+      await redis.set(`role_cache:${userId}`, "null", { ex: 5 });
+    } else {
+      await redis.set(`role_cache:${userId}`, user.role, { ex: 30 });
+    }
+  } catch {
+    // Redis KO à l'écriture : on continue sans cache, la DB a déjà répondu.
+  }
+
+  return user?.role ?? null;
 }
 
-export function invalidateRoleCache(userId: string): void {
-  roleCache.delete(userId);
+export async function invalidateRoleCache(userId: string): Promise<void> {
+  try {
+    await redis.del(`role_cache:${userId}`);
+  } catch {
+    // Redis KO : la clé expirera naturellement dans ≤ 30 s.
+  }
 }
 
 async function extractUser(req: NextRequest): Promise<JwtPayload | null> {

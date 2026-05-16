@@ -69,12 +69,16 @@ export async function getOrders(): Promise<Order[]> {
 }
 
 export async function createOrder(
-  data: { form: OrderForm; items: CartItem[]; total: number }
+  data: { form: OrderForm; items: CartItem[]; total: number },
+  idempotencyKey?: string
 ): Promise<string> {
   const res = await fetch("/api/orders", {
     method:      "POST",
     credentials: "include",
-    headers:     { "Content-Type": "application/json" },
+    headers:     {
+      "Content-Type":   "application/json",
+      ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {}),
+    },
     body:        JSON.stringify(data),
   });
 

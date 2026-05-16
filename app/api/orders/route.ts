@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { normalizePhoneDZ } from "@/lib/phone";
 import { requireSameOrigin } from "@/lib/csrf";
 import { getEffectiveStock } from "@/lib/stock";
+import { redis } from "@/lib/redis";
 
 async function getUser(req: NextRequest) {
   const token = getTokenFromRequest(req);
@@ -40,6 +41,16 @@ export async function POST(req: NextRequest) {
   if (csrf) return csrf;
 
   const user = await getUser(req);
+
+  // ─── Idempotence : déduplique les double-soumissions réseau ───────────────
+  const rawKey = req.headers.get("Idempotency-Key");
+  const idempotencyKey = rawKey && /^[0-9a-f-]{1,64}$/i.test(rawKey) ? rawKey : null;
+  if (idempotencyKey) {
+    const cached = await redis.get<string>(`idempotent:order:${idempotencyKey}`);
+    if (cached) {
+      return NextResponse.json(JSON.parse(cached), { status: 201 });
+    }
+  }
 
   // ─── Rate-limit IP : bloque tôt le flood (avant parsing/DB) ─────────────
   // 5 commandes / 10 min / IP — limite franche contre les bots invités.
@@ -142,9 +153,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Recalculate total server-side — never trust client-provided prices
+  // Recalculate total server-side — never trust client-provided prices.
+  // Math.round absorbs any residual float from legacy rows before the Int migration.
   const serverTotal = items.reduce((sum, item) => {
-    return sum + productMap.get(item.id)!.price * item.quantity;
+    const { price } = productMap.get(item.id)!;
+    return sum + Math.round(price * item.quantity);
   }, 0);
 
   try {
@@ -178,6 +191,14 @@ export async function POST(req: NextRequest) {
         },
       },
     });
+
+    if (idempotencyKey) {
+      await redis.set(
+        `idempotent:order:${idempotencyKey}`,
+        JSON.stringify({ id: order.id }),
+        { ex: 86400 }
+      );
+    }
 
     return NextResponse.json({ id: order.id }, { status: 201 });
   } catch (err) {

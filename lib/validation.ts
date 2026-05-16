@@ -21,7 +21,7 @@ export const sizeEntrySchema = z.object({
 export const variantSizeSchema = z.object({
   name:  z.string().min(1, "Le nom de taille est requis"),
   stock: z.number().int().min(0, "Le stock ne peut pas être négatif"),
-  price: z.number().positive().optional(),
+  price: z.number().int().positive().optional(),
 });
 
 export const variantSchema = z.object({
@@ -40,7 +40,7 @@ export const productWriteSchema = z
   .object({
     name:        z.string().min(1, "Nom requis").max(200),
     category:    z.string().min(1, "Catégorie requise").max(100),
-    price:       z.number().positive("Le prix doit être positif"),
+    price:       z.number().int().positive("Le prix doit être un entier positif (DZD)"),
     stock:       z.number().int().min(0, "Le stock ne peut pas être négatif"),
     status:      z.enum(["Actif", "Archivé", "Brouillon"]),
     mainImage:   z.string().default(""),

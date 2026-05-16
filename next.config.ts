@@ -10,7 +10,15 @@ const cspDirectives = [
   "form-action 'self'",
   "img-src 'self' data: blob: https://res.cloudinary.com",
   "font-src 'self' data:",
-  "style-src 'self' 'unsafe-inline'",
+  // 'unsafe-inline' est requis en production : de nombreux composants utilisent
+  // des attributs style={} JSX calculés dynamiquement (couleurs de variantes,
+  // animations Framer Motion, dimensions de charts, polices) qui sont bloqués
+  // par style-src sans 'unsafe-inline' dans les navigateurs CSP Level 3.
+  // Migration future : remplacer les style={} dynamiques par des variables CSS
+  // (--color: ...) injectées via className, puis activer les hashes CSP.
+  isDev
+    ? "style-src 'self' 'unsafe-inline'"
+    : "style-src 'self' 'unsafe-inline'",
   isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
     : "script-src 'self' 'unsafe-inline'",
@@ -48,6 +56,12 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      {
+        source: "/api/(auth|profile|orders|cart|favorites)/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store, max-age=0, must-revalidate" },
+        ],
       },
     ];
   },

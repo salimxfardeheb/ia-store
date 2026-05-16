@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { cartBodySchema, safeParse, apiError, handleDbError } from "@/lib/validation";
+import { getEffectiveStock } from "@/lib/stock";
 import { requireSameOrigin } from "@/lib/csrf";
 
 async function getUser(req: NextRequest) {
@@ -60,12 +61,26 @@ export async function POST(req: NextRequest) {
     const productIds = [...new Set(items.map((i) => i.id))];
     const valid = await prisma.product.findMany({
       where:  { id: { in: productIds }, status: "ACTIVE", deletedAt: null },
-      select: { id: true },
+      select: {
+        id:    true,
+        stock: true,
+        sizes: { select: { size: true, quantity: true } },
+        variants: { select: { color: true, sizes: { select: { name: true, stock: true } } } },
+      },
     });
     const validIds = new Set(valid.map((p) => p.id));
     const invalid  = productIds.find((id) => !validIds.has(id));
     if (invalid) {
       return apiError("INVALID_PRODUCT", "Un ou plusieurs produits sont invalides", 400);
+    }
+
+    const productMap = new Map(valid.map((p) => [p.id, p]));
+    for (const item of items) {
+      const product = productMap.get(item.id)!;
+      const available = getEffectiveStock(product, item.selectedColor, item.selectedSize);
+      if (item.quantity > available) {
+        return apiError("STOCK_INSUFFICIENT", `Stock insuffisant pour ce produit (disponible : ${available})`, 422);
+      }
     }
   }
 

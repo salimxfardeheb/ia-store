@@ -33,7 +33,7 @@ export async function PATCH(
       data:   { role: data.role },
       select: USER_SELECT,
     });
-    invalidateRoleCache(id);
+    await invalidateRoleCache(id);
     audit(auth.id, "user.role_changed", "User", id, {
       before: before?.role,
       after:  data.role,
@@ -61,7 +61,7 @@ export async function DELETE(
   try {
     const target = await prisma.user.findUnique({ where: { id }, select: { email: true, role: true } });
     await prisma.user.delete({ where: { id } });
-    invalidateRoleCache(id);
+    await invalidateRoleCache(id);
     audit(auth.id, "user.deleted", "User", id, {
       before: { email: target?.email, role: target?.role },
     });

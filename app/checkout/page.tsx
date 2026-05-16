@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { useCart } from "@/app/context/CartContext";
 import { useAuth } from "@/app/context/AuthContext";
@@ -66,6 +66,10 @@ export default function Checkout() {
     load();
   }, [user]);
 
+  // Généré une seule fois au montage — réutilisé à chaque retry réseau pour
+  // que le serveur déduplique les doubles soumissions.
+  const idempotencyKey = useRef(crypto.randomUUID());
+
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
@@ -118,11 +122,10 @@ export default function Checkout() {
 
     setSubmitting(true);
     try {
-      const id = await createOrder({
-        form,
-        items: cart,
-        total: cartTotal,
-      });
+      const id = await createOrder(
+        { form, items: cart, total: cartTotal },
+        idempotencyKey.current
+      );
       setOrderId(id);
       setSuccess(true);
       clearCart();

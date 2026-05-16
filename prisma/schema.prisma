@@ -38,7 +38,7 @@ model Product {
   id        String        @id @default(cuid())
   name      String
   category  String
-  price     Float
+  price     Int
   stock     Int           @default(0)
   status    ProductStatus @default(DRAFT)
   mainImage String        @default("")
@@ -95,7 +95,7 @@ model VariantSize {
   variantId String
   name      String          // Ex: "S", "M", "42", "Sur mesure"
   stock     Int     @default(0)
-  price     Float?          // null = hérite du prix de base du produit
+  price     Int?            // null = hérite du prix de base du produit
 
   @@unique([variantId, name])
 }
@@ -118,7 +118,7 @@ model Order {
   user          User?        @relation(fields: [userId], references: [id])
   userId        String?
   channel       OrderChannel @default(ONLINE)
-  total         Float
+  total         Int
   status        OrderStatus  @default(PENDING)
   paymentMethod String       @default("cash")
   deliveryType  String       @default("home")
@@ -150,7 +150,7 @@ model OrderItem {
 
   // Snapshot produit au moment de la commande
   name      String
-  price     Float
+  price     Int
   quantity  Int
   size      String?  // taille sélectionnée (null pour anciennes commandes)
   color     String?  // couleur variante sélectionnée (null si produit sans variantes)
