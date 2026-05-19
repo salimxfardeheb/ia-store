@@ -148,7 +148,7 @@ export default function ProductGrid() {
   };
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-[#faf9f7]">
+    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-[#faf9f7] min-h-screen">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}

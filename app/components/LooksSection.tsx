@@ -63,7 +63,7 @@ export default function LooksSection() {
   const displayed = looks.length > 0 ? looks : FALLBACK_LOOKS;
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
+    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white min-h-screen">
       <div className="max-w-7xl mx-auto">
 
         {/* Header */}

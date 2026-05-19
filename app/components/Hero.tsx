@@ -31,8 +31,8 @@ export default function HeroSection() {
   return (
     <section
       ref={containerRef}
-      className="relative overflow-hidden"
-      style={{ backgroundColor: "#EDE8DF", minHeight: "100svh" }}
+      className="relative overflow-hidden pt-16 sm:pt-18 lg:pt-20 h-svh"
+      style={{ backgroundColor: "#EDE8DF" }}
     >
       {/* Marquee — juste sous la navbar fixe */}
       <div className="absolute top-16 sm:top-18 lg:top-20 left-0 right-0 z-20 overflow-hidden bg-[#1a1713] py-1.5">
@@ -53,16 +53,28 @@ export default function HeroSection() {
         </motion.div>
       </div>
 
+      {/* Image de fond — mobile uniquement */}
+      <div className="absolute inset-0 lg:hidden">
+        <img
+          src="hero.jpg"
+          alt=""
+          className="w-full h-full object-cover object-top"
+        />
+        <div
+          className="absolute inset-0"
+          style={{ background: "linear-gradient(to bottom, rgba(237,232,223,0.55) 0%, rgba(237,232,223,0.85) 60%, rgba(237,232,223,1) 100%)" }}
+        />
+      </div>
+
       {/* Grid principal */}
       <motion.div
-        style={{ opacity: fadeOut }}
+        style={{ opacity: fadeOut, height: "100%" }}
         className="relative z-10 grid grid-cols-1 lg:grid-cols-2"
       >
-
         {/* ── Colonne texte ─────────────────────────────────────── */}
-        <div className="flex flex-col justify-between px-6 sm:px-10 lg:px-16
-                        pt-28 sm:pt-30 lg:pt-32
-                        pb-10 lg:pb-16">
+        <div className="flex flex-col justify-center gap-6 px-6 sm:px-10 lg:px-16
+                        pt-12 sm:pt-14 lg:pt-16
+                        pb-20 sm:pb-24 lg:pb-24">
 
           {/* Top meta */}
           <motion.div
@@ -78,12 +90,12 @@ export default function HeroSection() {
           </motion.div>
 
           {/* Bloc central */}
-          <div className="my-6 lg:my-auto">
+          <div>
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-[10px] uppercase tracking-[0.5em] text-[#1a1713]/35 mb-5 font-medium"
+              className="text-[10px] uppercase tracking-[0.5em] text-[#1a1713]/35 mb-4 font-medium"
             >
               Style vestimentaire
             </motion.p>
@@ -97,7 +109,7 @@ export default function HeroSection() {
                 className="leading-[0.88] text-[#1a1713]"
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontSize: "clamp(4rem, 14vw, 9rem)",
+                  fontSize: "clamp(3.5rem, 10vw, 8rem)",
                   fontWeight: 300,
                   letterSpacing: "-0.03em",
                 }}
@@ -113,7 +125,7 @@ export default function HeroSection() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.85 }}
-              className="mt-5 text-[#5a4e3a]/60 leading-relaxed text-sm max-w-xs"
+              className="mt-4 text-[#5a4e3a]/60 leading-relaxed text-sm max-w-xs"
               style={{ fontFamily: "'Inter', sans-serif", fontWeight: 300 }}
             >
               Coupes rigoureuses, matières nobles, aucun logo.
@@ -125,7 +137,7 @@ export default function HeroSection() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.7, delay: 1.05 }}
-              className="mt-5 flex flex-wrap gap-2"
+              className="mt-4 flex flex-wrap gap-2"
             >
               {["Blazer", "Polo Piqué", "Chino", "Cachemire", "Lin"].map((item, i) => (
                 <motion.span
@@ -170,11 +182,11 @@ export default function HeroSection() {
           </motion.div>
         </div>
 
-        {/* ── Colonne image ─────────────────────────────────────── */}
-        <div className="relative overflow-hidden" style={{ minHeight: "55vw", maxHeight: "100svh" }}>
+        {/* ── Colonne image — desktop uniquement ───────────────── */}
+        <div className="relative overflow-hidden hidden lg:block">
           <motion.div style={{ y: imgY }} className="absolute inset-0 scale-[1.08]">
             <img
-              src="https://images.unsplash.com/photo-1594938298603-c8148c4b4e05?auto=format&fit=crop&q=85&w=1100"
+              src="hero.jpg"
               alt="Style Old Money — Homme élégant"
               className="w-full h-full object-cover object-top"
             />
@@ -187,13 +199,13 @@ export default function HeroSection() {
             />
           </motion.div>
 
-          {/* Quote card — masquée sur très petit écran */}
+          {/* Quote card */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 1.4 }}
-            className="absolute bottom-6 left-4 sm:bottom-10 sm:left-6 z-10
-                       max-w-50 sm:max-w-52
+            className="absolute bottom-10 left-6 z-10
+                       max-w-52
                        bg-[#EDE8DF]/88 backdrop-blur-sm px-4 py-4 sm:px-6 sm:py-5
                        border-l-2 border-[#8b7355]"
           >
@@ -226,7 +238,7 @@ export default function HeroSection() {
         initial={{ scaleY: 0 }}
         animate={{ scaleY: 1 }}
         transition={{ duration: 1.1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className="hidden lg:block absolute top-20 bottom-0 left-1/2 w-px bg-[#1a1713]/8 origin-top z-20"
+        className="hidden lg:block absolute top-24 bottom-0 left-1/2 w-px bg-[#1a1713]/8 origin-top z-20"
       />
 
       {/* Barre stats bas */}
@@ -234,31 +246,31 @@ export default function HeroSection() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8, delay: 1.7 }}
-        className="hidden sm:block absolute bottom-0 left-0 right-0 z-20
+        className="absolute bottom-0 left-0 right-0 z-20
                    border-t border-[#1a1713]/8 bg-[#EDE8DF]/75 backdrop-blur-sm"
       >
-        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-3 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-6 sm:gap-10">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4 sm:gap-10">
             {[
-              { v: "100%", l: "Matières premium" },
+              { v: "100%", l: "Premium" },
               { v: "500+", l: "Pièces" },
               { v: "48h",  l: "Livraison" },
             ].map(({ v, l }) => (
-              <div key={l} className="flex items-baseline gap-1.5">
+              <div key={l} className="flex items-baseline gap-1">
                 <span
-                  className="text-base text-[#1a1713]/65"
+                  className="text-sm sm:text-base text-[#1a1713]/65"
                   style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic" }}
                 >
                   {v}
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.18em] text-[#1a1713]/25">{l}</span>
+                <span className="text-[8px] sm:text-[9px] uppercase tracking-[0.18em] text-[#1a1713]/25">{l}</span>
               </div>
             ))}
           </div>
           <motion.div
             animate={{ y: [0, 5, 0] }}
             transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-            className="flex items-center gap-2"
+            className="hidden sm:flex items-center gap-2"
           >
             <div className="h-4 w-px bg-[#1a1713]/20" />
             <span className="text-[8px] uppercase tracking-[0.4em] text-[#1a1713]/20">Défiler</span>
