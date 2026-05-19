@@ -548,10 +548,10 @@ export default function CatalogPage() {
             transition={{ delay: i * 0.05 }}
             className="bg-white border px-5 py-4 border-[rgba(0,0,0,0.08)]"
           >
-            <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 mb-2 font-serif">
+            <p className="text-[13px] uppercase tracking-[0.2em] text-black/30 mb-2 font-serif">
               {label}
             </p>
-            <p className="text-2xl text-black font-serif font-light italic">
+            <p className="text-3xl text-black font-serif font-light italic">
               {loading ? "—" : value}
             </p>
           </motion.div>
@@ -572,7 +572,7 @@ export default function CatalogPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Rechercher un produit..."
-              className="w-full border bg-[#F7F7F7] text-[11px] py-2.5 pl-9 pr-4 focus:outline-none focus:border-black/30 transition-colors font-serif border-[rgba(0,0,0,0.08)]"
+              className="w-full border bg-[#F7F7F7] text-[14px] py-3 pl-9 pr-4 focus:outline-none focus:border-black/30 transition-colors font-serif border-[rgba(0,0,0,0.08)]"
             />
           </div>
 
@@ -581,7 +581,7 @@ export default function CatalogPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="border bg-white text-[10px] uppercase tracking-widest py-2.5 pl-3 pr-8 focus:outline-none appearance-none hover:border-black/25 transition-colors font-serif border-[rgba(0,0,0,0.08)]"
+              className="border bg-white text-[13px] uppercase tracking-widest py-3 pl-3 pr-8 focus:outline-none appearance-none hover:border-black/25 transition-colors font-serif border-[rgba(0,0,0,0.08)]"
             >
               {categories.map((c) => (
                 <option key={c}>{c}</option>
@@ -598,7 +598,7 @@ export default function CatalogPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border bg-white text-[10px] uppercase tracking-widest py-2.5 pl-3 pr-8 focus:outline-none appearance-none hover:border-black/25 transition-colors font-serif border-[rgba(0,0,0,0.08)]"
+              className="border bg-white text-[13px] uppercase tracking-widest py-3 pl-3 pr-8 focus:outline-none appearance-none hover:border-black/25 transition-colors font-serif border-[rgba(0,0,0,0.08)]"
             >
               {STATUSES.map((s) => (
                 <option key={s}>{s}</option>
@@ -617,7 +617,7 @@ export default function CatalogPage() {
                 type="button"
                 key={v}
                 onClick={() => setView(v)}
-                className={`px-3 py-2.5 text-[8px] uppercase tracking-widest transition-colors font-serif ${
+                className={`px-3 py-2.5 text-[12px] uppercase tracking-widest transition-colors font-serif ${
                   view === v
                     ? "bg-black text-white"
                     : "text-black/35 hover:bg-black/4"
@@ -633,7 +633,7 @@ export default function CatalogPage() {
             <button
               type="button"
               onClick={() => setBestSellerOpen(true)}
-              className="flex items-center gap-2 border border-black/15 px-4 py-2.5 text-[9px] uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition-all font-serif ml-auto"
+              className="flex items-center gap-2 border border-black/15 px-4 py-2.5 text-[13px] uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition-all font-serif ml-auto"
             >
               <Star size={12} strokeWidth={1.5} />
               <span>Best Sellers</span>
@@ -645,7 +645,7 @@ export default function CatalogPage() {
             <button
               type="button"
               onClick={() => setPromoOpen(true)}
-              className="flex items-center gap-2 border border-black/15 px-4 py-2.5 text-[9px] uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition-all font-serif"
+              className="flex items-center gap-2 border border-black/15 px-4 py-2.5 text-[13px] uppercase tracking-widest hover:bg-black hover:text-white hover:border-black transition-all font-serif"
             >
               <Tag size={12} strokeWidth={1.5} />
               <span>Promotions</span>
@@ -657,7 +657,7 @@ export default function CatalogPage() {
             <button
               type="button"
               onClick={() => setEditProduct(null)}
-              className="flex items-center space-x-2 bg-black text-white px-5 py-2.5 text-[9px] uppercase tracking-widest hover:bg-black/80 transition-colors font-serif"
+              className="flex items-center space-x-2 bg-black text-white px-5 py-2.5 text-[13px] uppercase tracking-widest hover:bg-black/80 transition-colors font-serif"
             >
               <Plus size={13} strokeWidth={1.5} />
               <span>Nouveau produit</span>
@@ -667,7 +667,7 @@ export default function CatalogPage() {
 
         {/* Results count */}
         <div className="px-4 py-2 border-t border-[rgba(0,0,0,0.08)]">
-          <p className="text-[8px] uppercase tracking-[0.3em] text-black/30 font-serif">
+          <p className="text-[12px] uppercase tracking-[0.2em] text-black/30 font-serif">
             {loading
               ? "Chargement..."
               : `${filtered.length} produit${filtered.length !== 1 ? "s" : ""}${search ? ` · "${search}"` : ""}`}

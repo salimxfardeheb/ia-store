@@ -56,7 +56,7 @@ export default function HeroSection() {
       {/* Image de fond — mobile uniquement */}
       <div className="absolute inset-0 lg:hidden">
         <img
-          src="hero.jpg"
+          src="/hero.jpg"
           alt=""
           className="w-full h-full object-cover object-top"
         />

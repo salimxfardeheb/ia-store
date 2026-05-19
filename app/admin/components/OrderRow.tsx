@@ -83,19 +83,19 @@ export function OrderRow({
         >
           {/* Réf */}
           <div className="col-span-3">
-            <p className="text-[10px] uppercase tracking-[0.3em] text-black/30 font-serif mb-0.5">
+            <p className="text-[12px] uppercase tracking-[0.25em] text-black/30 font-serif mb-0.5">
               #{order.id.slice(0, 8).toUpperCase()}
             </p>
-            <p className="text-[11px] font-serif text-black">{order.form.name}</p>
-            <p className="text-[10px] text-black/30 font-serif">{order.form.phone}</p>
+            <p className="text-[14px] font-serif text-black">{order.form.name}</p>
+            <p className="text-[13px] text-black/30 font-serif">{order.form.phone}</p>
           </div>
 
           {/* Wilaya */}
           <div className="col-span-2">
-            <p className="text-[10px] font-serif text-black/70">
+            <p className="text-[13px] font-serif text-black/70">
               {order.form.city ?? (order.channel === "offline" ? "Vente magasin" : "—")}
             </p>
-            <p className="text-[10px] text-black/30 font-serif capitalize">
+            <p className="text-[12px] text-black/30 font-serif capitalize">
               {order.form.deliveryType === "home"
                 ? "À domicile"
                 : order.form.deliveryType === "store"
@@ -120,14 +120,14 @@ export function OrderRow({
             </div>
             <div className="space-y-0.5">
               {order.items.slice(0, 2).map((item, i) => (
-                <p key={i} className="text-[9px] text-black/50 font-serif leading-tight truncate max-w-32">
+                <p key={i} className="text-[12px] text-black/50 font-serif leading-tight truncate max-w-32">
                   {item.quantity}× {item.name}
                   {item.selectedColor && <span className="text-black/30"> · {item.selectedColor}</span>}
                   {item.selectedSize  && <span className="text-black/30"> · {item.selectedSize}</span>}
                 </p>
               ))}
               {order.items.length > 2 && (
-                <p className="text-[9px] text-black/30 font-serif italic">
+                <p className="text-[12px] text-black/30 font-serif italic">
                   +{order.items.length - 2} autre{order.items.length - 2 > 1 ? "s" : ""}
                 </p>
               )}
@@ -136,19 +136,19 @@ export function OrderRow({
 
           {/* Total */}
           <div className="col-span-2">
-            <p className="font-serif italic text-sm">{order.total.toLocaleString("fr-FR")} DA</p>
-            <p className="text-[10px] text-black/30 font-serif uppercase tracking-widest">
+            <p className="font-serif italic text-base">{order.total.toLocaleString("fr-FR")} DA</p>
+            <p className="text-[13px] text-black/30 font-serif uppercase tracking-widest">
               {order.form.paymentMethod === "cash" ? "Cash" : "Carte"}
             </p>
           </div>
 
           {/* Status */}
           <div className="col-span-2 flex items-center justify-between">
-            <span className={`text-[9px] uppercase tracking-widest px-2.5 py-1 font-serif ${cfg.color} ${cfg.bg}`}>
+            <span className={`text-[12px] uppercase tracking-widest px-2.5 py-1 font-serif ${cfg.color} ${cfg.bg}`}>
               {cfg.label}
             </span>
             <div className="flex items-center gap-2 text-black/20">
-              <span className="text-[9px] font-serif">{formatDate(order.createdAt)}</span>
+              <span className="text-[12px] font-serif">{formatDate(order.createdAt)}</span>
               {expanded
                 ? <ChevronUp size={12} strokeWidth={1.5} />
                 : <ChevronDown size={12} strokeWidth={1.5} />

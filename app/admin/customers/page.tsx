@@ -15,15 +15,15 @@ const PAGE_SIZE = 50;
 function ChannelBadge({ channel }: { channel: "online" | "offline" }) {
   if (channel === "online") {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-widest font-serif bg-black text-white">
-        <Globe size={9} strokeWidth={1.5} />
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[12px] uppercase tracking-widest font-serif bg-black text-white">
+        <Globe size={11} strokeWidth={1.5} />
         En ligne
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-widest font-serif bg-black/8 text-black">
-      <Store size={9} strokeWidth={1.5} />
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[12px] uppercase tracking-widest font-serif bg-black/8 text-black">
+      <Store size={11} strokeWidth={1.5} />
       Magasin
     </span>
   );
@@ -51,20 +51,20 @@ function CustomerRow({ customer }: { customer: UnifiedCustomer }) {
           {initials}
         </div>
         <div className="min-w-0">
-          <p className="text-[12px] font-serif font-medium truncate">{customer.name}</p>
+          <p className="text-[15px] font-serif font-medium truncate">{customer.name}</p>
         </div>
       </div>
 
       {/* Contact */}
       <div className="col-span-3 space-y-0.5">
         {customer.phone && (
-          <div className="flex items-center gap-1.5 text-[11px] font-serif text-black/60">
-            <Phone size={10} strokeWidth={1.5} className="text-black/25 shrink-0" />
+          <div className="flex items-center gap-1.5 text-[13px] font-serif text-black/60">
+            <Phone size={12} strokeWidth={1.5} className="text-black/25 shrink-0" />
             {customer.phone}
           </div>
         )}
         {customer.email && (
-          <div className="flex items-center gap-1.5 text-[11px] font-serif text-black/60 truncate">
+          <div className="flex items-center gap-1.5 text-[13px] font-serif text-black/60 truncate">
             <Mail size={10} strokeWidth={1.5} className="text-black/25 shrink-0" />
             <span className="truncate">{customer.email}</span>
           </div>
@@ -77,16 +77,16 @@ function CustomerRow({ customer }: { customer: UnifiedCustomer }) {
       </div>
 
       {/* Orders */}
-      <div className="col-span-2 flex items-center gap-1.5 text-[11px] font-serif text-black/50">
-        <ShoppingBag size={11} strokeWidth={1.5} className="text-black/25" />
+      <div className="col-span-2 flex items-center gap-1.5 text-[13px] font-serif text-black/50">
+        <ShoppingBag size={13} strokeWidth={1.5} className="text-black/25" />
         {customer.ordersCount}
-        <span className="text-black/25 text-[9px]">
+        <span className="text-black/25 text-[12px]">
           {customer.ordersCount !== 1 ? "commandes" : "commande"}
         </span>
       </div>
 
       {/* Last order */}
-      <div className="col-span-2 text-right text-[10px] text-black/30 font-serif">
+      <div className="col-span-2 text-right text-[13px] text-black/30 font-serif">
         {customer.lastOrderAt ? formatDate(customer.lastOrderAt) : "—"}
       </div>
     </motion.div>
@@ -150,10 +150,10 @@ export default function CustomersPage() {
                 : "border-transparent text-black/30 hover:text-black/60"
             }`}
           >
-            <span className="text-[9px] uppercase tracking-[0.3em] font-serif">{label}</span>
+            <span className="text-[13px] uppercase tracking-[0.2em] font-serif">{label}</span>
           </button>
         ))}
-        <span className="ml-auto text-[10px] uppercase tracking-widest text-black/30 font-serif">
+        <span className="ml-auto text-[13px] uppercase tracking-widest text-black/30 font-serif">
           {total} {total > 1 ? "résultats" : "résultat"}
         </span>
       </div>
@@ -169,7 +169,7 @@ export default function CustomersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher par nom, téléphone, email..."
-          className="w-full border border-[rgba(0,0,0,0.08)] bg-white text-[11px] py-2.5 pl-9 pr-4 font-serif focus:outline-none focus:border-black/30 transition-colors"
+          className="w-full border border-[rgba(0,0,0,0.08)] bg-white text-[14px] py-3 pl-9 pr-4 font-serif focus:outline-none focus:border-black/30 transition-colors"
         />
       </div>
 
@@ -182,7 +182,7 @@ export default function CustomersPage() {
           { label: "Commandes", span: "col-span-2" },
           { label: "Dernière commande", span: "col-span-2 text-right" },
         ].map(({ label, span }) => (
-          <div key={label} className={`${span} text-[9px] uppercase tracking-[0.3em] text-black/25 font-serif`}>
+          <div key={label} className={`${span} text-[13px] uppercase tracking-[0.2em] text-black/25 font-serif`}>
             {label}
           </div>
         ))}
@@ -216,21 +216,21 @@ export default function CustomersPage() {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-serif text-black/60 disabled:opacity-20 disabled:cursor-not-allowed hover:text-black transition-colors"
+                className="flex items-center gap-1 text-[13px] uppercase tracking-widest font-serif text-black/60 disabled:opacity-20 disabled:cursor-not-allowed hover:text-black transition-colors"
               >
-                <ChevronLeft size={13} strokeWidth={1.5} />
+                <ChevronLeft size={15} strokeWidth={1.5} />
                 Précédent
               </button>
-              <span className="text-[10px] uppercase tracking-widest font-serif text-black/60">
+              <span className="text-[13px] uppercase tracking-widest font-serif text-black/60">
                 Page {page} / {totalPages}
               </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="flex items-center gap-1 text-[10px] uppercase tracking-widest font-serif text-black/60 disabled:opacity-20 disabled:cursor-not-allowed hover:text-black transition-colors"
+                className="flex items-center gap-1 text-[13px] uppercase tracking-widest font-serif text-black/60 disabled:opacity-20 disabled:cursor-not-allowed hover:text-black transition-colors"
               >
                 Suivant
-                <ChevronRight size={13} strokeWidth={1.5} />
+                <ChevronRight size={15} strokeWidth={1.5} />
               </button>
             </div>
           )}

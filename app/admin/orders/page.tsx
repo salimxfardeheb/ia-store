@@ -70,12 +70,12 @@ export default function OrdersPage() {
               }`}
             >
               <p
-                className={`text-2xl font-serif italic mb-1 ${filterStatus === s ? "text-white" : "text-black"}`}
+                className={`text-3xl font-serif italic mb-1 ${filterStatus === s ? "text-white" : "text-black"}`}
               >
                 {count}
               </p>
               <p
-                className={`text-[10px] uppercase tracking-[0.25em] font-serif ${filterStatus === s ? "text-white/60" : "text-black/30"}`}
+                className={`text-[13px] uppercase tracking-[0.2em] font-serif ${filterStatus === s ? "text-white/60" : "text-black/30"}`}
               >
                 {s === "all" ? "Toutes" : cfg!.label}
               </p>
@@ -90,7 +90,7 @@ export default function OrdersPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher par nom, téléphone, référence..."
-          className="w-full border border-[rgba(0,0,0,0.08)] text-[11px] py-2.5 px-4 bg-white font-serif focus:outline-none focus:border-black transition-colors"
+          className="w-full border border-[rgba(0,0,0,0.08)] text-[14px] py-3 px-4 bg-white font-serif focus:outline-none focus:border-black transition-colors"
         />
       </div>
 
@@ -99,7 +99,7 @@ export default function OrdersPage() {
         {["Client", "Wilaya", "Articles", "Total", "Statut"].map((h, i) => (
           <div
             key={h}
-            className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-2" : "col-span-2"} text-[9px] uppercase tracking-[0.3em] text-black/25 font-serif`}
+            className={`${i === 0 ? "col-span-3" : i === 4 ? "col-span-2" : "col-span-2"} text-[13px] uppercase tracking-[0.2em] text-black/25 font-serif`}
           >
             {h}
           </div>

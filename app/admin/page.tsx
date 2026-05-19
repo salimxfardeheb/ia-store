@@ -37,7 +37,7 @@ function QuickAction({ icon: Icon, label, dark = false }: { icon: any; label: st
       }`}
     >
       <Icon size={18} strokeWidth={1.5} className="mb-2.5" />
-      <span className="text-[9px] uppercase tracking-tight font-serif">{label}</span>
+      <span className="text-[13px] uppercase tracking-tight font-serif">{label}</span>
     </button>
   );
 }
@@ -47,7 +47,7 @@ function StockPanel({ loading, lowStock }: { loading: boolean; lowStock: Dashboa
     <div className="bg-white border p-6 border-[rgba(0,0,0,0.08)]">
       <div className="flex items-center space-x-2 mb-6">
         <AlertTriangle size={14} strokeWidth={1.5} className="text-black/50" />
-        <h3 className="text-lg text-black font-serif italic font-light">Alertes stock</h3>
+        <h3 className="text-2xl text-black font-serif italic font-light">Alertes stock</h3>
       </div>
       {loading ? (
         <p className="font-serif italic text-black/20 text-center py-8">Chargement…</p>
@@ -58,17 +58,17 @@ function StockPanel({ loading, lowStock }: { loading: boolean; lowStock: Dashboa
           {lowStock.map((item) => (
             <div key={`${item.name}-${item.size}`} className="p-4 border border-[rgba(0,0,0,0.08)]">
               <div className="flex justify-between items-start mb-2.5">
-                <h4 className="text-[10px] text-black pr-2 leading-snug font-serif">{item.name}</h4>
-                <span className="text-[7px] uppercase tracking-widest bg-black text-white px-2 py-0.5 shrink-0 font-serif">{item.size}</span>
+                <h4 className="text-[14px] text-black pr-2 leading-snug font-serif">{item.name}</h4>
+                <span className="text-[11px] uppercase tracking-widest bg-black text-white px-2 py-0.5 shrink-0 font-serif">{item.size}</span>
               </div>
               <div className="flex justify-between items-end">
                 <div>
-                  <p className="text-[9px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
+                  <p className="text-[12px] uppercase tracking-[0.3em] text-black/30 mb-0.5 font-serif">En stock</p>
                   <p className="text-xl font-serif italic font-light" style={{ color: item.stock === 0 ? "#000" : "#555" }}>
                     {item.stock}
                   </p>
                 </div>
-                <button type="button" className="text-[8px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
+                <button type="button" className="text-[12px] uppercase tracking-widest border-b border-black text-black pb-0.5 hover:opacity-50 transition-opacity font-serif">
                   Restock
                 </button>
               </div>
@@ -79,7 +79,7 @@ function StockPanel({ loading, lowStock }: { loading: boolean; lowStock: Dashboa
           ))}
         </div>
       )}
-      <button type="button" className="w-full mt-4 py-3 border border-black/10 text-[9px] uppercase tracking-[0.25em] text-black hover:bg-black hover:text-white transition-all font-serif">
+      <button type="button" className="w-full mt-4 py-3 border border-black/10 text-[13px] uppercase tracking-[0.2em] text-black hover:bg-black hover:text-white transition-all font-serif">
         Rapport complet
       </button>
     </div>
@@ -90,14 +90,14 @@ function OrdersTable({ loading, recentOrders }: { loading: boolean; recentOrders
   return (
     <div className="bg-white border overflow-hidden border-[rgba(0,0,0,0.08)]">
       <div className="px-7 py-5 border-b flex justify-between items-center border-[rgba(0,0,0,0.08)]">
-        <h3 className="text-lg text-black font-serif italic font-light">Commandes récentes</h3>
-        <a href="/admin/orders" className="text-[9px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
+        <h3 className="text-2xl text-black font-serif italic font-light">Commandes récentes</h3>
+        <a href="/admin/orders" className="text-[13px] uppercase tracking-widest border-b border-black pb-0.5 text-black hover:opacity-50 transition-opacity font-serif">
           Tout voir
         </a>
       </div>
       <table className="w-full text-left">
         <thead>
-          <tr className="border-b text-[9px] uppercase tracking-[0.25em] text-black/30 border-[rgba(0,0,0,0.08)]">
+          <tr className="border-b text-[13px] uppercase tracking-[0.15em] text-black/30 border-[rgba(0,0,0,0.08)]">
             {["N° Commande", "Client", "Statut", "Montant", ""].map((h) => (
               <th key={h} className="px-6 py-3 font-normal font-serif">{h}</th>
             ))}
@@ -121,14 +121,14 @@ function OrdersTable({ loading, recentOrders }: { loading: boolean; recentOrders
                 transition={{ delay: i * 0.04 }}
                 className="border-b hover:bg-black/2 transition-colors border-[rgba(0,0,0,0.08)]"
               >
-                <td className="px-6 py-3.5 text-[10px] text-black/60 font-serif">{order.id}</td>
-                <td className="px-6 py-3.5 text-[10px] text-black font-serif">{order.customer}</td>
-                <td className="px-6 py-3.5">
-                  <span className={`px-2.5 py-0.5 text-[8px] uppercase tracking-widest font-serif ${order.statusStyle}`}>
+                <td className="px-6 py-4 text-[14px] text-black/60 font-serif">{order.id}</td>
+                <td className="px-6 py-4 text-[14px] text-black font-serif">{order.customer}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2.5 py-0.5 text-[12px] uppercase tracking-widest font-serif ${order.statusStyle}`}>
                     {order.status}
                   </span>
                 </td>
-                <td className="px-6 py-3.5 text-[10px] text-black font-serif italic">{order.amount}</td>
+                <td className="px-6 py-4 text-[14px] text-black font-serif italic">{order.amount}</td>
                 <td className="px-6 py-3.5">
                   <button type="button" className="p-1 text-black/20 hover:text-black hover:bg-black/5 transition-colors">
                     <MoreVertical size={12} strokeWidth={1.5} />
@@ -159,8 +159,8 @@ function SellerNavCard({
             <Icon size={16} strokeWidth={1.5} className="text-black/50" />
           </div>
           <div>
-            <p className="text-[11px] uppercase tracking-[0.25em] font-serif text-black">{label}</p>
-            <p className="text-[9px] text-black/35 font-serif mt-0.5">{sub}</p>
+            <p className="text-[15px] uppercase tracking-[0.15em] font-serif text-black">{label}</p>
+            <p className="text-[13px] text-black/35 font-serif mt-0.5">{sub}</p>
           </div>
         </div>
         <ChevronRight size={14} strokeWidth={1.5} className="text-black/20 group-hover:text-black/50 transition-colors" />
@@ -198,16 +198,16 @@ function SellerDashboard({
             className="lg:col-span-2 bg-black p-8 relative overflow-hidden flex flex-col justify-between min-h-52"
           >
             <div className="relative z-10">
-              <span className="text-[9px] uppercase tracking-[0.4em] text-white/35 font-serif">Bienvenue</span>
-              <h2 className="text-white font-serif text-[2rem] italic font-light mt-2 mb-3 leading-snug">
+              <span className="text-[13px] uppercase tracking-[0.35em] text-white/35 font-serif">Bienvenue</span>
+              <h2 className="text-white font-serif text-[2.75rem] italic font-light mt-2 mb-3 leading-snug">
                 {userName}
               </h2>
-              <p className="text-white/35 text-sm font-serif leading-relaxed max-w-xs">
+              <p className="text-white/35 text-base font-serif leading-relaxed max-w-xs">
                 Prêt pour une nouvelle journée de ventes.
               </p>
             </div>
             <a href="/admin/pos" className="self-start mt-6">
-              <button type="button" className="px-6 py-3 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/85 transition-all font-serif flex items-center space-x-2.5">
+              <button type="button" className="px-6 py-3 bg-white text-black text-[13px] uppercase tracking-[0.2em] hover:bg-white/85 transition-all font-serif flex items-center space-x-2.5">
                 <ShoppingBag size={12} strokeWidth={1.5} />
                 <span>Nouvelle vente</span>
               </button>
@@ -324,16 +324,16 @@ function AdminDashboard({ data, loading }: { data: DashboardData | null; loading
             <div className="relative z-10">
               <div className="flex items-center space-x-2.5 mb-4">
                 <Sun size={14} strokeWidth={1.5} className="text-white/50" />
-                <span className="text-[9px] uppercase tracking-[0.4em] text-white/40 font-serif">Analyse saisonnière</span>
+                <span className="text-[13px] uppercase tracking-[0.3em] text-white/40 font-serif">Analyse saisonnière</span>
               </div>
-              <h3 className="text-white mb-3 font-serif text-[1.5rem] italic font-light leading-5">
+              <h3 className="text-white mb-3 font-serif text-[1.9rem] italic font-light leading-snug">
                 Transition printemps<br />approche
               </h3>
-              <p className="text-white/40 text-sm mb-6 max-w-xs leading-relaxed font-serif">
+              <p className="text-white/40 text-base mb-6 max-w-xs leading-relaxed font-serif">
                 La demande en lin et soie légère devrait augmenter de 40% la semaine prochaine.
               </p>
             </div>
-            <button type="button" className="self-start px-6 py-2.5 bg-white text-black text-[9px] uppercase tracking-[0.25em] hover:bg-white/80 transition-all font-serif">
+            <button type="button" className="self-start px-6 py-2.5 bg-white text-black text-[13px] uppercase tracking-[0.2em] hover:bg-white/80 transition-all font-serif">
               Mettre à jour la vitrine
             </button>
             <div className="absolute -right-6 -bottom-6 pointer-events-none opacity-[0.04]">
@@ -343,7 +343,7 @@ function AdminDashboard({ data, loading }: { data: DashboardData | null; loading
 
           {/* Quick actions */}
           <div className="bg-white border p-7 border-[rgba(0,0,0,0.08)]">
-            <h3 className="text-lg text-black mb-5 font-serif italic font-light">Actions rapides</h3>
+            <h3 className="text-2xl text-black mb-5 font-serif italic font-light">Actions rapides</h3>
             <div className="grid grid-cols-2 gap-3">
               <a href="/admin/catalog">
                 <QuickAction icon={Plus}       label="Ajouter produit" dark />
