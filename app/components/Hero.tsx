@@ -56,7 +56,7 @@ export default function HeroSection() {
       {/* Image de fond — mobile uniquement */}
       <div className="absolute inset-0 lg:hidden">
         <img
-          src="hero.jpg"
+          src="/hero.jpg"
           alt=""
           className="w-full h-full object-cover object-top"
         />
@@ -186,7 +186,7 @@ export default function HeroSection() {
         <div className="relative overflow-hidden hidden lg:block">
           <motion.div style={{ y: imgY }} className="absolute inset-0 scale-[1.08]">
             <img
-              src="hero.jpg"
+              src="/hero.jpg"
               alt="Style Old Money — Homme élégant"
               className="w-full h-full object-cover object-top"
             />
