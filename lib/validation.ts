@@ -38,13 +38,15 @@ export const variantSchema = z.object({
 
 export const productWriteSchema = z
   .object({
-    name:        z.string().min(1, "Nom requis").max(200),
-    category:    z.string().min(1, "Catégorie requise").max(100),
-    price:       z.number().int().positive("Le prix doit être un entier positif (DZD)"),
-    stock:       z.number().int().min(0, "Le stock ne peut pas être négatif"),
-    status:      z.enum(["Actif", "Archivé", "Brouillon"]),
-    mainImage:   z.string().default(""),
-    extraImages: z.array(
+    name:            z.string().min(1, "Nom requis").max(200),
+    category:        z.string().min(1, "Catégorie requise").max(100),
+    price:           z.number().int().positive("Le prix doit être un entier positif (DZD)"),
+    discountPercent: z.number().int().min(1).max(99).nullable().optional(),
+    isBestSeller:    z.boolean().optional(),
+    stock:           z.number().int().min(0, "Le stock ne peut pas être négatif"),
+    status:          z.enum(["Actif", "Archivé", "Brouillon"]),
+    mainImage:       z.string().default(""),
+    extraImages:     z.array(
       z.object({
         url:   z.string().min(1),
         color: z.string().optional(),

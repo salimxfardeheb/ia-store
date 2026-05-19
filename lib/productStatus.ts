@@ -2,14 +2,16 @@ import type { Product, ProductImage } from "@/app/variables";
 
 /** Subset of the Prisma Product row needed for mapping */
 export type ProductRow = {
-  id:          string;
-  name:        string;
-  category:    string;
-  price:       number;
-  stock:       number;
-  status:      string;
-  mainImage:   string;
-  createdAt:   Date;
+  id:              string;
+  name:            string;
+  category:        string;
+  price:           number;
+  discountPercent: number | null;
+  isBestSeller:    boolean;
+  stock:           number;
+  status:          string;
+  mainImage:       string;
+  createdAt:       Date;
   extraImages: { url: string; color: string | null; sortOrder: number }[];
   sizes:       { size: string; quantity: number }[];
   variants:    {
@@ -45,15 +47,17 @@ export function toProduct(p: ProductRow): Product {
     }));
 
   return {
-    id:          p.id,
-    name:        p.name,
-    category:    p.category,
-    price:       p.price,
-    stock:       p.stock,
-    status:      fromPrismaStatus(p.status),
-    mainImage:   p.mainImage,
+    id:              p.id,
+    name:            p.name,
+    category:        p.category,
+    price:           p.price,
+    discountPercent: p.discountPercent ?? null,
+    isBestSeller:    p.isBestSeller,
+    stock:           p.stock,
+    status:          fromPrismaStatus(p.status),
+    mainImage:       p.mainImage,
     extraImages,
-    createdAt:   p.createdAt.toLocaleDateString("fr-FR", {
+    createdAt:       p.createdAt.toLocaleDateString("fr-FR", {
       day: "numeric", month: "short", year: "numeric",
     }),
     sizes: p.sizes,

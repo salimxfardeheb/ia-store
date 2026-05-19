@@ -1,7 +1,7 @@
 import type React from "react";
 import {
   LayoutDashboard, ShoppingBag, Package, Users, BarChart3,
-  Wallet, Calendar, Settings, ShoppingCart, UserRound
+  Wallet, Calendar, Settings, ShoppingCart, UserRound, Images
 } from "lucide-react";
 
 export type AdminRole = "ADMIN" | "SELLER";
@@ -89,6 +89,8 @@ export interface Product {
   name: string;
   category: string;
   price: number;
+  discountPercent?: number | null;
+  isBestSeller?: boolean;
   stock: number;
   sizes: SizeEntry[];
   variants?: VariantEntry[];
@@ -190,6 +192,7 @@ export const NAV_ITEMS: { id: string; icon: React.ComponentType<{ size?: number;
   { id: "pos",        icon: ShoppingCart,    label: "Nouvelle vente",  href: "/admin/pos",        roles: ["ADMIN", "SELLER"]  },
   { id: "customers",  icon: Users,           label: "Clients",         href: "/admin/customers",  roles: ["ADMIN", "SELLER"]  },
   { id: "users",      icon: UserRound,       label: "Comptes",         href: "/admin/users",      roles: ["ADMIN"]            },
+  { id: "lookbook",   icon: Images,          label: "Looks & Tenues",  href: "/admin/lookbook",   roles: ["ADMIN"]            },
   { id: "analytics",  icon: BarChart3,       label: "Analytiques",     href: "/admin/analytics",  roles: ["ADMIN"]            },
   { id: "finance",    icon: Wallet,          label: "Finance",         href: "/admin/finance",    roles: ["ADMIN"]            },
 ];

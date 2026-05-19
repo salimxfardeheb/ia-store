@@ -72,10 +72,16 @@ export default function ProductTable({
               >
                 <td className="px-5 py-3.5">
                   <div>
-                    <p className="text-[11px] text-black font-serif">
-                      {product.name}
-                    </p>
-                    <p className="text-[9px] text-black/30 mt-0.5 font-serif">
+                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                      <p className="text-[11px] text-black font-serif">{product.name}</p>
+                      {product.isBestSeller && (
+                        <span className="bg-[#1a1713] text-white text-[7px] uppercase tracking-wider px-1.5 py-0.5 font-bold">★ Best</span>
+                      )}
+                      {product.discountPercent && (
+                        <span className="bg-red-500 text-white text-[7px] uppercase tracking-wider px-1.5 py-0.5 font-bold">-{product.discountPercent}%</span>
+                      )}
+                    </div>
+                    <p className="text-[9px] text-black/30 font-serif">
                       {product.sizes.map((s) => s.size).join(" · ")}
                     </p>
                   </div>

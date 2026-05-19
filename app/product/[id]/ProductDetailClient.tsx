@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Minus, ShoppingBag, Truck, ShieldCheck, RefreshCw } from "lucide-react";
+import { ArrowLeft, Plus, Minus, ShoppingBag, Truck, ShieldCheck, RefreshCw, Tag, ArrowRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useCart } from "@/app/context/CartContext";
 import { useRouter } from "next/navigation";
 import { Product } from "@/app/variables";
 import { FavoriteButton } from "@/app/components/FavoriteButton";
+import type { LookSuggestion, SuggestedProduct } from "./page";
 
 const isHex = (c: string) => /^#[0-9A-Fa-f]{6}$/.test(c);
 
 interface Props {
-  product: Product;
+  product:          Product;
+  lookSuggestions:  LookSuggestion[];
+  fallbackProducts: SuggestedProduct[];
 }
 
-export default function ProductDetailClient({ product }: Props) {
+export default function ProductDetailClient({ product, lookSuggestions, fallbackProducts }: Props) {
   const [selectedImage, setSelectedImage] = useState<string>(product.mainImage ?? "");
   const [selectedColor, setSelectedColor] = useState<string>(
     product.variants?.length ? product.variants[0].color : ""
@@ -38,10 +42,13 @@ export default function ProductDetailClient({ product }: Props) {
   const variantSizes = activeVariant?.sizes ?? [];
   const flatSizes    = product.sizes;
 
-  const selectedVSize = selectedSize
+  const selectedVSize  = selectedSize
     ? variantSizes.find((s) => s.name === selectedSize)
     : undefined;
-  const displayPrice  = selectedVSize?.price ?? product.price;
+  const basePrice      = selectedVSize?.price ?? product.price;
+  const discountPct    = product.discountPercent ?? 0;
+  const displayPrice   = discountPct ? Math.round(basePrice * (1 - discountPct / 100)) : basePrice;
+  const hasPromo       = discountPct > 0;
 
   const maxQty = (() => {
     if (activeVariant && selectedSize) return selectedVSize?.stock ?? 1;
@@ -136,6 +143,14 @@ export default function ProductDetailClient({ product }: Props) {
                   className="object-cover"
                 />
               </motion.div>
+
+              {/* Badge promo sur l'image */}
+              {hasPromo && (
+                <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1.5 flex items-center gap-1.5">
+                  <Tag size={11} strokeWidth={2.5} />
+                  -{discountPct}%
+                </div>
+              )}
             </div>
           </motion.div>
 
@@ -146,9 +161,18 @@ export default function ProductDetailClient({ product }: Props) {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="flex flex-col lg:pt-6"
           >
-            <span className="text-[10px] uppercase tracking-[0.4em] font-medium text-black/35 mb-4">
-              {product.category}
-            </span>
+            {/* Catégorie + badge promo */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-[10px] uppercase tracking-[0.4em] font-medium text-black/35">
+                {product.category}
+              </span>
+              {hasPromo && (
+                <span className="flex items-center gap-1 bg-red-500 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1">
+                  <Tag size={9} strokeWidth={2.5} />
+                  -{discountPct}%
+                </span>
+              )}
+            </div>
 
             <h1 className="font-serif text-5xl italic leading-tight mb-6 text-black/90">
               {product.name}
@@ -156,19 +180,25 @@ export default function ProductDetailClient({ product }: Props) {
 
             <div className="w-10 h-px bg-black/15 mb-6" />
 
-            {/* Price */}
-            <div className="flex items-baseline gap-2 mb-10">
-              <span className="font-serif text-3xl text-black/80">
-                {displayPrice.toLocaleString("fr-FR")}
-              </span>
-              <span className="text-[11px] uppercase tracking-widest text-black/60 font-medium">DA</span>
+            {/* Prix */}
+            <div className="mb-10">
+              <div className="flex items-baseline gap-3">
+                <span className={`font-serif text-3xl ${hasPromo ? "text-red-500" : "text-black/80"}`}>
+                  {displayPrice.toLocaleString("fr-FR")}
+                </span>
+                <span className="text-[11px] uppercase tracking-widest text-black/60 font-medium">DA</span>
+                {hasPromo && (
+                  <span className="font-serif text-xl text-black/25 line-through">
+                    {basePrice.toLocaleString("fr-FR")} DA
+                  </span>
+                )}
+              </div>
+              {hasPromo && (
+                <p className="text-[10px] text-red-400 uppercase tracking-widest mt-1.5 font-medium">
+                  Vous économisez {(basePrice - displayPrice).toLocaleString("fr-FR")} DA
+                </p>
+              )}
             </div>
-
-            <p className="text-[13px] text-black/50 leading-7 mb-10 font-light max-w-sm">
-              Une pièce qui incarne l'élégance intemporelle, confectionnée dans
-              des matières d'exception. Coupe soignée, finitions impeccables.
-            </p>
-
             <div className="space-y-8 mb-12">
 
               {/* ── Color variants ──────────────────────────────────────── */}
@@ -353,7 +383,136 @@ export default function ProductDetailClient({ product }: Props) {
             </div>
           </motion.div>
         </div>
+
+        {/* ── Suggestions Looks & Tenues ───────────────────────────────── */}
+        {(lookSuggestions.length > 0 || fallbackProducts.length > 0) && (
+          <motion.section
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="mt-24 pt-16 border-t border-black/8"
+          >
+            {lookSuggestions.length > 0 ? (
+              lookSuggestions.map((look) => (
+                <div key={look.lookId} className="mb-16 last:mb-0">
+                  {/* Header look */}
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      {/* Miniature du look */}
+                      <div className="relative w-12 h-16 overflow-hidden shrink-0 bg-[#EDE9E3]">
+                        {look.lookImage && (
+                          <Image
+                            src={look.lookImage}
+                            alt={look.lookTitle}
+                            fill
+                            sizes="48px"
+                            className="object-cover object-top"
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-[0.4em] text-black/35 mb-1">
+                          Looks & Tenues
+                        </p>
+                        <h2 className="font-serif text-2xl italic text-black/85">
+                          {look.lookTitle}
+                        </h2>
+                      </div>
+                    </div>
+                    <Link
+                      href="/shop"
+                      className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-black/35 hover:text-black transition-colors border-b border-transparent hover:border-black/30 pb-0.5"
+                    >
+                      Voir tout <ArrowRight size={11} strokeWidth={1.8} />
+                    </Link>
+                  </div>
+
+                  {/* Grille produits du look */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                    {look.products.map((p) => (
+                      <SuggestedCard key={p.id} product={p} />
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              /* Fallback même catégorie */
+              <div>
+                <div className="flex items-center justify-between mb-8">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.4em] text-black/35 mb-1">
+                      Vous aimerez aussi
+                    </p>
+                    <h2 className="font-serif text-2xl italic text-black/85">
+                      Dans la même catégorie
+                    </h2>
+                  </div>
+                  <Link
+                    href={`/shop?category=${encodeURIComponent(product.category)}`}
+                    className="hidden sm:flex items-center gap-2 text-[10px] uppercase tracking-[0.3em] text-black/35 hover:text-black transition-colors border-b border-transparent hover:border-black/30 pb-0.5"
+                  >
+                    Voir tout <ArrowRight size={11} strokeWidth={1.8} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+                  {fallbackProducts.map((p) => (
+                    <SuggestedCard key={p.id} product={p} />
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.section>
+        )}
       </div>
     </div>
+  );
+}
+
+// ── Card suggestion ────────────────────────────────────────────────────────
+function SuggestedCard({ product: p }: { product: SuggestedProduct }) {
+  const promoPrice = p.discountPercent
+    ? Math.round(p.price * (1 - p.discountPercent / 100))
+    : null;
+
+  return (
+    <Link href={`/product/${p.id}`} className="group block">
+      {/* Image */}
+      <div className="relative aspect-3/4 overflow-hidden bg-[#EDE9E3] mb-3">
+        {p.mainImage ? (
+          <Image
+            src={p.mainImage}
+            alt={p.name}
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover object-top transition-transform duration-700 group-hover:scale-[1.05]"
+          />
+        ) : (
+          <div className="w-full h-full" />
+        )}
+        {p.discountPercent && (
+          <div className="absolute top-2.5 left-2.5 bg-red-500 text-white text-[8px] font-bold uppercase tracking-wider px-2 py-0.5">
+            -{p.discountPercent}%
+          </div>
+        )}
+        {/* Hover overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/6 transition-colors duration-500" />
+      </div>
+
+      {/* Info */}
+      <p className="text-[10px] uppercase tracking-[0.2em] text-black/35 mb-1">{p.category}</p>
+      <h3 className="font-serif text-base text-black/85 leading-tight mb-1.5 group-hover:italic transition-all line-clamp-2">
+        {p.name}
+      </h3>
+      <div className="flex items-baseline gap-2">
+        <span className={`text-sm font-medium ${promoPrice ? "text-red-500" : "text-black/70"}`}>
+          {(promoPrice ?? p.price).toLocaleString("fr-FR")} DA
+        </span>
+        {promoPrice && (
+          <span className="text-xs text-black/25 line-through">
+            {p.price.toLocaleString("fr-FR")} DA
+          </span>
+        )}
+      </div>
+    </Link>
   );
 }

@@ -22,27 +22,28 @@ function toOrderBy(sort: SortOption) {
 }
 
 function shapeProduct(p: {
-  id: string; name: string; category: string; price: number; stock: number;
+  id: string; name: string; category: string; price: number; discountPercent: number | null; stock: number;
   mainImage: string; createdAt: Date;
   extraImages: { url: string; color: string | null; sortOrder: number }[];
   sizes: { size: string; quantity: number }[];
   variants: { id: string; color: string; sku: string | null; sizes: { name: string; stock: number; price: number | null }[] }[];
 }): Product {
   return {
-    id:          p.id,
-    name:        p.name,
-    category:    p.category,
-    price:       p.price,
-    stock:       p.stock,
-    mainImage:   p.mainImage,
+    id:              p.id,
+    name:            p.name,
+    category:        p.category,
+    price:           p.price,
+    discountPercent: p.discountPercent ?? null,
+    stock:           p.stock,
+    mainImage:       p.mainImage,
     extraImages: p.extraImages.map((img) => ({
       url:   img.url,
       ...(img.color ? { color: img.color } : {}),
     })),
-    status:      "Actif",
-    createdAt:   p.createdAt.toISOString(),
-    sizes:       p.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
-    variants:    p.variants.map((v) => ({
+    status:    "Actif",
+    createdAt: p.createdAt.toISOString(),
+    sizes:     p.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
+    variants:  p.variants.map((v) => ({
       id:    v.id,
       color: v.color,
       sku:   v.sku ?? undefined,
@@ -52,13 +53,14 @@ function shapeProduct(p: {
 }
 
 interface PageProps {
-  searchParams: Promise<{ category?: string; sort?: string; page?: string }>;
+  searchParams: Promise<{ category?: string; sort?: string; page?: string; promo?: string }>;
 }
 
 export default async function ShopPage({ searchParams }: PageProps) {
   const params   = await searchParams;
   const category = params.category ?? "";
   const sort     = (params.sort as SortOption) ?? "newest";
+  const promo    = params.promo === "true";
   const page     = Math.max(1, parseInt(params.page ?? "1", 10));
   const skip     = (page - 1) * LIMIT;
 
@@ -66,6 +68,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
     status:    "ACTIVE" as const,
     deletedAt: null,
     ...(category && category !== "Tous" ? { category } : {}),
+    ...(promo ? { discountPercent: { not: null } } : {}),
   };
 
   const [rawProducts, total, categoryRows] = await Promise.all([
@@ -99,6 +102,7 @@ export default async function ShopPage({ searchParams }: PageProps) {
           limit={LIMIT}
           activeCategory={category || "Tous"}
           sort={sort}
+          promoOnly={promo}
         />
       </Suspense>
     </div>

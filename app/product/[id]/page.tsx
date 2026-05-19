@@ -47,6 +47,23 @@ export async function generateMetadata({
   };
 }
 
+// Types légers pour les suggestions
+export interface SuggestedProduct {
+  id: string;
+  name: string;
+  mainImage: string;
+  category: string;
+  price: number;
+  discountPercent: number | null;
+}
+
+export interface LookSuggestion {
+  lookId: string;
+  lookTitle: string;
+  lookImage: string;
+  products: SuggestedProduct[];
+}
+
 export default async function ProductPage({
   params,
 }: {
@@ -54,26 +71,50 @@ export default async function ProductPage({
 }) {
   const { id } = await params;
 
-  const dbProduct = await prisma.product.findUnique({
-    where: { id },
-    include: {
-      extraImages: { orderBy: { sortOrder: "asc" } },
-      sizes:       true,
-      variants:    { include: { sizes: true } },
-    },
-  });
+  const [dbProduct, looksWithProduct] = await Promise.all([
+    prisma.product.findUnique({
+      where: { id },
+      include: {
+        extraImages: { orderBy: { sortOrder: "asc" } },
+        sizes:       true,
+        variants:    { include: { sizes: true } },
+      },
+    }),
+    // Looks actifs contenant ce produit
+    prisma.lookBook.findMany({
+      where: {
+        active:   true,
+        products: { some: { productId: id } },
+      },
+      include: {
+        products: {
+          orderBy: { sortOrder: "asc" },
+          include: {
+            product: {
+              select: {
+                id: true, name: true, mainImage: true,
+                category: true, price: true, discountPercent: true,
+                deletedAt: true, status: true,
+              },
+            },
+          },
+        },
+      },
+    }),
+  ]);
 
   let product: Product | null = null;
   if (dbProduct && !dbProduct.deletedAt) {
     product = {
-      id:          dbProduct.id,
-      name:        dbProduct.name,
-      category:    dbProduct.category,
-      price:       dbProduct.price,
-      stock:       dbProduct.stock,
-      status:      STATUS_FR[dbProduct.status],
-      mainImage:   dbProduct.mainImage,
-      createdAt:   dbProduct.createdAt.toISOString(),
+      id:              dbProduct.id,
+      name:            dbProduct.name,
+      category:        dbProduct.category,
+      price:           dbProduct.price,
+      discountPercent: dbProduct.discountPercent ?? null,
+      stock:           dbProduct.stock,
+      status:          STATUS_FR[dbProduct.status],
+      mainImage:       dbProduct.mainImage,
+      createdAt:       dbProduct.createdAt.toISOString(),
       sizes:       dbProduct.sizes.map((s) => ({ size: s.size, quantity: s.quantity })),
       extraImages: dbProduct.extraImages.map((img) => ({
         url:   img.url,
@@ -108,5 +149,59 @@ export default async function ProductPage({
     );
   }
 
-  return <ProductDetailClient product={product} />;
+  // ── Construire les suggestions depuis les looks ──────────────────────────
+  let lookSuggestions: LookSuggestion[] = looksWithProduct.map((look) => ({
+    lookId:    look.id,
+    lookTitle: look.title,
+    lookImage: look.imageUrl,
+    products:  look.products
+      .filter((lp) =>
+        lp.productId !== id &&
+        lp.product.status === "ACTIVE" &&
+        !lp.product.deletedAt
+      )
+      .map((lp) => ({
+        id:              lp.product.id,
+        name:            lp.product.name,
+        mainImage:       lp.product.mainImage,
+        category:        lp.product.category,
+        price:           lp.product.price,
+        discountPercent: lp.product.discountPercent,
+      })),
+  })).filter((l) => l.products.length > 0);
+
+  // Fallback : même catégorie si aucun look ne contient ce produit
+  let fallbackProducts: SuggestedProduct[] = [];
+  if (lookSuggestions.length === 0) {
+    const sameCat = await prisma.product.findMany({
+      where: {
+        category: product.category,
+        status:   "ACTIVE",
+        deletedAt: null,
+        NOT: { id },
+      },
+      select: {
+        id: true, name: true, mainImage: true,
+        category: true, price: true, discountPercent: true,
+      },
+      take: 4,
+      orderBy: { createdAt: "desc" },
+    });
+    fallbackProducts = sameCat.map((p) => ({
+      id:              p.id,
+      name:            p.name,
+      mainImage:       p.mainImage,
+      category:        p.category,
+      price:           p.price,
+      discountPercent: p.discountPercent,
+    }));
+  }
+
+  return (
+    <ProductDetailClient
+      product={product}
+      lookSuggestions={lookSuggestions}
+      fallbackProducts={fallbackProducts}
+    />
+  );
 }

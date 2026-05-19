@@ -3,8 +3,12 @@
 import { useRef } from "react";
 import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
 import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 
-const WORDS = ["Intemporel.", "Raffiné.", "Naturel."];
+const MARQUEE_ITEMS = [
+  "Old Money", "Classique", "Intemporel", "Élégance", "Discrétion",
+  "Qualité", "Héritage", "Style", "Noblesse", "Old Money",
+];
 
 export default function HeroSection() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -15,236 +19,251 @@ export default function HeroSection() {
     offset: ["start start", "end start"],
   });
 
-  // Sur mobile (< 1024 px) ou si l'utilisateur a activé "réduire les animations",
-  // on fige les valeurs de parallaxe à leur état initial.
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 1024;
-  const disableParallax = prefersReduced || isMobile;
-
-  const imageY = useTransform(scrollYProgress, [0, 1], disableParallax ? ["0%", "0%"] : ["0%", "20%"]);
-  const textY  = useTransform(scrollYProgress, [0, 1], disableParallax ? ["0%", "0%"] : ["0%", "40%"]);
-  const opacity = useTransform(scrollYProgress, [0, 0.6], disableParallax ? [1, 1] : [1, 0]);
+  const imgY = useTransform(
+    scrollYProgress, [0, 1],
+    prefersReduced ? ["0%", "0%"] : ["0%", "12%"]
+  );
+  const fadeOut = useTransform(
+    scrollYProgress, [0, 0.6],
+    prefersReduced ? [1, 1] : [1, 0]
+  );
 
   return (
     <section
       ref={containerRef}
-      className="relative h-screen min-h-175 overflow-hidden bg-white"
+      className="relative overflow-hidden"
+      style={{ backgroundColor: "#EDE8DF", minHeight: "100svh" }}
     >
-      {/* Superposition texture grain */}
-      <div
-        className="pointer-events-none absolute inset-0 z-10 opacity-[0.06]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "repeat",
-          backgroundSize: "200px",
-        }}
-      />
-
-      {/* Lignes verticales décoratives */}
-      <div className="pointer-events-none absolute inset-0 z-10">
-        <div className="absolute left-[8%] top-0 h-full w-px bg-white/8" />
-        <div className="absolute right-[8%] top-0 h-full w-px bg-white/8" />
+      {/* Marquee — juste sous la navbar fixe */}
+      <div className="absolute top-16 sm:top-18 lg:top-20 left-0 right-0 z-20 overflow-hidden bg-[#1a1713] py-1.5">
+        <motion.div
+          animate={{ x: ["0%", "-50%"] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "linear" }}
+          className="flex whitespace-nowrap"
+        >
+          {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((item, i) => (
+            <span
+              key={i}
+              className="mx-5 text-[8px] uppercase tracking-[0.45em] text-[#EDE8DF]/45"
+              style={{ fontFamily: "'Cormorant Garamond', serif" }}
+            >
+              {item}<span className="ml-5 text-[#EDE8DF]/20">·</span>
+            </span>
+          ))}
+        </motion.div>
       </div>
 
-      {/* Image de fond avec parallaxe */}
+      {/* Grid principal */}
       <motion.div
-        style={{ y: imageY }}
-        className="absolute inset-0 z-0 scale-110"
+        style={{ opacity: fadeOut }}
+        className="relative z-10 grid grid-cols-1 lg:grid-cols-2"
       >
-        <div
-          className="h-full w-full"
-          style={{
-            background: `linear-gradient(165deg, #ffffff 0%, #f5f5f5 40%, #eeeeee 70%, #e8e8e8 100%)`,
-          }}
-        />
 
-        {/* Superposition atmosphérique */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 80% 80% at 60% 40%, transparent 30%, rgba(0,0,0,0.08) 100%),
-              linear-gradient(to right, rgba(0,0,0,0.03) 0%, rgba(0,0,0,0.01) 42%, transparent 65%)
-            `,
-          }}
-        />
-      </motion.div>
+        {/* ── Colonne texte ─────────────────────────────────────── */}
+        <div className="flex flex-col justify-between px-6 sm:px-10 lg:px-16
+                        pt-28 sm:pt-30 lg:pt-32
+                        pb-10 lg:pb-16">
 
-      {/* Contenu */}
-      <motion.div
-        style={{ y: textY, opacity }}
-        className="relative z-20 flex h-full flex-col justify-center px-[8%]"
-      >
-        {/* Étiquette saison */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="my-10 flex items-center space-x-4"
-        >
-          <div className="h-px w-12 bg-black/40" />
-          <span
-            className="text-[10px] uppercase tracking-[0.35em] text-black/50"
-            style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+          {/* Top meta */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 0.15 }}
+            className="flex items-center gap-3"
           >
-            Collection Printemps — 2025
-          </span>
-        </motion.div>
+            <div className="h-px w-7 bg-[#8b7355]/50" />
+            <span className="text-[9px] uppercase tracking-[0.5em] text-[#8b7355] font-medium">
+              Collection 2025
+            </span>
+          </motion.div>
 
-        {/* Titre principal */}
-        <div className="overflow-hidden">
-          <motion.h1
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-            className="leading-none text-black/90"
-            style={{
-              fontFamily: "'Cormorant Garamond', Georgia, serif",
-              fontSize: "clamp(3.5rem, 8vw, 7.5rem)",
-              fontWeight: 300,
-              fontStyle: "italic",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            L'Art du
-            <br />
-            <span style={{ fontWeight: 600 }}>Gentleman</span>
-          </motion.h1>
-        </div>
-
-        {/* Mots animés */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.9 }}
-          className="mt-6 flex items-center space-x-3"
-        >
-          {WORDS.map((word, i) => (
-            <motion.span
-              key={word}
+          {/* Bloc central */}
+          <div className="my-6 lg:my-auto">
+            <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 1 + i * 0.15 }}
-              className="text-[11px] uppercase tracking-[0.25em] text-black/60"
-              style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="text-[10px] uppercase tracking-[0.5em] text-[#1a1713]/35 mb-5 font-medium"
             >
-              {word}
-              {i < WORDS.length - 1 && (
-                <span className="ml-3 text-black/20">·</span>
-              )}
-            </motion.span>
-          ))}
-        </motion.div>
+              Style vestimentaire
+            </motion.p>
 
-        {/* Description */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.2 }}
-          className="mt-8 max-w-xs leading-relaxed text-black/35"
-          style={{
-            fontFamily: "'Cormorant Garamond', Georgia, serif",
-            fontSize: "1rem",
-          }}
-        >
-          Des pièces conçues pour l'homme qui comprend que le vrai luxe réside
-          dans la discrétion et la permanence du style.
-        </motion.p>
-
-        {/* Boutons d'action */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 1.4 }}
-          className="mt-12 flex items-center space-x-8"
-        >
-          <Link
-            href="/boutique"
-            className="group relative overflow-hidden bg-black px-10 py-4 text-[10px] uppercase tracking-[0.3em] text-white transition-all duration-300 hover:bg-white/85"
-          >
-            <span className="relative z-10">Découvrir la Collection</span>
-          </Link>
-
-          <Link
-            href="/notre-histoire"
-            className="group flex items-center space-x-3 text-[10px] uppercase tracking-[0.3em] text-black/60 transition-colors hover:text-black"
-          >
-            <span>Notre Histoire</span>
-            <motion.span
-              animate={{ x: [0, 4, 0] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            >
-              →
-            </motion.span>
-          </Link>
-        </motion.div>
-      </motion.div>
-
-      {/* Barre inférieure */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 1.8 }}
-        className="absolute bottom-0 left-0 right-0 z-20 flex items-end justify-between px-[8%] py-8"
-      >
-        {/* Indicateur de défilement */}
-        <div className="flex flex-col items-center space-y-3">
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex flex-col items-center space-y-1"
-          >
-            <div className="h-8 w-px bg-black/20" />
-            <div className="h-1.5 w-1.5 rounded-full bg-black/50" />
-          </motion.div>
-          <span
-            className="text-[8px] uppercase tracking-[0.4em] text-black/25"
-            style={{ writingMode: "vertical-rl" }}
-          >
-            Défiler
-          </span>
-        </div>
-
-        {/* Statistiques */}
-        <div className="hidden sm:flex items-center space-x-10">
-          {[
-            { value: "MMXXV", label: "Fondé" },
-            { value: "100%", label: "Matières naturelles" },
-            { value: "∞", label: "Intemporel" },
-          ].map(({ value, label }) => (
-            <div key={label} className="text-right">
-              <div
-                className="text-lg text-black/60"
+            {/* H1 */}
+            <div className="overflow-hidden">
+              <motion.h1
+                initial={{ y: 80, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 1, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                className="leading-[0.88] text-[#1a1713]"
                 style={{
                   fontFamily: "'Cormorant Garamond', Georgia, serif",
-                  fontStyle: "italic",
+                  fontSize: "clamp(4rem, 14vw, 9rem)",
+                  fontWeight: 300,
+                  letterSpacing: "-0.03em",
                 }}
               >
-                {value}
-              </div>
-              <div className="text-[9px] uppercase tracking-[0.25em] text-black/25">
-                {label}
-              </div>
+                Old
+                <br />
+                <em style={{ fontWeight: 600 }}>Money.</em>
+              </motion.h1>
             </div>
-          ))}
+
+            {/* Description */}
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.85 }}
+              className="mt-5 text-[#5a4e3a]/60 leading-relaxed text-sm max-w-xs"
+              style={{ fontFamily: "'Inter', sans-serif", fontWeight: 300 }}
+            >
+              Coupes rigoureuses, matières nobles, aucun logo.
+              L'élégance qui n'a pas besoin de se justifier.
+            </motion.p>
+
+            {/* Pills */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.7, delay: 1.05 }}
+              className="mt-5 flex flex-wrap gap-2"
+            >
+              {["Blazer", "Polo Piqué", "Chino", "Cachemire", "Lin"].map((item, i) => (
+                <motion.span
+                  key={item}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 1.1 + i * 0.07, duration: 0.35 }}
+                  className="text-[9px] uppercase tracking-[0.25em] text-[#8b7355] border border-[#8b7355]/25 px-2.5 py-1"
+                >
+                  {item}
+                </motion.span>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* CTAs */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 1.25 }}
+            className="flex flex-col sm:flex-row gap-3"
+          >
+            <Link
+              href="/shop"
+              className="group flex items-center justify-center gap-2 bg-[#1a1713] text-[#EDE8DF]
+                         px-7 py-3.5 text-[10px] uppercase tracking-[0.38em] font-semibold
+                         hover:bg-[#2e2a24] transition-colors duration-300 whitespace-nowrap"
+            >
+              Découvrir la boutique
+              <ArrowUpRight size={12} strokeWidth={2}
+                className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
+            </Link>
+            <Link
+              href="/shop?sort=newest"
+              className="flex items-center justify-center gap-2 border border-[#1a1713]/20
+                         text-[#1a1713]/60 px-7 py-3.5 text-[10px] uppercase tracking-[0.38em]
+                         font-medium hover:border-[#1a1713]/50 hover:text-[#1a1713]
+                         transition-all duration-300 whitespace-nowrap"
+            >
+              Nouvelle collection
+            </Link>
+          </motion.div>
+        </div>
+
+        {/* ── Colonne image ─────────────────────────────────────── */}
+        <div className="relative overflow-hidden" style={{ minHeight: "55vw", maxHeight: "100svh" }}>
+          <motion.div style={{ y: imgY }} className="absolute inset-0 scale-[1.08]">
+            <img
+              src="https://images.unsplash.com/photo-1594938298603-c8148c4b4e05?auto=format&fit=crop&q=85&w=1100"
+              alt="Style Old Money — Homme élégant"
+              className="w-full h-full object-cover object-top"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background:
+                  "linear-gradient(to right, rgba(237,232,223,0.6) 0%, transparent 30%), linear-gradient(to top, rgba(237,232,223,0.45) 0%, transparent 35%)",
+              }}
+            />
+          </motion.div>
+
+          {/* Quote card — masquée sur très petit écran */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 1.4 }}
+            className="absolute bottom-6 left-4 sm:bottom-10 sm:left-6 z-10
+                       max-w-50 sm:max-w-52
+                       bg-[#EDE8DF]/88 backdrop-blur-sm px-4 py-4 sm:px-6 sm:py-5
+                       border-l-2 border-[#8b7355]"
+          >
+            <p
+              className="text-[#1a1713]/70 leading-snug mb-2 text-sm"
+              style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic" }}
+            >
+              "Le vrai luxe ne se voit pas. Il se ressent."
+            </p>
+            <span className="text-[8px] uppercase tracking-[0.3em] text-[#8b7355]">
+              IA Store · Algérie
+            </span>
+          </motion.div>
+
+          {/* Label haut-droite */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.7, delay: 1.6 }}
+            className="absolute top-5 right-5 z-10 flex flex-col items-end gap-0.5"
+          >
+            <span className="text-[8px] uppercase tracking-[0.4em] text-[#1a1713]/25">Old Money</span>
+            <span className="text-[8px] uppercase tracking-[0.3em] text-[#8b7355]/50">Aesthetic</span>
+          </motion.div>
         </div>
       </motion.div>
 
-      {/* Chiffre romain décoratif */}
+      {/* Diviseur vertical desktop */}
+      <motion.div
+        initial={{ scaleY: 0 }}
+        animate={{ scaleY: 1 }}
+        transition={{ duration: 1.1, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="hidden lg:block absolute top-20 bottom-0 left-1/2 w-px bg-[#1a1713]/8 origin-top z-20"
+      />
+
+      {/* Barre stats bas */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 1.5, delay: 1.6 }}
-        className="pointer-events-none absolute bottom-16 right-[8%] z-20 hidden lg:block"
-        style={{
-          fontFamily: "'Cormorant Garamond', Georgia, serif",
-          fontSize: "12rem",
-          fontWeight: 300,
-          color: "rgba(255,255,255,0.03)",
-          lineHeight: 1,
-          userSelect: "none",
-        }}
+        transition={{ duration: 0.8, delay: 1.7 }}
+        className="hidden sm:block absolute bottom-0 left-0 right-0 z-20
+                   border-t border-[#1a1713]/8 bg-[#EDE8DF]/75 backdrop-blur-sm"
       >
-        I
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 py-3 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-6 sm:gap-10">
+            {[
+              { v: "100%", l: "Matières premium" },
+              { v: "500+", l: "Pièces" },
+              { v: "48h",  l: "Livraison" },
+            ].map(({ v, l }) => (
+              <div key={l} className="flex items-baseline gap-1.5">
+                <span
+                  className="text-base text-[#1a1713]/65"
+                  style={{ fontFamily: "'Cormorant Garamond', serif", fontStyle: "italic" }}
+                >
+                  {v}
+                </span>
+                <span className="text-[9px] uppercase tracking-[0.18em] text-[#1a1713]/25">{l}</span>
+              </div>
+            ))}
+          </div>
+          <motion.div
+            animate={{ y: [0, 5, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="flex items-center gap-2"
+          >
+            <div className="h-4 w-px bg-[#1a1713]/20" />
+            <span className="text-[8px] uppercase tracking-[0.4em] text-[#1a1713]/20">Défiler</span>
+          </motion.div>
+        </div>
       </motion.div>
     </section>
   );

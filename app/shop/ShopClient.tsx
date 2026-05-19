@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Plus, Filter, ChevronDown } from "lucide-react";
+import { Plus, Filter, ChevronDown, Tag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -32,10 +32,11 @@ interface Props {
   limit:          number;
   activeCategory: string;
   sort:           SortOption;
+  promoOnly?:     boolean;
 }
 
 export default function ShopClient({
-  products, categories, total, page, limit, activeCategory, sort,
+  products, categories, total, page, limit, activeCategory, sort, promoOnly = false,
 }: Props) {
   const { addToCart }   = useCart();
   const [quickAdd, setQuickAdd] = useState<Product | null>(null);
@@ -90,6 +91,20 @@ export default function ShopClient({
               ))}
             </ul>
           </nav>
+
+          {/* Filtre Promotions */}
+          <button
+            type="button"
+            onClick={() => nav({ promo: promoOnly ? "" : "true", page: 1 })}
+            className={`flex items-center gap-2 px-4 py-2 text-[11px] uppercase tracking-[0.2em] font-medium border transition-all ${
+              promoOnly
+                ? "bg-red-500 text-white border-red-500"
+                : "border-black/10 text-black/60 hover:border-black/30"
+            }`}
+          >
+            <Tag size={13} strokeWidth={1.5} />
+            Promotions
+          </button>
 
           {/* Sort dropdown */}
           <div className="relative">
@@ -163,6 +178,12 @@ export default function ShopClient({
               </Link>
               <div className="absolute inset-0 pointer-events-none bg-black/0 group-hover:bg-black/5 transition-colors duration-500" />
 
+              {product.discountPercent && (
+                <div className="absolute top-4 left-4 z-10 bg-red-500 text-white text-[9px] font-bold px-2 py-1 uppercase tracking-wider">
+                  -{product.discountPercent}%
+                </div>
+              )}
+
               <div className="absolute top-6 right-6 z-10">
                 <FavoriteButton product={product} variant="card" />
               </div>
@@ -186,9 +207,22 @@ export default function ShopClient({
                   {product.category}
                 </p>
               </Link>
-              <span className="font-medium text-sm">
-                {product.price.toLocaleString("fr-FR")} DA
-              </span>
+              <div className="text-right shrink-0">
+                {product.discountPercent ? (
+                  <>
+                    <span className="font-semibold text-sm text-red-500">
+                      {Math.round(product.price * (1 - product.discountPercent / 100)).toLocaleString("fr-FR")} DA
+                    </span>
+                    <span className="block text-xs text-black/30 line-through">
+                      {product.price.toLocaleString("fr-FR")} DA
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-medium text-sm">
+                    {product.price.toLocaleString("fr-FR")} DA
+                  </span>
+                )}
+              </div>
             </div>
           </li>
         ))}

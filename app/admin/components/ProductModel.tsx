@@ -151,7 +151,7 @@ export default function ProductModel({
 
   const setImageColor = useCallback((index: number, color: string | undefined) => {
     setExtraItems((prev) => prev.map((item, i) => (i === index ? { ...item, color } : item)));
-    setColorPickerIdx(-1);
+    // Ne pas fermer le picker ici — l'utilisateur le ferme en cliquant ailleurs
   }, []);
 
   const goNext = () => {
@@ -163,11 +163,12 @@ export default function ProductModel({
   const goPrev = () => setStep((s) => Math.max(0, s - 1) as StepId);
 
   const handleSubmit = async () => {
+    // step 0 = Infos, step 2 = Images (step 1 = Variantes, pas de validation bloquante)
     const allErrors = { ...validateStep(0), ...validateStep(1) };
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
       if (Object.keys(validateStep(0)).length > 0) { setStep(0); return; }
-      if (Object.keys(validateStep(1)).length > 0) { setStep(1); return; }
+      if (Object.keys(validateStep(1)).length > 0) { setStep(2); return; }
     }
 
     if (useVariants && (form.variants?.length ?? 0) > 0) {
@@ -209,8 +210,8 @@ export default function ProductModel({
 
   const STEPS = [
     { id: 0 as StepId, label: "Infos de base", Icon: FileText,  hasError: () => step > 0 && step0HasError() },
-    { id: 1 as StepId, label: "Images",        Icon: ImageIcon, hasError: () => step > 1 && step1HasError() },
-    { id: 2 as StepId, label: "Variantes",     Icon: Layers,    hasError: () => false },
+    { id: 1 as StepId, label: "Variantes",     Icon: Layers,    hasError: () => false },
+    { id: 2 as StepId, label: "Images",        Icon: ImageIcon, hasError: () => step > 2 && step1HasError() },
   ] as const;
 
   return (
@@ -290,17 +291,6 @@ export default function ProductModel({
             />
           )}
           {step === 1 && (
-            <StepImages
-              mainPreview={mainPreview} errors={errors}
-              mainInputRef={mainInputRef} extraInputRef={extraInputRef}
-              extraItems={extraItems} colorPickerIdx={colorPickerIdx}
-              setColorPickerIdx={setColorPickerIdx}
-              handleMainImageChange={handleMainImageChange}
-              handleExtraImagesChange={handleExtraImagesChange}
-              removeExtraImage={removeExtraImage} setImageColor={setImageColor}
-            />
-          )}
-          {step === 2 && (
             <StepVariants
               form={form} useVariants={useVariants} setUseVariants={setUseVariants}
               quickFill={quickFill} setQuickFill={setQuickFill}
@@ -309,6 +299,18 @@ export default function ProductModel({
               quickQty={quickQty} setQuickQty={setQuickQty}
               sizeOptions={sizeOptions} computedStock={computedStock}
               toggleSize={toggleSize} updateQuantity={updateQuantity} setForm={setForm}
+            />
+          )}
+          {step === 2 && (
+            <StepImages
+              mainPreview={mainPreview} errors={errors}
+              mainInputRef={mainInputRef} extraInputRef={extraInputRef}
+              extraItems={extraItems} colorPickerIdx={colorPickerIdx}
+              setColorPickerIdx={setColorPickerIdx}
+              handleMainImageChange={handleMainImageChange}
+              handleExtraImagesChange={handleExtraImagesChange}
+              removeExtraImage={removeExtraImage} setImageColor={setImageColor}
+              variants={useVariants ? (form.variants ?? []) : []}
             />
           )}
         </div>
