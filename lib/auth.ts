@@ -20,8 +20,8 @@ export interface JwtPayload {
   exp?:  number;
 }
 
-export const TOKEN_MAX_AGE_SECONDS  = 60 * 15;      // 15 minutes
-export const TOKEN_REFRESH_THRESHOLD = 60 * 5;       // refresh when < 5 min left
+export const TOKEN_MAX_AGE_SECONDS  = 60 * 60;      // 1 hour
+export const TOKEN_REFRESH_THRESHOLD = 60 * 15;      // refresh when < 15 min left
 export const AUTH_COOKIE_NAME        = "ia_session";
 
 function blockedKey(jti: string) {
