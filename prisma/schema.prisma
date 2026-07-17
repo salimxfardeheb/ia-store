@@ -7,64 +7,51 @@ datasource db {
   provider = "postgresql"
 }
 
-// ─── User ────────────────────────────────────────────────────────────────────
-
-enum UserRole {
-  ADMIN   // Propriétaire — accès total
-  SELLER  // Vendeur — POS + clients uniquement
-  CLIENT
-}
-
 model User {
-  id         String   @id @default(cuid())
-  email      String   @unique
+  id         String     @id @default(cuid())
+  email      String     @unique
   name       String
   password   String
-  role       UserRole @default(CLIENT)
+  role       UserRole   @default(CLIENT)
   phone      String?
   city       String?
   address    String?
   postalCode String?
-  createdAt  DateTime @default(now())
-
-  orders    Order[]
-  cartItems CartItem[]
-  favorites Favorite[]
+  createdAt  DateTime   @default(now())
+  cartItems  CartItem[]
+  favorites  Favorite[]
+  orders     Order[]
 }
 
-// ─── Product ─────────────────────────────────────────────────────────────────
-
 model Product {
-  id              String        @id @default(cuid())
-  name            String
-  category        String
-  price           Int
-  discountPercent Int?                      // null = pas de promo ; 1-99 = % de réduction
-  isBestSeller    Boolean       @default(false)
-  stock           Int           @default(0)
-  status          ProductStatus @default(DRAFT)
-  mainImage       String        @default("")
-  createdAt       DateTime      @default(now())
-  deletedAt       DateTime?     // null = active; non-null = soft-deleted
-
-  sizes       ProductSize[]
-  extraImages ProductImage[]
-  variants    Variant[]
-  orderItems  OrderItem[]
+  id          String         @id @default(cuid())
+  name        String
+  category    String
+  price       Int
+  stock       Int            @default(0)
+  status          ProductStatus  @default(DRAFT)
+  mainImage       String         @default("")
+  createdAt       DateTime       @default(now())
+  deletedAt       DateTime?
+  discountPercent Int?
+  isBestSeller    Boolean        @default(false)
   cartItems   CartItem[]
   favorites   Favorite[]
-  lookBooks   LookBookProduct[]
+  orderItems  OrderItem[]
+  extraImages ProductImage[]
+  sizes       ProductSize[]
+  variants    Variant[]
 
   @@index([status, deletedAt])
 }
 
 model ProductImage {
   id        Int     @id @default(autoincrement())
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
   url       String
   color     String?
   sortOrder Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@index([productId])
   @@index([productId, color])
@@ -74,18 +61,16 @@ model ProductSize {
   id        Int     @id @default(autoincrement())
   size      String
   quantity  Int
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
-
-// ─── Variant (couleur → tailles) ─────────────────────────────────────────────
 
 model Variant {
   id        String        @id @default(cuid())
-  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   productId String
-  color     String        // Ex: "Rouge", "Marine", "#3B82F6"
-  sku       String?       // Ex: "PROD-RED-S-001"
+  color     String
+  sku       String?
+  product   Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   sizes     VariantSize[]
 
   @@unique([productId, color])
@@ -94,13 +79,97 @@ model Variant {
 
 model VariantSize {
   id        Int     @id @default(autoincrement())
-  variant   Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   variantId String
-  name      String          // Ex: "S", "M", "42", "Sur mesure"
+  name      String
   stock     Int     @default(0)
-  price     Int?            // null = hérite du prix de base du produit
+  price     Int?
+  variant   Variant @relation(fields: [variantId], references: [id], onDelete: Cascade)
 
   @@unique([variantId, name])
+}
+
+model Order {
+  id            String       @id @default(cuid())
+  userId        String?
+  total         Int
+  status        OrderStatus  @default(PENDING)
+  paymentMethod String       @default("cash")
+  deliveryType  String       @default("home")
+  name          String
+  phone         String
+  email         String?
+  city          String?
+  address       String?
+  postalCode    String?
+  createdAt     DateTime     @default(now())
+  channel       OrderChannel @default(ONLINE)
+  user          User?        @relation(fields: [userId], references: [id])
+  items         OrderItem[]
+
+  @@index([userId])
+  @@index([channel, userId])
+}
+
+model OrderItem {
+  id        Int      @id @default(autoincrement())
+  orderId   String
+  productId String?
+  name      String
+  price     Int
+  quantity  Int
+  mainImage String
+  category  String
+  color     String?
+  size      String?
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product? @relation(fields: [productId], references: [id])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  actorId  String
+  action   String
+  entity   String
+  entityId String
+  diff     Json?
+  at       DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+  @@index([at])
+}
+
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  productId String
+  quantity  Int      @default(1)
+  size      String?
+  color     String?
+  updatedAt DateTime @default(now()) @updatedAt
+  product   Product  @relation(fields: [productId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId, size, color])
+  @@index([updatedAt])
+}
+
+enum UserRole {
+  ADMIN
+  CLIENT
+  SELLER
 }
 
 enum ProductStatus {
@@ -109,56 +178,9 @@ enum ProductStatus {
   ARCHIVED
 }
 
-// ─── Order ───────────────────────────────────────────────────────────────────
-
 enum OrderChannel {
-  ONLINE   // commande en ligne
-  OFFLINE  // vente en magasin (POS)
-}
-
-model Order {
-  id            String       @id @default(cuid())
-  user          User?        @relation(fields: [userId], references: [id])
-  userId        String?
-  channel       OrderChannel @default(ONLINE)
-  total         Int
-  status        OrderStatus  @default(PENDING)
-  paymentMethod String       @default("cash")
-  deliveryType  String       @default("home")
-
-  // Snapshot adresse au moment de la commande.
-  // city/address/postalCode sont nullable : les ventes OFFLINE (POS) ne
-  // collectent pas d'adresse de livraison. Les commandes ONLINE les exigent
-  // au niveau de la validation Zod (orderFormSchema).
-  name       String
-  phone      String
-  email      String?
-  city       String?
-  address    String?
-  postalCode String?
-
-  createdAt DateTime    @default(now())
-  items     OrderItem[]
-
-  @@index([userId])
-  @@index([channel, userId])
-}
-
-model OrderItem {
-  id        Int      @id @default(autoincrement())
-  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  orderId   String
-  product   Product? @relation(fields: [productId], references: [id])
-  productId String?
-
-  // Snapshot produit au moment de la commande
-  name      String
-  price     Int
-  quantity  Int
-  size      String?  // taille sélectionnée (null pour anciennes commandes)
-  color     String?  // couleur variante sélectionnée (null si produit sans variantes)
-  mainImage String
-  category  String
+  ONLINE
+  OFFLINE
 }
 
 enum OrderStatus {
@@ -168,80 +190,4 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   RETURNED
-}
-
-// ─── Favorites (wishlist) ────────────────────────────────────────────────────
-
-model Favorite {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId String
-  createdAt DateTime @default(now())
-
-  @@unique([userId, productId])
-  @@index([userId])
-}
-
-// ─── Audit log ───────────────────────────────────────────────────────────────
-
-model AuditLog {
-  id       String   @id @default(cuid())
-  actorId  String                      // user who performed the action
-  action   String                      // e.g. "order.status_changed", "user.role_changed"
-  entity   String                      // e.g. "Order", "User", "Product"
-  entityId String                      // PK of the affected row
-  diff     Json?                       // { before, after } for key fields
-  at       DateTime @default(now())
-
-  @@index([entity, entityId])
-  @@index([actorId])
-  @@index([at])
-}
-
-// ─── LookBook ────────────────────────────────────────────────────────────────
-
-model LookBook {
-  id          String   @id @default(cuid())
-  title       String                        // Ex: "Casual Chic"
-  tag         String   @default("")         // Ex: "Quotidien", "Bureau"
-  description String   @default("")
-  imageUrl    String                        // URL Cloudinary
-  accent      String   @default("#1a1713")  // Couleur badge
-  sortOrder   Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  products    LookBookProduct[]
-}
-
-model LookBookProduct {
-  id         Int      @id @default(autoincrement())
-  lookBook   LookBook @relation(fields: [lookBookId], references: [id], onDelete: Cascade)
-  lookBookId String
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  productId  String
-  sortOrder  Int      @default(0)
-
-  @@unique([lookBookId, productId])
-  @@index([lookBookId])
-}
-
-// ─── Cart ────────────────────────────────────────────────────────────────────
-
-model CartItem {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  product   Product  @relation(fields: [productId], references: [id])
-  productId String
-  quantity  Int      @default(1)
-  size      String?  // taille sélectionnée (null si pas de taille)
-  color     String?  // couleur variante sélectionnée (null si produit sans variantes)
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, productId, size, color])
-  @@index([updatedAt])
 }

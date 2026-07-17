@@ -8,24 +8,20 @@ const cspDirectives = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "img-src 'self' data: blob: https://res.cloudinary.com",
-  "font-src 'self' data:",
-  // 'unsafe-inline' est requis en production : de nombreux composants utilisent
-  // des attributs style={} JSX calculés dynamiquement (couleurs de variantes,
-  // animations Framer Motion, dimensions de charts, polices) qui sont bloqués
-  // par style-src sans 'unsafe-inline' dans les navigateurs CSP Level 3.
-  // Migration future : remplacer les style={} dynamiques par des variables CSS
-  // (--color: ...) injectées via className, puis activer les hashes CSP.
-  isDev
-    ? "style-src 'self' 'unsafe-inline'"
-    : "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com",
+  "font-src 'self' data: https://fonts.gstatic.com",
+  // 'unsafe-inline' est requis : de nombreux composants utilisent des attributs
+  // style={} JSX calculés dynamiquement (couleurs de variantes, animations
+  // Framer Motion, dimensions de charts) bloqués par style-src sans 'unsafe-inline'.
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   isDev
     ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
     : "script-src 'self' 'unsafe-inline'",
-  "connect-src 'self'",
+  isDev ? "connect-src 'self' ws: wss:" : "connect-src 'self'",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
-  "upgrade-insecure-requests",
+  // upgrade-insecure-requests uniquement en production (casse le dev HTTP→HTTPS)
+  ...(!isDev ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const securityHeaders = [
@@ -48,6 +44,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
       },
     ],
   },
