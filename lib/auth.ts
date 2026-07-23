@@ -53,8 +53,13 @@ export async function verifyToken(token: string): Promise<JwtPayload | null> {
   }
 
   // Reject tokens that have been explicitly revoked on logout
-  const blocked = await redis.get(blockedKey(payload.jti));
-  if (blocked) return null;
+  // Fail-open si Redis est injoignable (on laisse passer)
+  try {
+    const blocked = await redis.get(blockedKey(payload.jti));
+    if (blocked) return null;
+  } catch (err) {
+    console.error("[auth] Redis unreachable during verifyToken, failing open:", err);
+  }
 
   return payload;
 }
@@ -71,7 +76,11 @@ export async function revokeToken(token: string): Promise<void> {
   const now = Math.floor(Date.now() / 1000);
   const ttl = (payload.exp ?? now + TOKEN_MAX_AGE_SECONDS) - now;
   if (ttl > 0) {
-    await redis.set(blockedKey(payload.jti), "1", { ex: ttl });
+    try {
+      await redis.set(blockedKey(payload.jti), "1", { ex: ttl });
+    } catch (err) {
+      console.error("[auth] Redis unreachable during revokeToken:", err);
+    }
   }
 }
 
