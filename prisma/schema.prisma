@@ -41,6 +41,7 @@ model Product {
   extraImages ProductImage[]
   sizes       ProductSize[]
   variants    Variant[]
+  lookProducts LookBookProduct[]
 
   @@index([status, deletedAt])
 }
@@ -135,6 +136,31 @@ model Favorite {
 
   @@unique([userId, productId])
   @@index([userId])
+}
+
+model LookBook {
+  id          String   @id @default(cuid())
+  title       String
+  tag         String   @default("")
+  description String   @default("")
+  imageUrl    String
+  accent      String   @default("#1a1713")
+  sortOrder   Int      @default(0)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  products    LookBookProduct[]
+}
+
+model LookBookProduct {
+  id        Int      @id @default(autoincrement())
+  lookId    String
+  productId String
+  sortOrder Int      @default(0)
+  look      LookBook @relation(fields: [lookId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
+  @@index([lookId])
+  @@index([productId])
 }
 
 model AuditLog {
