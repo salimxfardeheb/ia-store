@@ -53,7 +53,7 @@ export default function AdminSidebar() {
   const visibleBottom = BOTTOM_NAV.filter((item) => item.roles.includes(role));
 
   return (
-    <aside className="w-60 fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-white border-[rgba(0,0,0,0.08)]">
+    <aside className="w-72 fixed inset-y-0 left-0 z-30 flex flex-col border-r bg-white border-[rgba(0,0,0,0.08)]">
       {/* Brand */}
       <div className="px-6 pt-8 pb-6 border-b border-[rgba(0,0,0,0.08)]">
         <Link href="/admin" className="flex flex-col">

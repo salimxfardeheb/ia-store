@@ -24,4 +24,15 @@
     @apply bg-[#fdfcfb] text-[#1a1a1a] font-sans antialiased;
   }
 
+  .font-serif {
+    font-weight: 450;
+  }
+
+  .font-serif.font-light {
+    font-weight: 350;
+  }
+
+  .font-serif.font-bold {
+    font-weight: 600;
+  }
 }
