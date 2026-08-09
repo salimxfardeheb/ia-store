@@ -9,6 +9,7 @@ import {
   parseReturnSessionResponse,
 } from "@/lib/flowmerce";
 import { shippingForOrder } from "@/lib/shipping";
+import { ageFromBirthDate } from "@/lib/age";
 
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
@@ -57,6 +58,10 @@ export async function POST(req: NextRequest) {
         deliveryType:  true,
         createdAt:     true,
         items:         { select: { name: true, price: true, quantity: true } },
+        // Date de naissance et genre vivent sur le compte, pas sur la commande.
+        // Absents pour une vente au comptoir (aucun compte) ou un profil non
+        // renseigné.
+        user:          { select: { birthDate: true, gender: true } },
       },
     });
   } catch (err) {
@@ -88,22 +93,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 6. Le lien est à usage unique et expire : si une session encore valide
-  //    existe pour ce produit, on la réutilise au lieu d'en brûler une autre.
-  try {
-    const existing = await prisma.returnSession.findUnique({
-      where:  { orderId_productName: { orderId: order.id, productName } },
-      select: { url: true, expiresAt: true },
-    });
-    if (existing && existing.expiresAt.getTime() > Date.now()) {
-      return NextResponse.json({ url: existing.url, expiresAt: existing.expiresAt });
-    }
-  } catch (err) {
-    // Un cache de session inutilisable ne doit pas empêcher d'en créer une.
-    console.error("[flowmerce] lecture ReturnSession impossible", err);
-  }
-
-  // 7. Construction du payload à partir des données authoritatives de la DB.
+  // 6. Construction du payload à partir des données authoritatives de la DB.
   //    Tout champ transmis est pré-rempli sur la page de retour ; tout champ
   //    omis devient une saisie supplémentaire pour le client.
   // Yalidine n'est pas intégré à la boutique : le mode de livraison et le
@@ -134,6 +124,10 @@ export async function POST(req: NextRequest) {
     quantity:      matchedItem.quantity,
     shippingMethod: shipping?.method ?? null,
     shippingCost:   shipping?.price  ?? null,
+    // Flowmerce attend un âge, pas une date : on le calcule à l'envoi pour
+    // qu'il ne se périme jamais.
+    customerAge:    ageFromBirthDate(order.user?.birthDate),
+    customerGender: order.user?.gender ?? null,
   });
 
   for (const field of built.omitted) {
@@ -157,7 +151,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 8. Appel Flowmerce — depuis le backend uniquement, la clé API ne doit
+  // 7. Appel Flowmerce — depuis le backend uniquement, la clé API ne doit
   //    jamais transiter côté navigateur.
   const apiKey  = process.env.FLOWMERCE_API_KEY;
   const baseUrl = process.env.FLOWMERCE_BASE_URL;
@@ -241,22 +235,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Service de retour indisponible." }, { status: 502 });
   }
 
-  // 9. Mémorisation du token et de son expiration à côté de la commande.
-  //    Un échec d'écriture ne doit pas priver le client de son lien.
-  const expiresAt = new Date(session.expires_at);
-  try {
-    await prisma.returnSession.upsert({
-      where:  { orderId_productName: { orderId: order.id, productName } },
-      create: { orderId: order.id, productName, token: session.token, url: session.url, expiresAt },
-      update: { token: session.token, url: session.url, expiresAt, createdAt: new Date() },
-    });
-  } catch (err) {
-    console.error("[flowmerce] enregistrement ReturnSession impossible", {
-      orderId: order.id,
-      err,
-    });
-  }
-
-  // On renvoie l'URL fournie par Flowmerce — jamais une URL reconstruite.
-  return NextResponse.json({ url: session.url, expiresAt });
+  // 8. Rien n'est stocké côté boutique : Flowmerce est seul dépositaire de la
+  //    réclamation et son API permet de la relire. On renvoie l'URL telle
+  //    qu'il l'a fournie — jamais une URL reconstruite.
+  return NextResponse.json({ url: session.url, expiresAt: new Date(session.expires_at) });
 }

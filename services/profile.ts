@@ -14,6 +14,9 @@ export async function getProfile(): Promise<Profile | null> {
     city:       data.city       ?? "",
     address:    data.address    ?? "",
     postalCode: data.postalCode ?? "",
+    // L'API renvoie un ISO complet ; l'`<input type="date">` veut YYYY-MM-DD.
+    birthDate:  data.birthDate ? String(data.birthDate).slice(0, 10) : null,
+    gender:     data.gender     ?? null,
   };
 }
 
@@ -33,7 +36,7 @@ export async function changePassword(
 }
 
 export async function saveProfile(
-  data: Partial<Pick<Profile, "phone" | "city" | "address" | "postalCode">>
+  data: Partial<Pick<Profile, "phone" | "city" | "address" | "postalCode" | "birthDate" | "gender">>
 ): Promise<void> {
   await fetch("/api/profile", {
     method:      "PATCH",

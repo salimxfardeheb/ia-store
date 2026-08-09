@@ -11,9 +11,11 @@
  * Un champ qui ne respecte pas les contraintes est OMIS et signalé dans
  * `omitted` pour être loggué par l'appelant.
  *
- * Ce module est volontairement sans dépendance (pas de Prisma, pas de Next) :
- * toute la logique de payload est isolée de la route.
+ * Ce module est volontairement sans dépendance framework (pas de Prisma, pas
+ * de Next) : toute la logique de payload est isolée de la route.
  */
+
+import { MAX_AGE, MIN_AGE } from "@/lib/age";
 
 // ─── Valeurs acceptées par Flowmerce ─────────────────────────────────────────
 
@@ -25,6 +27,24 @@ export const FLOWMERCE_PAYMENT_METHODS = [
 ] as const;
 
 export type FlowmercePaymentMethod = (typeof FLOWMERCE_PAYMENT_METHODS)[number];
+
+/**
+ * Valeurs de genre transmises à Flowmerce.
+ *
+ * ⚠ Non documentées dans le contrat du endpoint, contrairement aux moyens de
+ * paiement. Si Flowmerce en attend d'autres (« M »/« F », « homme »/« femme »),
+ * le champ sera ignoré en silence — exactement le piège qui avait vidé
+ * `shipping_method`. À confirmer avant de s'y fier.
+ */
+export const FLOWMERCE_GENDERS = ["Male", "Female"] as const;
+
+export type FlowmerceGender = (typeof FLOWMERCE_GENDERS)[number];
+
+/** Notre énumération Prisma (`Gender`) → valeur Flowmerce. */
+const GENDER_MAP: Record<string, FlowmerceGender> = {
+  male:   "Male",
+  female: "Female",
+};
 
 /**
  * Notre énumération de paiement (Order.paymentMethod) → valeur Flowmerce.
@@ -72,6 +92,8 @@ export interface ReturnSessionPayload {
   customer_id?:      string;
   customer_phone?:   string;
   customer_wilaya?:  string;
+  customer_age?:     number;
+  customer_gender?:  FlowmerceGender;
   payment_method?:   FlowmercePaymentMethod;
   order_date?:       string;
   product_price?:    number;
@@ -132,6 +154,13 @@ export interface ReturnSessionInput {
   shippingMethod: string | null;
   /** Frais de port associés, en DZD. `0` est une valeur significative. */
   shippingCost:   number | null;
+  /**
+   * Âge du client, calculé depuis sa date de naissance au moment de l'envoi
+   * (voir lib/age.ts). `null` si son profil ne la renseigne pas.
+   */
+  customerAge:    number | null;
+  /** Genre du client (`Gender` Prisma), `null` s'il ne l'a pas renseigné. */
+  customerGender: string | null;
 }
 
 // ─── Normalisation champ par champ ───────────────────────────────────────────
@@ -185,6 +214,22 @@ export function mapPaymentMethod(
   if (!internal) return null;
   const key = internal.trim().toLowerCase().replace(/[\s-]+/g, "_");
   return PAYMENT_METHOD_MAP[key] ?? null;
+}
+
+/** Idem pour le genre : jamais transmis brut, omis si non mappable. */
+export function mapGender(internal: string | null | undefined): FlowmerceGender | null {
+  if (!internal) return null;
+  return GENDER_MAP[internal.trim().toLowerCase()] ?? null;
+}
+
+/**
+ * Âge plausible. Hors bornes, la donnée est fausse plutôt qu'utile : on
+ * l'omet, un âge aberrant dégraderait le score au lieu de l'affiner.
+ */
+function checkAge(value: number | null | undefined): number | null {
+  if (typeof value !== "number" || !Number.isInteger(value)) return null;
+  if (value < MIN_AGE || value > MAX_AGE) return null;
+  return value;
 }
 
 /** Montant strictement positif, sinon omis. */
@@ -255,6 +300,26 @@ export function buildReturnSessionPayload(input: ReturnSessionInput): BuildPaylo
   const wilaya = checkText(input.city, MAX_LENGTH.customer_wilaya);
   if (wilaya.ok) payload.customer_wilaya = wilaya.value;
   else record("customer_wilaya", wilaya);
+
+  const age = checkAge(input.customerAge);
+  if (age !== null) payload.customer_age = age;
+  else if (input.customerAge != null) {
+    omitted.push({
+      field:  "customer_age",
+      reason: "invalide",
+      detail: `âge « ${input.customerAge} » hors des bornes ${MIN_AGE}-${MAX_AGE}`,
+    });
+  }
+
+  const gender = mapGender(input.customerGender);
+  if (gender) payload.customer_gender = gender;
+  else if (input.customerGender) {
+    omitted.push({
+      field:  "customer_gender",
+      reason: "non_mappable",
+      detail: `valeur interne « ${input.customerGender} » absente de la table de correspondance`,
+    });
+  }
 
   const paymentMethod = mapPaymentMethod(input.paymentMethod);
   if (paymentMethod) payload.payment_method = paymentMethod;

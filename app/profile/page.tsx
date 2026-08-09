@@ -4,9 +4,23 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/app/context/AuthContext";
 import { getProfile, saveProfile, changePassword } from "@/services/profile";
-import { Profile, WILAYAS } from "../variables";
+import { Gender, Profile, WILAYAS } from "../variables";
+import { MAX_AGE, MIN_AGE } from "@/lib/age";
 import { useRouter } from "next/navigation";
 import { User, MapPin, Phone, Hash, Check, LogOut, ClockArrowUp, KeyRound } from "lucide-react";
+
+/** Date ISO d'il y a `years` années, pour borner le sélecteur. */
+function isoYearsAgo(years: number): string {
+  const now = new Date();
+  return new Date(Date.UTC(now.getUTCFullYear() - years, now.getUTCMonth(), now.getUTCDate()))
+    .toISOString()
+    .slice(0, 10);
+}
+
+// Le sélecteur applique les mêmes bornes que le serveur : pas de saisie
+// que l'API rejetterait ensuite.
+const BIRTH_DATE_MAX = isoYearsAgo(MIN_AGE);
+const BIRTH_DATE_MIN = isoYearsAgo(MAX_AGE);
 
 export default function ProfilePage() {
   const { user, profile, logout } = useAuth();
@@ -19,6 +33,8 @@ export default function ProfilePage() {
     city: "",
     address: "",
     postalCode: "",
+    birthDate: null,
+    gender: null,
   });
 
   const [saved, setSaved] = useState(false);
@@ -32,14 +48,14 @@ export default function ProfilePage() {
   useEffect(() => {
     if (!user) { router.push("/"); return; }
     getProfile().then((data) => {
-      if (data) setForm({ name: data.name, email: data.email, phone: data.phone, city: data.city, address: data.address, postalCode: data.postalCode });
+      if (data) setForm({ name: data.name, email: data.email, phone: data.phone, city: data.city, address: data.address, postalCode: data.postalCode, birthDate: data.birthDate, gender: data.gender });
       setLoading(false);
     });
   }, [user]);
 
   const handleSave = async () => {
     setSaving(true);
-    await saveProfile({ phone: form.phone, city: form.city, address: form.address, postalCode: form.postalCode });
+    await saveProfile({ phone: form.phone, city: form.city, address: form.address, postalCode: form.postalCode, birthDate: form.birthDate, gender: form.gender });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2500);
@@ -222,6 +238,44 @@ export default function ProfilePage() {
                   placeholder="Ex : 31000"
                   className="w-full border border-black/8 text-sm py-2.5 pl-8 pr-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Âge + Genre */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
+                Date de naissance
+              </label>
+              <input
+                type="date"
+                min={BIRTH_DATE_MIN}
+                max={BIRTH_DATE_MAX}
+                value={form.birthDate ?? ""}
+                onChange={(e) =>
+                  setForm({ ...form, birthDate: e.target.value === "" ? null : e.target.value })
+                }
+                className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-[8px] uppercase tracking-[0.3em] text-black/60 mb-1.5 font-serif">
+                Genre
+              </label>
+              <div className="relative">
+                <select
+                  value={form.gender ?? ""}
+                  onChange={(e) =>
+                    setForm({ ...form, gender: e.target.value === "" ? null : (e.target.value as Gender) })
+                  }
+                  className="w-full border border-black/8 text-sm py-2.5 px-3 bg-[#F7F7F7] font-serif focus:outline-none focus:border-black transition-colors appearance-none"
+                >
+                  <option value="">Non précisé</option>
+                  <option value="MALE">Homme</option>
+                  <option value="FEMALE">Femme</option>
+                </select>
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-black/30 pointer-events-none text-xs">▾</span>
               </div>
             </div>
           </div>

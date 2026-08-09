@@ -128,11 +128,19 @@ export interface PosCartItem {
 
 //  ─── Profile  ────────────────────────────────────────────────────────────────
 
+export type Gender = "MALE" | "FEMALE";
+
 export interface Profile extends UserProfile {
   phone: string;
   city: string;
   address: string;
   postalCode: string;
+  /**
+   * Facultatifs : `null` tant que le client ne les a pas renseignés.
+   * `birthDate` est au format `YYYY-MM-DD`, celui de l'`<input type="date">`.
+   */
+  birthDate: string | null;
+  gender:    Gender | null;
 }
 
 export interface UserProfile {
@@ -156,7 +164,9 @@ export interface Order {
   createdAt: Date;
 }
 
-export interface OrderForm extends Omit<Profile, "city" | "address" | "postalCode" | "email"> {
+// La date de naissance et le genre vivent sur le compte, pas sur le formulaire
+// de commande : le checkout ne les redemande pas.
+export interface OrderForm extends Omit<Profile, "city" | "address" | "postalCode" | "email" | "birthDate" | "gender"> {
   email:         string | null;
   city:          string | null;
   address:       string | null;

@@ -17,6 +17,12 @@ model User {
   city       String?
   address    String?
   postalCode String?
+  /// Renseignés par le client depuis son profil, jamais obligatoires : les
+  /// comptes existants et les ventes au comptoir n'en ont pas.
+  /// On stocke la date de naissance, pas l'âge : l'âge est calculé à chaque
+  /// envoi, sinon il se périme en silence.
+  birthDate  DateTime?  @db.Date
+  gender     Gender?
   createdAt  DateTime   @default(now())
   cartItems  CartItem[]
   favorites  Favorite[]
@@ -106,26 +112,9 @@ model Order {
   channel       OrderChannel @default(ONLINE)
   user          User?        @relation(fields: [userId], references: [id])
   items         OrderItem[]
-  returnSessions ReturnSession[]
 
   @@index([userId])
   @@index([channel, userId])
-}
-
-/// Session de retour Flowmerce (page hébergée). On conserve le token et sa date
-/// d'expiration pour réutiliser le lien existant au lieu d'en régénérer un.
-model ReturnSession {
-  id          String   @id @default(cuid())
-  orderId     String
-  productName String
-  token       String   @unique
-  url         String
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
-  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-
-  @@unique([orderId, productName])
-  @@index([orderId])
 }
 
 model OrderItem {
@@ -213,6 +202,11 @@ enum UserRole {
   ADMIN
   CLIENT
   SELLER
+}
+
+enum Gender {
+  MALE
+  FEMALE
 }
 
 enum ProductStatus {

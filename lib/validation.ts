@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { NextResponse } from "next/server";
+import { ageFromBirthDate, MAX_AGE, MIN_AGE } from "@/lib/age";
 
 // ─── Structured error helper ──────────────────────────────────────────────────
 
@@ -166,6 +167,14 @@ export const profileUpdateSchema = z.object({
   city:       z.string().min(1).max(100).optional(),
   address:    z.string().min(1).max(500).optional(),
   postalCode: z.string().min(1).max(20).optional(),
+  // Facultatifs, et effaçables : `null` remet le champ à vide en base, alors
+  // qu'un champ absent le laisse inchangé.
+  // La borne porte sur l'âge qui en découle, pas sur la date elle-même.
+  birthDate:  z.coerce.date()
+                .refine((d) => ageFromBirthDate(d) !== null,
+                        `L'âge doit être compris entre ${MIN_AGE} et ${MAX_AGE} ans`)
+                .nullable().optional(),
+  gender:     z.enum(["MALE", "FEMALE"]).nullable().optional(),
 });
 
 // ─── Zod parse helper — returns [data, errorResponse] ────────────────────────

@@ -13,6 +13,7 @@ async function getUser(req: NextRequest) {
 const PROFILE_SELECT = {
   id: true, email: true, name: true,
   phone: true, city: true, address: true, postalCode: true,
+  birthDate: true, gender: true,
 } as const;
 
 // GET /api/profile

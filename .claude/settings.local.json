@@ -41,7 +41,16 @@
       "Bash(node -e \"const c=require\\('./node_modules/eslint-config-next/package.json'\\);console.log\\('installed:',c.name,c.version\\);console.log\\('deps:',JSON.stringify\\(c.dependencies||{}\\)\\);\")",
       "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('next:',p.dependencies?.next\\)\")",
       "Bash(git --no-pager diff --stat)",
-      "Bash(git --no-pager diff)"
+      "Bash(git --no-pager diff)",
+      "Bash(git --no-pager log -1 --format=\"%h %s\")",
+      "Bash(git --no-pager show 48fe8e4 --stat)",
+      "Bash(git --no-pager log -3 --format=\"%h %ad %s\" --date=iso)",
+      "Bash(git --no-pager log origin/main..HEAD --oneline)",
+      "Bash(git --no-pager log origin/main -1 --format=\"%h %ad %s\" --date=iso)",
+      "Bash(cd /private/tmp/claude-502/-Users-salim-github-ia-store/eb20cd23-7370-4443-97e4-760bd87328c4/scratchpad && sed -i '' 's|\"/Users/salim/github/ia-store/node_modules/@prisma/client\"|\"/Users/salim/github/ia-store/app/generated/prisma/client\"|' inspect-sessions.ts && npx tsx --env-file=.env /private/tmp/claude-502/-Users-salim-github-ia-store/eb20cd23-7370-4443-97e4-760bd87328c4/scratchpad/inspect-sessions.ts 2>&1 | tail -60)",
+      "Bash(awk '/^model ReturnSession/,/^}/' prisma/schema.prisma)",
+      "Bash(awk '/^model User/,/^}/' prisma/schema.prisma)",
+      "Bash(node -e \"console.log\\('zod', require\\('./package.json'\\).dependencies?.zod ?? require\\('./package.json'\\).devDependencies?.zod\\)\")"
     ]
   }
 }
