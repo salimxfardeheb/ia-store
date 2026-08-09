@@ -53,8 +53,7 @@ const MAX_LENGTH = {
   customer_name:   200,
   customer_wilaya: 100,
   product_name:    500,
-  // Non documenté par Flowmerce — on s'aligne sur les autres champs courts.
-  shipping:        100,
+  shipping_method: 100,
 } as const;
 
 /**
@@ -79,12 +78,12 @@ export interface ReturnSessionPayload {
   product_quantity?: number;
   order_total?:      number;
   /**
-   * Transporteur et frais de port. Absents de la documentation Flowmerce :
-   * si leur validation rejette les clés inconnues, l'appel répond 400 — le
-   * payload complet est alors loggué par la route pour diagnostic immédiat.
+   * Mode et frais de livraison. Ces deux champs ne sont plus jamais demandés
+   * au client sur la page de retour : omis, ils sont remplacés par le repli
+   * « Standard » / 0, ce qui dégrade le score anti-fraude.
    */
-  shipping?:         string;
-  shipping_price?:   number;
+  shipping_method?:  string;
+  shipping_cost?:    number;
 }
 
 /** Réponse 201 de POST /api/return-sessions. */
@@ -129,10 +128,10 @@ export interface ReturnSessionInput {
   productName:   string;
   productPrice:  number | null;
   quantity:      number | null;
-  /** Transporteur, ou `null` pour un retrait en boutique. Voir lib/shipping.ts. */
-  shippingCarrier: string | null;
-  /** Frais de port associés, en DZD. */
-  shippingPrice:   number | null;
+  /** Mode de livraison en clair, ou `null` si inconnu. Voir lib/shipping.ts. */
+  shippingMethod: string | null;
+  /** Frais de port associés, en DZD. `0` est une valeur significative. */
+  shippingCost:   number | null;
 }
 
 // ─── Normalisation champ par champ ───────────────────────────────────────────
@@ -199,6 +198,16 @@ function checkPositiveInt(value: number | null | undefined): number | null {
   const positive = checkPositive(value);
   if (positive === null || !Number.isInteger(positive)) return null;
   return positive;
+}
+
+/**
+ * Montant nul ou positif. Réservé aux champs où `0` porte une information —
+ * des frais de livraison à `0` disent « offerte », alors qu'un champ absent
+ * dit « on ne sait pas » et déclenche un repli côté Flowmerce.
+ */
+function checkNonNegative(value: number | null | undefined): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return null;
+  return value;
 }
 
 // ─── Construction du payload ─────────────────────────────────────────────────
@@ -272,15 +281,22 @@ export function buildReturnSessionPayload(input: ReturnSessionInput): BuildPaylo
   const total = checkPositive(input.total);
   if (total !== null) payload.order_total = total;
 
-  const carrier = checkText(input.shippingCarrier, MAX_LENGTH.shipping);
-  if (carrier.ok) {
-    payload.shipping = carrier.value;
+  const shippingMethod = checkText(input.shippingMethod, MAX_LENGTH.shipping_method);
+  if (shippingMethod.ok) {
+    payload.shipping_method = shippingMethod.value;
 
-    // Le prix de port n'a de sens qu'accompagné du transporteur.
-    const shippingPrice = checkPositive(input.shippingPrice);
-    if (shippingPrice !== null) payload.shipping_price = shippingPrice;
+    // Les frais n'ont de sens qu'accompagnés du mode. `0` est transmis tel
+    // quel — c'est « livraison offerte », pas « information absente ».
+    const shippingCost = checkNonNegative(input.shippingCost);
+    if (shippingCost !== null) payload.shipping_cost = shippingCost;
+    else if (input.shippingCost != null) {
+      record("shipping_cost", {
+        reason: "invalide",
+        detail: `montant « ${input.shippingCost} » négatif ou non numérique`,
+      });
+    }
   } else {
-    record("shipping", carrier);
+    record("shipping_method", shippingMethod);
   }
 
   // `expires_in` est volontairement omis : la valeur par défaut du vendeur

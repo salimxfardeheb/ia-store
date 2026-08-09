@@ -106,9 +106,18 @@ export async function POST(req: NextRequest) {
   // 7. Construction du payload à partir des données authoritatives de la DB.
   //    Tout champ transmis est pré-rempli sur la page de retour ; tout champ
   //    omis devient une saisie supplémentaire pour le client.
-  // Yalidine n'est pas intégré à la boutique : le transporteur et le forfait
-  // viennent des constantes, et sont nuls pour un retrait en boutique (POS).
+  // Yalidine n'est pas intégré à la boutique : le mode de livraison et le
+  // forfait viennent des constantes. Le retrait en magasin (POS) a bien un
+  // mode, facturé 0 DA.
   const shipping = shippingForOrder(order.deliveryType);
+  if (!shipping) {
+    // Sans mode de livraison, Flowmerce applique son repli « Standard » / 0.
+    // C'est une dégradation du score anti-fraude, pas un cas nominal.
+    console.warn("[flowmerce] mode de livraison indéterminé", {
+      orderId:      order.id,
+      deliveryType: order.deliveryType,
+    });
+  }
 
   const built = buildReturnSessionPayload({
     orderId:       order.id,
@@ -123,8 +132,8 @@ export async function POST(req: NextRequest) {
     productName,
     productPrice:  matchedItem.price,
     quantity:      matchedItem.quantity,
-    shippingCarrier: shipping?.carrier ?? null,
-    shippingPrice:   shipping?.price   ?? null,
+    shippingMethod: shipping?.method ?? null,
+    shippingCost:   shipping?.price  ?? null,
   });
 
   for (const field of built.omitted) {

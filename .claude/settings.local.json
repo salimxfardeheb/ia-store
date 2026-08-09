@@ -31,7 +31,17 @@
       "Bash(npx prisma *)",
       "Bash(node --test lib/flowmerce.test.ts)",
       "Bash(npm run *)",
-      "Bash(npm test *)"
+      "Bash(npm test *)",
+      "Bash(node -e \"console.log\\(JSON.stringify\\(require\\('./package.json'\\).scripts,null,2\\)\\)\")",
+      "Bash(npx tsx *)",
+      "Bash(sed -i '' 's|\\\\.\\\\./\\\\.\\\\./\\\\.\\\\./\\\\.\\\\./Users/salim/github/ia-store/lib|/Users/salim/github/ia-store/lib|g' check-payload.ts)",
+      "Bash(npx eslint *)",
+      "Bash(echo \"=== exit: $? ===\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('eslint-config-next in deps?', p.devDependencies?.['eslint-config-next'] ?? p.dependencies?.['eslint-config-next'] ?? 'ABSENT'\\)\")",
+      "Bash(node -e \"const c=require\\('./node_modules/eslint-config-next/package.json'\\);console.log\\('installed:',c.name,c.version\\);console.log\\('deps:',JSON.stringify\\(c.dependencies||{}\\)\\);\")",
+      "Bash(node -e \"const p=require\\('./package.json'\\);console.log\\('next:',p.dependencies?.next\\)\")",
+      "Bash(git --no-pager diff --stat)",
+      "Bash(git --no-pager diff)"
     ]
   }
 }

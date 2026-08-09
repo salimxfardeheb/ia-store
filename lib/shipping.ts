@@ -24,22 +24,45 @@ export const STANDARD_SHIPPING_PRICE = 500;
 
 /**
  * `deliveryType` couvrant une vraie livraison. « store » est la vente au
- * comptoir (POS) : rien n'est expédié, aucun transporteur à déclarer.
+ * comptoir (POS) : rien n'est expédié, donc aucun frais de port.
  */
 const SHIPPED_DELIVERY_TYPES = new Set(["home", "bureau"]);
 
+/**
+ * Mode de livraison en clair, par `deliveryType`. C'est cette valeur métier
+ * qui part vers les services tiers — jamais le code interne (« bureau »),
+ * qu'ils ne savent pas interpréter.
+ */
+const DELIVERY_METHODS: Record<string, string> = {
+  home:   `${SHIPPING_CARRIER} - Domicile`,
+  bureau: `${SHIPPING_CARRIER} - Stopdesk`,
+  store:  "Retrait en magasin",
+};
+
 export interface ShippingDetails {
-  carrier: string;
-  price:   number;
+  /** Mode de livraison en clair, ex. « Yalidine - Stopdesk ». */
+  method: string;
+  /** Frais de port en DZD, `0` pour un retrait en magasin. */
+  price:  number;
 }
 
 /**
- * Transporteur et prix d'une commande, ou `null` si elle n'a pas été livrée
- * (retrait en boutique).
+ * Mode et prix de livraison d'une commande, ou `null` si le `deliveryType`
+ * est inconnu — une valeur héritée ne doit pas être transmise telle quelle.
+ *
+ * Le retrait en magasin renvoie bien un mode, à `0` DA : pour un tiers,
+ * « pas de frais » et « frais inconnus » ne sont pas la même information.
  */
 export function shippingForOrder(deliveryType: string | null): ShippingDetails | null {
-  if (!deliveryType || !SHIPPED_DELIVERY_TYPES.has(deliveryType)) return null;
-  return { carrier: SHIPPING_CARRIER, price: STANDARD_SHIPPING_PRICE };
+  if (!deliveryType) return null;
+
+  const method = DELIVERY_METHODS[deliveryType];
+  if (!method) return null;
+
+  return {
+    method,
+    price: SHIPPED_DELIVERY_TYPES.has(deliveryType) ? STANDARD_SHIPPING_PRICE : 0,
+  };
 }
 
 /**
