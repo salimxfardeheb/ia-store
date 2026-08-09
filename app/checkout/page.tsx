@@ -7,6 +7,7 @@ import { useAuth } from "@/app/context/AuthContext";
 import { createOrder } from "@/services/orders";
 import { getProfile } from "@/services/profile";
 import { OrderForm, WILAYAS } from "../variables";
+import { SHIPPING_CARRIER, shippingPriceFor } from "@/lib/shipping";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -48,6 +49,10 @@ export default function Checkout() {
     paymentMethod: "cash",
     deliveryType: "home",
   });
+
+  // Frais de port : mêmes règles que le serveur, qui reste seul à faire foi.
+  const shippingPrice = shippingPriceFor(form.deliveryType);
+  const orderTotal    = cartTotal + shippingPrice;
 
   useEffect(() => {
     if (!user) return;
@@ -123,7 +128,7 @@ export default function Checkout() {
     setSubmitting(true);
     try {
       const id = await createOrder(
-        { form, items: cart, total: cartTotal },
+        { form, items: cart, total: orderTotal },
         idempotencyKey.current
       );
       setOrderId(id);
@@ -458,15 +463,17 @@ export default function Checkout() {
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-black/60 font-light">Livraison</span>
-                <span className="text-[10px] uppercase tracking-widest text-black/30 font-serif">
-                  À confirmer
+                <span className="text-black/60 font-light">
+                  Livraison · {SHIPPING_CARRIER}
+                </span>
+                <span className="font-serif italic">
+                  {shippingPrice.toLocaleString("fr-FR")} DA
                 </span>
               </div>
               <div className="pt-4 border-t border-black/8 flex justify-between items-baseline">
                 <span className="font-serif text-xl italic">Total</span>
                 <span className="font-serif text-xl italic">
-                  {cartTotal.toLocaleString("fr-FR")} DA
+                  {orderTotal.toLocaleString("fr-FR")} DA
                 </span>
               </div>
             </div>

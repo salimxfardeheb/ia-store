@@ -6,6 +6,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 import { normalizePhoneDZ } from "@/lib/phone";
 import { requireSameOrigin } from "@/lib/csrf";
 import { getEffectiveStock } from "@/lib/stock";
+import { shippingPriceFor } from "@/lib/shipping";
 import { redis } from "@/lib/redis";
 
 async function getUser(req: NextRequest) {
@@ -155,10 +156,13 @@ export async function POST(req: NextRequest) {
 
   // Recalculate total server-side — never trust client-provided prices.
   // Math.round absorbs any residual float from legacy rows before the Int migration.
-  const serverTotal = items.reduce((sum, item) => {
+  const itemsTotal = items.reduce((sum, item) => {
     const { price } = productMap.get(item.id)!;
     return sum + Math.round(price * item.quantity);
   }, 0);
+
+  // Frais de port inclus dans le total : c'est le montant que le client paie.
+  const serverTotal = itemsTotal + shippingPriceFor(form.deliveryType);
 
   try {
     const order = await prisma.order.create({

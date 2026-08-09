@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getTokenFromRequest, verifyToken } from "@/lib/auth";
 import { requireSameOrigin } from "@/lib/csrf";
+import { apiError, handleDbError } from "@/lib/validation";
+import {
+  buildReturnSessionPayload,
+  parseReturnSessionFailure,
+  parseReturnSessionResponse,
+} from "@/lib/flowmerce";
+import { shippingForOrder } from "@/lib/shipping";
 
 export async function POST(req: NextRequest) {
   const csrf = requireSameOrigin(req);
@@ -33,22 +40,28 @@ export async function POST(req: NextRequest) {
   }
 
   // 3. Récupération de la commande + vérification ownership
-  const order = await prisma.order.findUnique({
-    where:  { id: orderId },
-    select: {
-      id:            true,
-      userId:        true,
-      status:        true,
-      email:         true,
-      name:          true,
-      phone:         true,
-      city:          true,
-      total:         true,
-      paymentMethod: true,
-      createdAt:     true,
-      items:         { select: { name: true, price: true, quantity: true } },
-    },
-  });
+  let order;
+  try {
+    order = await prisma.order.findUnique({
+      where:  { id: orderId },
+      select: {
+        id:            true,
+        userId:        true,
+        status:        true,
+        email:         true,
+        name:          true,
+        phone:         true,
+        city:          true,
+        total:         true,
+        paymentMethod: true,
+        deliveryType:  true,
+        createdAt:     true,
+        items:         { select: { name: true, price: true, quantity: true } },
+      },
+    });
+  } catch (err) {
+    return handleDbError(err);
+  }
 
   if (!order) {
     return NextResponse.json({ error: "Commande introuvable" }, { status: 404 });
@@ -75,7 +88,68 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // 6. Appel Flowmerce avec les données authoritatives de la DB
+  // 6. Le lien est à usage unique et expire : si une session encore valide
+  //    existe pour ce produit, on la réutilise au lieu d'en brûler une autre.
+  try {
+    const existing = await prisma.returnSession.findUnique({
+      where:  { orderId_productName: { orderId: order.id, productName } },
+      select: { url: true, expiresAt: true },
+    });
+    if (existing && existing.expiresAt.getTime() > Date.now()) {
+      return NextResponse.json({ url: existing.url, expiresAt: existing.expiresAt });
+    }
+  } catch (err) {
+    // Un cache de session inutilisable ne doit pas empêcher d'en créer une.
+    console.error("[flowmerce] lecture ReturnSession impossible", err);
+  }
+
+  // 7. Construction du payload à partir des données authoritatives de la DB.
+  //    Tout champ transmis est pré-rempli sur la page de retour ; tout champ
+  //    omis devient une saisie supplémentaire pour le client.
+  // Yalidine n'est pas intégré à la boutique : le transporteur et le forfait
+  // viennent des constantes, et sont nuls pour un retrait en boutique (POS).
+  const shipping = shippingForOrder(order.deliveryType);
+
+  const built = buildReturnSessionPayload({
+    orderId:       order.id,
+    customerId:    order.userId,
+    email:         order.email,
+    name:          order.name,
+    phone:         order.phone,
+    city:          order.city,
+    paymentMethod: order.paymentMethod,
+    createdAt:     order.createdAt,
+    total:         order.total,
+    productName,
+    productPrice:  matchedItem.price,
+    quantity:      matchedItem.quantity,
+    shippingCarrier: shipping?.carrier ?? null,
+    shippingPrice:   shipping?.price   ?? null,
+  });
+
+  for (const field of built.omitted) {
+    console.warn("[flowmerce] champ omis du payload", {
+      orderId: order.id,
+      field:   field.field,
+      reason:  field.reason,
+      detail:  field.detail,
+    });
+  }
+
+  if (!built.ok) {
+    console.error("[flowmerce] champ obligatoire inutilisable", {
+      orderId: order.id,
+      ...built.invalid,
+    });
+    return apiError(
+      "RETURN_SESSION_INCOMPLETE",
+      "Les informations de cette commande ne permettent pas d'ouvrir une demande de retour. Contactez le service client.",
+      422
+    );
+  }
+
+  // 8. Appel Flowmerce — depuis le backend uniquement, la clé API ne doit
+  //    jamais transiter côté navigateur.
   const apiKey  = process.env.FLOWMERCE_API_KEY;
   const baseUrl = process.env.FLOWMERCE_BASE_URL;
 
@@ -90,41 +164,90 @@ export async function POST(req: NextRequest) {
         "Content-Type":  "application/json",
         "Authorization": `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        order_id:       order.id,
-        customer_email: order.email ?? "",
-        customer_name:  order.name,
-        product_name:   productName,
-
-        // Champs optionnels disponibles en DB
-        customer_phone:   order.phone,
-        customer_wilaya:  order.city ?? undefined,
-        payment_method:   order.paymentMethod,
-        order_date:       order.createdAt.toISOString().split("T")[0],
-        order_total:      order.total,
-        product_price:    matchedItem.price,
-        product_quantity: matchedItem.quantity,
-      }),
+      body: JSON.stringify(built.payload),
     });
   } catch {
     return NextResponse.json({ error: "Impossible de joindre Flowmerce" }, { status: 502 });
   }
 
-  if (sessionRes.status === 429) {
-    return NextResponse.json(
-      { error: "Trop de demandes. Veuillez réessayer dans quelques instants." },
-      { status: 429 }
-    );
-  }
-
   if (!sessionRes.ok) {
-    const errBody = await sessionRes.text().catch(() => "");
-    return NextResponse.json(
-      { error: `Flowmerce: ${sessionRes.status} ${errBody}` },
-      { status: 502 }
-    );
+    const raw     = await sessionRes.text().catch(() => "");
+    const failure = parseReturnSessionFailure(sessionRes.status, raw);
+
+    switch (failure.kind) {
+      // Cas métier : le délai de retour du vendeur est dépassé. Ce n'est pas
+      // une panne — on ne propose simplement pas le retour au client.
+      case "return_window_expired":
+        return apiError(
+          "RETURN_WINDOW_EXPIRED",
+          "Le délai de retour de cette commande est dépassé.",
+          422
+        );
+
+      case "bad_request":
+        console.error("[flowmerce] payload refusé (400)", {
+          orderId: order.id,
+          message: failure.message,
+          payload: built.payload,
+        });
+        return NextResponse.json(
+          { error: "Demande de retour impossible pour le moment." },
+          { status: 502 }
+        );
+
+      // Clé API invalide/révoquée ou compte vendeur non approuvé : à traiter
+      // côté exploitation, inutile de retenter.
+      case "account":
+        console.error("[flowmerce] ALERTE compte/clé API", {
+          status:  failure.status,
+          message: failure.message,
+        });
+        return NextResponse.json(
+          { error: "Service de retour indisponible." },
+          { status: 503 }
+        );
+
+      case "rate_limited":
+        return NextResponse.json(
+          { error: "Trop de demandes. Veuillez réessayer dans quelques instants." },
+          { status: 429 }
+        );
+
+      default:
+        console.error("[flowmerce] échec création de session", {
+          orderId: order.id,
+          status:  failure.status,
+          message: failure.message,
+        });
+        return NextResponse.json(
+          { error: "Service de retour indisponible." },
+          { status: 502 }
+        );
+    }
   }
 
-  const { url } = await sessionRes.json();
-  return NextResponse.json({ url });
+  const session = parseReturnSessionResponse(await sessionRes.json().catch(() => null));
+  if (!session) {
+    console.error("[flowmerce] réponse 201 inexploitable", { orderId: order.id });
+    return NextResponse.json({ error: "Service de retour indisponible." }, { status: 502 });
+  }
+
+  // 9. Mémorisation du token et de son expiration à côté de la commande.
+  //    Un échec d'écriture ne doit pas priver le client de son lien.
+  const expiresAt = new Date(session.expires_at);
+  try {
+    await prisma.returnSession.upsert({
+      where:  { orderId_productName: { orderId: order.id, productName } },
+      create: { orderId: order.id, productName, token: session.token, url: session.url, expiresAt },
+      update: { token: session.token, url: session.url, expiresAt, createdAt: new Date() },
+    });
+  } catch (err) {
+    console.error("[flowmerce] enregistrement ReturnSession impossible", {
+      orderId: order.id,
+      err,
+    });
+  }
+
+  // On renvoie l'URL fournie par Flowmerce — jamais une URL reconstruite.
+  return NextResponse.json({ url: session.url, expiresAt });
 }

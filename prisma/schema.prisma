@@ -106,9 +106,26 @@ model Order {
   channel       OrderChannel @default(ONLINE)
   user          User?        @relation(fields: [userId], references: [id])
   items         OrderItem[]
+  returnSessions ReturnSession[]
 
   @@index([userId])
   @@index([channel, userId])
+}
+
+/// Session de retour Flowmerce (page hébergée). On conserve le token et sa date
+/// d'expiration pour réutiliser le lien existant au lieu d'en régénérer un.
+model ReturnSession {
+  id          String   @id @default(cuid())
+  orderId     String
+  productName String
+  token       String   @unique
+  url         String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, productName])
+  @@index([orderId])
 }
 
 model OrderItem {

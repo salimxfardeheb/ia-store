@@ -3,6 +3,7 @@
 import { useCart } from '@/app/context/CartContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Minus, Plus, ArrowRight, ShoppingBag } from 'lucide-react';
+import { SHIPPING_CARRIER, STANDARD_SHIPPING_PRICE } from '@/lib/shipping';
 import Link from 'next/link';
 
 export default function Cart() {
@@ -144,15 +145,17 @@ export default function Cart() {
                 </span>
               </div>
               <div className="flex justify-between text-sm items-center">
-                <span className="text-black/60 font-light">Livraison</span>
-                <span className="text-black/60 uppercase text-[10px] tracking-widest font-serif">
-                  À confirmer
+                <span className="text-black/60 font-light">
+                  Livraison · {SHIPPING_CARRIER}
+                </span>
+                <span className="font-serif italic">
+                  {STANDARD_SHIPPING_PRICE.toLocaleString("fr-FR")} DA
                 </span>
               </div>
               <div className="pt-6 border-t border-black/8 flex justify-between items-baseline">
                 <span className="font-serif text-xl italic">Total</span>
                 <span className="font-serif text-xl italic">
-                  {cartTotal.toLocaleString("fr-FR")} DA
+                  {(cartTotal + STANDARD_SHIPPING_PRICE).toLocaleString("fr-FR")} DA
                 </span>
               </div>
             </div>

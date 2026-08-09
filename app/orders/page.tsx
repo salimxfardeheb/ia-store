@@ -12,6 +12,7 @@ export default function OrdersPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [claimError, setClaimError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) { router.push("/"); return; }
@@ -19,13 +20,27 @@ export default function OrdersPage() {
   }, [user]);
 
   const openClaim = async (order: Order, productName: string) => {
-    const res = await fetch("/api/flowmerce-url", {
-      method:  "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderId: order.id, productName }),
-    });
-    const { url } = await res.json();
-    if (url) window.open(url, "_blank", "noopener,noreferrer");
+    setClaimError(null);
+    try {
+      const res = await fetch("/api/flowmerce-url", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id, productName }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.url) {
+        window.open(data.url, "_blank", "noopener,noreferrer");
+        return;
+      }
+
+      // Délai de retour dépassé : cas métier, on affiche le motif au client.
+      setClaimError(
+        data.message ?? data.error ?? "Demande de retour impossible pour le moment."
+      );
+    } catch {
+      setClaimError("Connexion impossible. Veuillez réessayer.");
+    }
   };
 
   return (
@@ -63,6 +78,12 @@ export default function OrdersPage() {
           </div>
         ))}
       </div>
+
+      {claimError && (
+        <div className="mb-6 border border-red-200 bg-red-50/50 px-4 py-3">
+          <p className="text-[11px] font-serif text-red-600">{claimError}</p>
+        </div>
+      )}
 
       {/* Orders list */}
       {orders.length === 0 ? (

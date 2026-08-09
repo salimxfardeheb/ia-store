@@ -27,7 +27,11 @@
       "Bash(npx tsc:*)",
       "Bash(grep -v \"^$\")",
       "Bash(export PATH=\"/c/Users/simou/AppData/Roaming/npm:/c/Program Files/nodejs:$PATH\")",
-      "Bash(npx --version)"
+      "Bash(npx --version)",
+      "Bash(npx prisma *)",
+      "Bash(node --test lib/flowmerce.test.ts)",
+      "Bash(npm run *)",
+      "Bash(npm test *)"
     ]
   }
 }

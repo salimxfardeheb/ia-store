@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Package, ChevronUp, ChevronDown, AlertTriangle, Clock, CheckCircle2, Truck, XCircle, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { Order, OrderStatus } from "../variables";
+import { SHIPPING_CARRIER } from "@/lib/shipping";
 
 export const STATUS_CONFIG: Record<
   OrderStatus,
@@ -59,6 +60,9 @@ export function OrderCard({
 
   const firstProduct = order.items[0]?.name ?? "—";
   const extraCount = order.items.length - 1;
+
+  const itemsTotal   = order.items.reduce((sum, it) => sum + it.price * it.quantity, 0);
+  const shippingPaid = Math.max(0, order.total - itemsTotal);
 
   return (
     <motion.div
@@ -176,6 +180,21 @@ export function OrderCard({
                     </div>
                   </div>
                 ))}
+
+                {/* Frais de port, déduits de l'écart entre le total payé et les
+                    articles : reste juste pour les commandes antérieures à la
+                    facturation de la livraison (écart nul) comme après un
+                    changement de tarif. */}
+                {shippingPaid > 0 && (
+                  <div className="flex items-center justify-between py-3 border-t border-black/8">
+                    <span className="font-serif text-sm text-black/80">
+                      Livraison · {SHIPPING_CARRIER}
+                    </span>
+                    <span className="font-serif text-sm text-black/80 w-20 text-right">
+                      {shippingPaid.toLocaleString("fr-DZ")} DA
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* Per-product claim buttons */}
