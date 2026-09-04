@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin, isNextResponse } from "@/lib/rbac";
 import { apiError } from "@/lib/validation";
-import { uploadToSupabase } from "@/lib/storage";
+import { uploadToCloudinary } from "@/lib/storage";
 import crypto from "crypto";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -31,17 +31,7 @@ function detectMimeType(buf: Buffer): string | null {
   return null;
 }
 
-function extFromMime(mime: string): string {
-  const map: Record<string, string> = {
-    "image/jpeg": "jpg",
-    "image/png": "png",
-    "image/webp": "webp",
-    "image/gif": "gif",
-  };
-  return map[mime] ?? "bin";
-}
-
-// POST /api/admin/upload — upload an image to Supabase Storage (ADMIN + SELLER)
+// POST /api/admin/upload — upload an image to Cloudinary (ADMIN + SELLER)
 export async function POST(req: NextRequest) {
   const auth = await requireAdmin(req);
   if (isNextResponse(auth)) return auth;
@@ -73,15 +63,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const ext     = extFromMime(realMime);
-    const id      = crypto.randomUUID();
-    const fileName = `products/${id}.${ext}`;
-
-    const url = await uploadToSupabase(buffer, realMime, fileName);
+    // Cloudinary déduit l'extension du contenu : le public_id n'en porte pas,
+    // sinon elle se retrouve dupliquée dans l'URL (`<id>.jpg.jpg`).
+    const url = await uploadToCloudinary(buffer, realMime, crypto.randomUUID());
 
     return NextResponse.json({ url });
   } catch (err) {
-    console.error("[upload] Supabase Storage error:", err);
+    console.error("[upload] Cloudinary error:", err);
     return apiError("UPLOAD_FAILED", "Échec de l'upload, veuillez réessayer", 500);
   }
 }

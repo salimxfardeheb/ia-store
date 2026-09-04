@@ -8,7 +8,7 @@ const cspDirectives = [
   "object-src 'none'",
   "frame-ancestors 'none'",
   "form-action 'self'",
-  "img-src 'self' data: blob: https://*.supabase.co https://images.unsplash.com",
+  "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   // 'unsafe-inline' est requis : de nombreux composants utilisent des attributs
   // style={} JSX calculés dynamiquement (couleurs de variantes, animations
@@ -43,7 +43,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "*.supabase.co",
+        hostname: "res.cloudinary.com",
       },
       {
         protocol: "https",
