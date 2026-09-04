@@ -66,7 +66,9 @@ export function OrderRow({
     }
   };
 
-  const canReportRefusal = order.status === "delivered" || order.status === "returned";
+  // Miroir de REPORTABLE_STATUSES côté API : un refus se signale sur un colis
+  // expédié (ou déjà revenu), jamais sur un colis que le client a accepté.
+  const canReportRefusal = order.status === "shipped" || order.status === "returned";
 
   return (
     <>

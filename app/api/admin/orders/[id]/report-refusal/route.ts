@@ -3,7 +3,12 @@ import { requireAdmin, isNextResponse } from "@/lib/rbac";
 import { prisma } from "@/lib/prisma";
 import { handleDbError } from "@/lib/validation";
 
-const REPORTABLE_STATUSES = new Set(["DELIVERED", "RETURNED"]);
+// Un refus de livraison se constate sur un colis PARTI, pas sur un colis reçu :
+// « livrée » veut précisément dire que le client l'a accepté. Le signalement est
+// donc ouvert sur SHIPPED (refus au seuil de la porte, avant tout changement de
+// statut) et reste ouvert sur RETURNED, quand le colis est déjà revenu au
+// vendeur avant qu'il ne pense à le signaler.
+const REPORTABLE_STATUSES = new Set(["SHIPPED", "RETURNED"]);
 
 const VALID_REASONS = new Set([
   "Client absent",
